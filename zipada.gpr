@@ -12,6 +12,10 @@
 --
 project ZipAda is
 
+   for Languages use ("Ada");
+
+   for Create_Missing_Dirs use "True";
+
    type Build_Mode_Type is
       ("Debug", 
        "Fast", 
@@ -30,24 +34,12 @@ project ZipAda is
          for Source_Dirs use ("zip_lib");
          for Main use ();
       when others =>
-         for Source_Dirs use ("zip_lib", "extras", "tools", "demo");
+         for Source_Dirs use ("zip_lib", "tools");
          for Main use (
            "zipada.adb", 
            "unzipada.adb",
            "comp_zip.adb", 
-           "find_zip.adb",
-           "rezip.adb", 
-           "demo_csv_into_zip.adb", 
-           "demo_zip.adb",
-           "demo_unzip.adb",
-           --  Miscellaneous, non-Zip or experimental stuff
-           "bunzip",   --  Standalone BZip2 decoder (for .bz2 files)
-           "lzhuf",    --  A simple LZ-Huffman coder/decoder
-           "lzma_dec", --  LZMA decoder
-           "lzma_enc", --  LZMA encoder
-           "bwt_demo", --  Burrows-Wheeler precompression demo
-           "bwt_enc",  --  Burrows-Wheeler file encoder
-           "bwt_dec"   --  Burrows-Wheeler file decoder
+           "find_zip.adb"
          );
    end case;
 
@@ -84,7 +76,7 @@ project ZipAda is
 
          when "Check_95" => for Default_Switches ("ada") use (
               "-gnat95", "-gnatwa",
-              "-gnatec=" & project'Project_Dir & "restrictions.pra"
+              "-gnatec=" & project'Project_Dir & "gnat.adc"
               );
       
          when "Debug" =>
@@ -100,7 +92,7 @@ project ZipAda is
               "-gnatVa",                        --  Validity checks switches
               "-gnatwa",                        --  Warnings switches
               "-gnatwcijkmopruvz.c.n.p.t.w.x",  --  Warnings switches
-              "-gnatec=" & project'Project_Dir & "debug.pra"
+              "-gnatec=" & project'Project_Dir & "gnat.adc"
               );
 
          when "Fast" =>
@@ -109,14 +101,14 @@ project ZipAda is
               "-funroll-loops", "-fpeel-loops", "-funswitch-loops", "-ftracer", "-fweb", "-frename-registers", 
               "-fpredictive-commoning", "-fgcse-after-reload", "-ftree-vectorize", "-fipa-cp-clone",
               "-ffunction-sections", 
-              "-gnatec=" & project'Project_Dir & "za_elim.pra"
+              "-gnatec=" & project'Project_Dir & "gnat.adc"
               );
 
          when "Small" =>
             for Default_Switches ("ada") use (
               "-gnat12", "-Os", "-gnatp",
               "-ffunction-sections", 
-              "-gnatec=" & project'Project_Dir & "za_elim.pra"
+              "-gnatec=" & project'Project_Dir & "gnat.adc"
               );
 
          when "Profiling" =>
@@ -136,9 +128,4 @@ project ZipAda is
       for Default_Switches ("ada") use ("-j0");
    end Builder;
 
-   package Ide is
-      for Default_Switches ("adacontrol") use ("-f", "verif.aru");
-      for Vcs_Kind use "Subversion";
-   end Ide;
-   
 end ZipAda;

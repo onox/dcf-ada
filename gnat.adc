@@ -1,0 +1,17 @@
+pragma Initialize_Scalars;
+
+pragma Assertion_Policy (Pre => Check, Pre'Class => Check);
+pragma Overflow_Mode (General => Strict, Assertions => Eliminated);
+
+--  pragma Restrictions (No_Obsolescent_Features);
+
+--  pragma Restrictions (No_Dependence => Ada.Finalization);
+--  pragma Restrictions (No_Dependence => Ada.Unchecked_Deallocation);
+
+--  pragma Profile (No_Implementation_Extensions);
+
+pragma Restrictions (No_Implementation_Aspect_Specifications);
+--  pragma Restrictions (No_Implementation_Attributes);
+--  pragma Restrictions (No_Implementation_Identifiers);
+--  pragma Restrictions (No_Implementation_Pragmas);
+pragma Restrictions (No_Implementation_Units);
