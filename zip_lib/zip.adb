@@ -27,6 +27,7 @@
 with Zip.Headers;
 
 with Ada.Characters.Handling;
+with Ada.Characters.Latin_1;
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.IO_Exceptions;
@@ -1074,14 +1075,16 @@ package body Zip is
   is
     last_char: Character:= ' ';
     c: Character;
+
+    use Ada.Characters.Latin_1;
   begin
     for i in text'Range loop
       c:= text(i);
       case c is
-        when ASCII.CR =>
+        when CR =>
           Ada.Text_IO.New_Line(out_file);
-        when ASCII.LF =>
-          if last_char /= ASCII.CR then Ada.Text_IO.New_Line(out_file); end if;
+        when LF =>
+          if last_char /= CR then Ada.Text_IO.New_Line(out_file); end if;
         when others =>
           Ada.Text_IO.Put(out_file, c);
       end case;
@@ -1096,14 +1099,16 @@ package body Zip is
   )
   is
     c: Character;
+
+    use Ada.Characters.Latin_1;
   begin
     for i in buffer'Range loop
       c:= Character'Val(buffer(i));
       case c is
-        when ASCII.CR =>
+        when CR =>
           Ada.Text_IO.New_Line(out_file);
-        when ASCII.LF =>
-          if last_char /= ASCII.CR then Ada.Text_IO.New_Line(out_file); end if;
+        when LF =>
+          if last_char /= CR then Ada.Text_IO.New_Line(out_file); end if;
         when others =>
           Ada.Text_IO.Put(out_file, c);
       end case;

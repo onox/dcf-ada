@@ -3,11 +3,13 @@
 --  Description:     part of UnZipada demo
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Latin_1;
 with Ada.Text_IO;                       use Ada.Text_IO;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 
 procedure My_get_password(password: out Unbounded_String) is
   c: Character;
+  use Ada.Characters.Latin_1;
 begin
   New_Line;
   Put_Line(" Current password is incorrect.");
@@ -20,7 +22,7 @@ begin
 
   loop
     Get_Immediate(c);
-    exit when c = ASCII.CR;
+    exit when c = CR;
     Put('*');
     password:= password & c;
   end loop;

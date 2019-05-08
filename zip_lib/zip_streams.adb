@@ -31,6 +31,8 @@
 -- 18-Jan-2009 (GdM): Fixed Read(Stream, Item...) which read
 --                      only 1st element of Item
 
+with Ada.Characters.Latin_1;
+
 package body Zip_Streams is
 
    procedure Set_Name (S: in out Root_Zipstream_Type; Name: String) is
@@ -175,13 +177,15 @@ package body Zip_Streams is
 
    procedure Set_Index (S : in out Memory_Zipstream; To : ZS_Index_Type) is
      I, chunk_size: ZS_Size_Type;
+
+     use Ada.Characters.Latin_1;
    begin
      if To > ZS_Size_Type(Length(S.Unb)) then
        -- ...we are off the string's bounds, we need to extend it.
        I:= ZS_Size_Type(Length(S.Unb)) + 1;
        while I <= To loop
          chunk_size:= ZS_Size_Type'Min(To-I+1, ZS_Size_Type(max_chunk_size));
-         Append(S.Unb, (1..Integer(chunk_size) => ASCII.NUL));
+         Append(S.Unb, (1..Integer(chunk_size) => NUL));
          I:= I + chunk_size;
        end loop;
      end if;
