@@ -42,8 +42,8 @@ Latest changes (-!- marks an improvement which brings an incompatibility)
   - Zip.Compress has the following new methods with improved compression:
       LZMA_3, Preselection_1 (replaces Preselection), Preselection_2.
       Preselection methods use now entry name extension and size for
-      improving compression, while remaining 1-pass methods. 
-  
+      improving compression, while remaining 1-pass methods.
+
 * Changes in '51', 27-Aug-2016:
   - LZMA.Encoding has been added; it is a standalone compressor,
       see lzma_enc.adb for an example of use.
@@ -67,7 +67,7 @@ Latest changes (-!- marks an improvement which brings an incompatibility)
 
 * Changes in '48', 20-Jul-2014:
   - LZMA decompression significantly faster
-  
+
 * Changes in '47', 28-Jun-2014:
   - LZMA method added for decompression
 
@@ -108,7 +108,7 @@ Latest changes (-!- marks an improvement which brings an incompatibility)
     - new Add_Compressed_Stream for copying entries from an archive
         to another one
     - file modification date and read-only attribute can be passed
-        to Add_File 
+        to Add_File
     - archive creation date is used when entries are added which
         are from a memory buffer (Add_String)
     - compression method can be changed "on the fly", before
@@ -204,11 +204,11 @@ Latest changes (-!- marks an improvement which brings an incompatibility)
   - UnZip.Extract that used (in v.26) a temporary memory input
       stream (memory hog!) use now a file stream
   - fixed: Zip.Headers.Load for End_of_Central_Dir never
-      raised Bad_End even when it had to 
+      raised Bad_End even when it had to
   - fixed: Zip.Find_offset:470 Natural, was Positive (bug in v.26)
 
 * Changes in '26', 30-Aug-2008:
-  - zip archive can be any kind of stream (not only a file), for both 
+  - zip archive can be any kind of stream (not only a file), for both
       extraction (unzip) and creation (zip)
 
 * Changes in '25', 1-May-2008:

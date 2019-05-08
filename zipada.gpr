@@ -20,14 +20,14 @@ project ZipAda is
    for Exec_Dir use "bin";
 
    type Build_Mode_Type is
-      ("Debug", 
-       "Fast", 
+      ("Debug",
+       "Fast",
        "Small",
        "Profiling",
        --  Check_95 mode is for checking that the *library* is strictly
        --  Ada-95-compliant for being compiled by the broadest set of compilers.
        --  The demos, tools and tests are using some Ada 2005 & 2012 features.
-       "Check_95"  
+       "Check_95"
       );
    Build_Mode : Build_Mode_Type := external ("Build_Mode", "Fast");
 
@@ -38,9 +38,9 @@ project ZipAda is
       when others =>
          for Source_Dirs use ("zip_lib", "tools");
          for Main use (
-           "zipada.adb", 
+           "zipada.adb",
            "unzipada.adb",
-           "comp_zip.adb", 
+           "comp_zip.adb",
            "find_zip.adb"
          );
    end case;
@@ -73,17 +73,17 @@ project ZipAda is
               "-gnat95", "-gnatwa",
               "-gnatec=" & project'Project_Dir & "gnat.adc"
               );
-      
+
          when "Debug" =>
             for Default_Switches ("ada") use (
               "-gnatyaknpr",  --  Style: check all casings: a:attribute, k:keywords, n:package Standard identifiers, p:pragma, r:identifier references
               "-gnatybfhiu",  --  Style: check b:no blanks at end of lines, f:no ff/vtabs, h: no htabs, i:if-then layout, u:no unnecessary blank lines
               "-gnatyx",      --  Style: check x:no extra parens
               "-gnatye",      --  Style: check e:end/exit labels present
-              "-gnat12", 
-              "-gnatf", 
-              "-gnato", 
-              "-fstack-check", "-g", 
+              "-gnat12",
+              "-gnatf",
+              "-gnato",
+              "-fstack-check", "-g",
               "-gnatVa",                        --  Validity checks switches
               "-gnatwa",                        --  Warnings switches
               "-gnatwcijkmopruvz.c.n.p.t.w.x",  --  Warnings switches
@@ -92,24 +92,24 @@ project ZipAda is
 
          when "Fast" =>
             for Default_Switches ("ada") use (
-              "-gnat12", "-O2", "-gnatp", "-gnatn", 
-              "-funroll-loops", "-fpeel-loops", "-funswitch-loops", "-ftracer", "-fweb", "-frename-registers", 
+              "-gnat12", "-O2", "-gnatp", "-gnatn",
+              "-funroll-loops", "-fpeel-loops", "-funswitch-loops", "-ftracer", "-fweb", "-frename-registers",
               "-fpredictive-commoning", "-fgcse-after-reload", "-ftree-vectorize", "-fipa-cp-clone",
-              "-ffunction-sections", 
+              "-ffunction-sections",
               "-gnatec=" & project'Project_Dir & "gnat.adc"
               );
 
          when "Small" =>
             for Default_Switches ("ada") use (
               "-gnat12", "-Os", "-gnatp",
-              "-ffunction-sections", 
+              "-ffunction-sections",
               "-gnatec=" & project'Project_Dir & "gnat.adc"
               );
 
          when "Profiling" =>
             for Default_Switches ("ada") use (
-              "-gnat12", "-O2", "-gnatp",  
-              "-fno-inline", 
+              "-gnat12", "-O2", "-gnatp",
+              "-fno-inline",
               "-funroll-loops", "-fpeel-loops", "-funswitch-loops", "-ftracer", "-fweb", "-frename-registers",
               "-fpredictive-commoning", "-fgcse-after-reload", "-ftree-vectorize", "-fipa-cp-clone",
               "-g", "-pg"

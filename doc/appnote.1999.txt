@@ -110,11 +110,11 @@ General Format of a ZIP file
       version made by (2 bytes)
 
           The upper byte indicates the compatibility of the file
-          attribute information.  If the external file attributes 
-          are compatible with MS-DOS and can be read by PKZIP for 
-          DOS version 2.04g then this value will be zero.  If these 
-          attributes are not compatible, then this value will 
-          identify the host system on which the attributes are 
+          attribute information.  If the external file attributes
+          are compatible with MS-DOS and can be read by PKZIP for
+          DOS version 2.04g then this value will be zero.  If these
+          attributes are not compatible, then this value will
+          identify the host system on which the attributes are
           compatible.  Software can use this information to determine
           the line record format for text files etc.  The current
           mappings are:
@@ -162,20 +162,20 @@ General Format of a ZIP file
           Note:  Bits 1 and 2 are undefined if the compression
                  method is any other.
 
-          Bit 3: If this bit is set, the fields crc-32, compressed 
-                 size and uncompressed size are set to zero in the 
-                 local header.  The correct values are put in the 
+          Bit 3: If this bit is set, the fields crc-32, compressed
+                 size and uncompressed size are set to zero in the
+                 local header.  The correct values are put in the
                  data descriptor immediately following the compressed
-                 data.  (Note: PKZIP version 2.04g for DOS only 
-                 recognizes this bit for method 8 compression, newer 
-                 versions of PKZIP recognize this bit for any 
+                 data.  (Note: PKZIP version 2.04g for DOS only
+                 recognizes this bit for method 8 compression, newer
+                 versions of PKZIP recognize this bit for any
                  compression method.)
 
           Bit 4: Reserved for use with method 8, for enhanced
-                 deflating. 
+                 deflating.
 
-          Bit 5: If this bit is set, this indicates that the file is 
-                 compressed patched data.  (Note: Requires PKZIP 
+          Bit 5: If this bit is set, this indicates that the file is
+                 compressed patched data.  (Note: Requires PKZIP
                  version 2.70 or greater)
 
           Bit 6: Currently unused.
@@ -326,7 +326,7 @@ General Format of a ZIP file
 
           0x0007        AV Info
           0x0009        OS/2
-          0x000a        NTFS 
+          0x000a        NTFS
           0x000c        VAX/VMS
           0x000d        Unix
           0x000f        Patch Descriptor
@@ -335,7 +335,7 @@ General Format of a ZIP file
 
           0x4b46        FWKCS MD5 (see below)
           0x07c8        Macintosh
-          0x4341        Acorn/SparkFS 
+          0x4341        Acorn/SparkFS
           0x4453        Windows NT security descriptor (binary ACL)
           0x4704        VM/CMS
           0x470f        MVS
@@ -368,7 +368,7 @@ General Format of a ZIP file
 
          -OS/2 Extra Field:
 
-          The following is the layout of the OS/2 attributes "extra" 
+          The following is the layout of the OS/2 attributes "extra"
           block.  (Last Revision  09/05/95)
 
           Note: all fields stored in Intel low-byte/high-byte order.
@@ -382,15 +382,15 @@ General Format of a ZIP file
           EACRC       4 bytes       CRC value for uncompress block
           (var)       variable      Compressed block
 
-        The OS/2 extended attribute structure (FEA2LIST) is 
-        compressed and then stored in it's entirety within this 
-        structure.  There will only ever be one "block" of data in 
+        The OS/2 extended attribute structure (FEA2LIST) is
+        compressed and then stored in it's entirety within this
+        structure.  There will only ever be one "block" of data in
         VarFields[].
 
          -UNIX Extra Field:
 
           The following is the layout of the Unix "extra" block.
-          Note: all fields are stored in Intel low-byte/high-byte 
+          Note: all fields are stored in Intel low-byte/high-byte
           order.
 
           Value       Size          Description
@@ -403,14 +403,14 @@ General Format of a ZIP file
           Gid         2 bytes       File group ID
           (var)       variable      Variable length data field
 
-          The variable length data field will contain file type 
+          The variable length data field will contain file type
           specific data.  Currently the only values allowed are
-          the original "linked to" file names for hard or symbolic 
+          the original "linked to" file names for hard or symbolic
           links.
 
          -VAX/VMS Extra Field:
 
-          The following is the layout of the VAX/VMS attributes 
+          The following is the layout of the VAX/VMS attributes
           "extra" block.
 
           Note: all fields stored in Intel low-byte/high-byte order.
@@ -432,10 +432,10 @@ General Format of a ZIP file
 
           Rules:
 
-          1. There will be one or more of attributes present, which 
-             will each be preceded by the above TagX & SizeX values.  
-             These values are identical to the ATR$C_XXXX and 
-             ATR$S_XXXX constants which are defined in ATR.H under 
+          1. There will be one or more of attributes present, which
+             will each be preceded by the above TagX & SizeX values.
+             These values are identical to the ATR$C_XXXX and
+             ATR$S_XXXX constants which are defined in ATR.H under
              VMS C.  Neither of these values will ever be zero.
 
           2. No word alignment or padding is performed.
@@ -447,7 +447,7 @@ General Format of a ZIP file
 
          -NTFS Extra Field:
 
-          The following is the layout of the NTFS attributes 
+          The following is the layout of the NTFS attributes
           "extra" block.
 
           Note: all fields stored in Intel low-byte/high-byte order.
@@ -472,12 +472,12 @@ General Format of a ZIP file
 
           Tag        Size       Description
           -----      ----       -----------
-          0x0001     2 bytes    Tag for attribute #1 
+          0x0001     2 bytes    Tag for attribute #1
           Size1      2 bytes    Size of attribute #1, in bytes
           Mtime      8 bytes    File last modification time
           Atime      8 bytes    File last access time
           Ctime      8 bytes    File creation time
-          
+
          -PATCH Descriptor Extra Field:
 
           The following is the layout of the Patch Descriptor "extra"
@@ -490,11 +490,11 @@ General Format of a ZIP file
   (Patch) 0x000f    2 bytes  Tag for this "extra" block type
           TSize     2 bytes  Size of the total "extra" block
           Version   2 bytes  Version of the descriptor
-          Flags     4 bytes  Actions and reactions (see below) 
-          OldSize   4 bytes  Size of the file about to be patched 
-          OldCRC    4 bytes  32-bit CRC of the file to be patched 
-          NewSize   4 bytes  Size of the resulting file 
-          NewCRC    4 bytes  32-bit CRC of the resulting file 
+          Flags     4 bytes  Actions and reactions (see below)
+          OldSize   4 bytes  Size of the file about to be patched
+          OldCRC    4 bytes  32-bit CRC of the file to be patched
+          NewSize   4 bytes  Size of the resulting file
+          NewCRC    4 bytes  32-bit CRC of the resulting file
 
           Actions and reactions
 
@@ -505,7 +505,7 @@ General Format of a ZIP file
           2-3           RESERVED
           4-5           Action (see below)
           6-7           RESERVED
-          8-9           Reaction (see below) to absent file 
+          8-9           Reaction (see below) to absent file
           10-11         Reaction (see below) to newer file
           12-13         Reaction (see below) to unknown file
           14-15         RESERVED
@@ -514,14 +514,14 @@ General Format of a ZIP file
           Actions
 
           Action       Value
-          ------       ----- 
+          ------       -----
           none         0
           add          1
           delete       2
           patch        3
 
           Reactions
- 
+
           Reaction     Value
           --------     -----
           ask          0
@@ -577,7 +577,7 @@ General Format of a ZIP file
           The number of the disk on which the central
           directory starts.
 
-      total number of entries in the central dir on 
+      total number of entries in the central dir on
       this disk: (2 bytes)
 
           The number of central directory entries on this disk.
@@ -856,7 +856,7 @@ Example:   0x02, 0x42, 0x01, 0x13
     This would generate the original bit length array of:
     (3, 3, 3, 3, 3, 2, 4, 4)
 
-    There are 8 codes in this table for the values 0 thru 7.  Using 
+    There are 8 codes in this table for the values 0 thru 7.  Using
     the algorithm to obtain the Shannon-Fano codes produces:
 
                                   Reversed     Order     Original
@@ -938,9 +938,9 @@ format is as follows:
                              compressed block in the data.
    Bits 1-2: Block type
       00 (0) - Block is stored - All stored data is byte aligned.
-               Skip bits until next byte, then next word = block 
+               Skip bits until next byte, then next word = block
                length, followed by the ones compliment of the block
-               length word. Remaining data in block is the stored 
+               length word. Remaining data in block is the stored
                data.
 
       01 (1) - Use fixed Huffman codes for literal and distance codes.
@@ -951,7 +951,7 @@ format is as follows:
                256 - 279    7
                280 - 287    8
 
-               Literal codes 286-287 and distance codes 30-31 are 
+               Literal codes 286-287 and distance codes 30-31 are
                never used but participate in the huffman construction.
 
       10 (2) - Dynamic Huffman codes.  (See expanding Huffman codes)
@@ -989,7 +989,7 @@ The Huffman codes should be built as described in the Implode algorithm
 except codes are assigned starting at the shortest bit length, i.e. the
 shortest code should be all 0's rather than all 1's.  Also, codes with
 a bit length of zero do not participate in the tree construction.  The
-codes are then used to decode the bit lengths for the literal and 
+codes are then used to decode the bit lengths for the literal and
 distance tables.
 
 The bit lengths for the literal tables are sent first with the number

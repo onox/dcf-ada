@@ -16,7 +16,7 @@ file format. It supplies:
  - output archive to build can be any kind of indexed data stream
  - input data to compress can be any kind of data stream
  - output data to extract can be any kind of data stream
- - types Zip_info and Zip_Create_info are provided to handle archives quickly and easily 
+ - types Zip_info and Zip_Create_info are provided to handle archives quickly and easily
  - cross format compatibility with the most various tools and file formats
      based on the Zip format: 7-zip, Info-Zip's Zip, WinZip, PKZip, Java's JARs,
      OpenDocument files, MS Office 2007+, Nokia themes, Google Chrome extensions,
@@ -83,7 +83,7 @@ Contents
   - Comp_Zip.adb         : tool for comparing two Zip archives
   - Find_Zip.adb         : tool for searching a string across an archive (contents + names)
   - ReZip.adb            : tool for recompressing Zip archives and make them smaller
-  
+
 *  In the "test" subdirectory, there is, among others:
   - ZipTest.adb              : test for Zip archive creation with various stream types
   - Zip_with_many_files.adb  : test archive with a large number of entries - and test limits
@@ -101,7 +101,7 @@ Contents
   - lzma_dec             : a standalone decompressor for LZMA files (.lzma)
   - lzma_enc             : a standalone compressor for LZMA files (.lzma)
 
-  These demos can be built as main programs. 
+  These demos can be built as main programs.
   Some are using Ada 2005's Ada.Directories for directory creation (UnZipAda)
   or reading time stamps (ZipAda).
 
@@ -149,9 +149,9 @@ Thanks to...
 The ITEC team (NXP Semiconductors), for extending the medium for
    zip archives from file only to streams of any sort (v.26)
 
-Nicolas Brunot, Stratégies, for constructive discussions and 
+Nicolas Brunot, Stratégies, for constructive discussions and
    in-depth profiling of the library (and compilers' run-time
-   libraries as well!) 
+   libraries as well!)
 
 Jérôme Haguet, Stratégies, for nice discussions and contributions:
    the major performance boost in v.35 and later,
@@ -199,7 +199,7 @@ Open bugs (as of v.53)
     method from 7-Zip (7z -mm=deflate64)! Since 7-Zip compresses a lot
     better also with that "enhanced deflate" format, a workaround is
     just to use 7-Zip and not WinZip...
-    
+
 To do
 =====
 
