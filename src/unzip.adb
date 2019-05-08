@@ -57,9 +57,7 @@ package body UnZip is
     feedback                 : Zip.Feedback_proc;
     help_the_file_exists     : Resolve_conflict_proc;
     tell_data                : Tell_data_proc;
-    get_pwd                  : Get_password_proc;
     options                  : Option_set;
-    password                 : in out Unbounded_String;
     file_system_routines     : FS_routines_type
   )
   is
@@ -301,12 +299,10 @@ package body UnZip is
     end if;
 
     encrypted:= (local_header.bit_flag and Zip.Headers.Encryption_Flag_Bit) /= 0;
+    pragma Assert (not encrypted);
 
     -- 13-Dec-2002
     true_packed_size:= File_size_type(local_header.dd.compressed_size);
-    if encrypted then
-      true_packed_size:= true_packed_size - 12;
-    end if;
 
     if name_from_header then -- Name from local header is used as output name
       the_name_len:= Natural(local_header.filename_length);
@@ -391,9 +387,6 @@ package body UnZip is
         explode_literal_tree       => (local_header.bit_flag and 4) /= 0,
         explode_slide_8KB_LZMA_EOS => (local_header.bit_flag and Zip.Headers.LZMA_EOS_Flag_Bit) /= 0,
         data_descriptor_after_data => data_descriptor_after_data,
-        is_encrypted               => encrypted,
-        password                   => password,
-        get_new_password           => get_pwd,
         hint                       => local_header
       );
 
@@ -454,68 +447,62 @@ package body UnZip is
 
   procedure Extract( from                 : String;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 ) is
   begin
-    Extract( from, null, null, null, null,
-             options, password, file_system_routines );
+    Extract( from, null, null, null,
+             options, file_system_routines );
   end Extract;
 
   procedure Extract( from                 : String;
                      what                 : String;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 ) is
   begin
-    Extract( from, what, null, null, null, null,
-             options, password, file_system_routines );
+    Extract( from, what, null, null, null,
+             options, file_system_routines );
   end Extract;
 
   procedure Extract( from                 : String;
                      what                 : String;
                      rename               : String;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 ) is
   begin
-    Extract( from, what, rename, null, null, null,
-             options, password, file_system_routines );
+    Extract( from, what, rename, null, null,
+             options, file_system_routines );
   end Extract;
 
   procedure Extract( from                 : Zip.Zip_info;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 ) is
   begin
-    Extract( from, null, null, null, null,
-             options, password, file_system_routines );
+    Extract( from, null, null, null,
+             options, file_system_routines );
   end Extract;
 
   procedure Extract( from                 : Zip.Zip_info;
                      what                 : String;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 ) is
   begin
-    Extract( from, what, null, null, null, null,
-             options, password, file_system_routines );
+    Extract( from, what, null, null, null,
+             options, file_system_routines );
   end Extract;
 
   procedure Extract( from                 : Zip.Zip_info;
                      what                 : String;
                      rename               : String;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 ) is
   begin
-    Extract( from, what, rename, null, null, null,
-             options, password, file_system_routines );
+    Extract( from, what, rename, null, null,
+             options, file_system_routines );
   end Extract;
 
   -- All previous extract call the following ones, with bogus UI arguments
@@ -531,9 +518,7 @@ package body UnZip is
                      feedback             : Zip.Feedback_proc;
                      help_the_file_exists : Resolve_conflict_proc;
                      tell_data            : Tell_data_proc;
-                     get_pwd              : Get_password_proc;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 )
    is
@@ -544,7 +529,6 @@ package body UnZip is
     comp_size    : File_size_type;
     uncomp_size  : File_size_type;
     crc_32       : Unsigned_32;
-    work_password: Unbounded_String:= To_Unbounded_String(password);
   begin
     if feedback = null then
       current_user_attitude:= yes_to_all; -- non-interactive
@@ -571,9 +555,7 @@ package body UnZip is
       feedback             => feedback,
       help_the_file_exists => help_the_file_exists,
       tell_data            => tell_data,
-      get_pwd              => get_pwd,
       options              => options,
-      password             => work_password,
       file_system_routines => file_system_routines
     );
     Close(zip_file);
@@ -590,9 +572,7 @@ package body UnZip is
                      rename               : String;
                      feedback             : Zip.Feedback_proc;
                      tell_data            : Tell_data_proc;
-                     get_pwd              : Get_password_proc;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 )
   is
@@ -603,7 +583,6 @@ package body UnZip is
     comp_size    : File_size_type;
     uncomp_size  : File_size_type;
     crc_32       : Unsigned_32;
-    work_password: Unbounded_String:= To_Unbounded_String(password);
   begin
     if feedback = null then
       current_user_attitude:= yes_to_all; -- non-interactive
@@ -630,9 +609,7 @@ package body UnZip is
       feedback             => feedback,
       help_the_file_exists => null,
       tell_data            => tell_data,
-      get_pwd              => get_pwd,
       options              => options,
-      password             => work_password,
       file_system_routines => file_system_routines
     );
     Close(zip_file);
@@ -647,9 +624,7 @@ package body UnZip is
                      feedback             : Zip.Feedback_proc;
                      help_the_file_exists : Resolve_conflict_proc;
                      tell_data            : Tell_data_proc;
-                     get_pwd              : Get_password_proc;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 )
   is
@@ -657,7 +632,6 @@ package body UnZip is
     zip_file     : File_Zipstream;
                    -- was Unbounded_Stream & file->buffer copy in v.26
     header_index : Zip_Streams.ZS_Index_Type;
-    work_password: Unbounded_String:= To_Unbounded_String(password);
   begin
     if feedback = null then
       current_user_attitude:= yes_to_all; -- non-interactive
@@ -679,9 +653,7 @@ package body UnZip is
         feedback             => feedback,
         help_the_file_exists => help_the_file_exists,
         tell_data            => tell_data,
-        get_pwd              => get_pwd,
         options              => options,
-        password             => work_password,
         file_system_routines => file_system_routines
       );
     end loop all_files;
@@ -702,9 +674,7 @@ package body UnZip is
                      feedback             : Zip.Feedback_proc;
                      help_the_file_exists : Resolve_conflict_proc;
                      tell_data            : Tell_data_proc;
-                     get_pwd              : Get_password_proc;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 )
   is
@@ -715,9 +685,7 @@ package body UnZip is
               feedback => feedback,
               help_the_file_exists => help_the_file_exists,
               tell_data => tell_data,
-              get_pwd => get_pwd,
               options => options,
-              password => password,
               file_system_routines => file_system_routines
       );
     end Extract_1_file;
@@ -736,9 +704,7 @@ package body UnZip is
                      feedback             : Zip.Feedback_proc;
                      help_the_file_exists : Resolve_conflict_proc;
                      tell_data            : Tell_data_proc;
-                     get_pwd              : Get_password_proc;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 ) is
 
@@ -746,7 +712,6 @@ package body UnZip is
     comp_size    : File_size_type;
     uncomp_size  : File_size_type;
     crc_32       : Unsigned_32;
-    work_password: Unbounded_String:= To_Unbounded_String(password);
     use Zip, Zip_Streams;
     zip_file     : aliased File_Zipstream;
     input_stream : Zipstream_Class_Access;
@@ -783,9 +748,7 @@ package body UnZip is
       feedback              => feedback,
       help_the_file_exists  => help_the_file_exists,
       tell_data             => tell_data,
-      get_pwd               => get_pwd,
       options               => options,
-      password              => work_password,
       file_system_routines  => file_system_routines
     );
     if use_a_file then
@@ -813,9 +776,7 @@ package body UnZip is
                      rename               : String;
                      feedback             : Zip.Feedback_proc;
                      tell_data            : Tell_data_proc;
-                     get_pwd              : Get_password_proc;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                 ) is
 
@@ -823,7 +784,6 @@ package body UnZip is
     comp_size    : File_size_type;
     uncomp_size  : File_size_type;
     crc_32       : Unsigned_32;
-    work_password: Unbounded_String:= To_Unbounded_String(password);
     use Zip, Zip_Streams;
     zip_file     : aliased File_Zipstream;
     input_stream : Zipstream_Class_Access;
@@ -860,9 +820,7 @@ package body UnZip is
       feedback             => feedback,
       help_the_file_exists => null,
       tell_data            => tell_data,
-      get_pwd              => get_pwd,
       options              => options,
-      password             => work_password,
       file_system_routines => file_system_routines
     );
     if use_a_file then

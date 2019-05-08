@@ -41,9 +41,6 @@ package body UnZip.Decompress is
     explode_literal_tree       : Boolean;
     explode_slide_8KB_LZMA_EOS : Boolean;
     data_descriptor_after_data : Boolean;
-    is_encrypted               : Boolean;
-    password                   : in out Unbounded_String;
-    get_new_password           : Get_password_proc;
     hint                       : in out Zip.Headers.Local_File_Header
   )
   is
@@ -489,32 +486,6 @@ package body UnZip.Decompress is
       end Delete_output;
 
     end UnZ_IO;
-
-    procedure Init_Decryption( password: String; crc_check: Unsigned_32) is
-      c: Zip.Byte:= 0;
-      t: Unsigned_32;
-    begin
-      -- Step 1 - Initializing the encryption keys
-      Init_keys(local_crypto_pack, password);
-      -- Step 2 - Decrypting the encryption header. 11 bytes are random,
-      --          just to shuffle the keys, 1 byte is from the CRC value.
-      Set_mode(local_crypto_pack, encrypted);
-      for i in 1..12 loop
-        UnZ_IO.Read_byte_no_decrypt( c );
-        Decode(local_crypto_pack, c);
-      end loop;
-      t:= Zip_Streams.Calendar.Convert(hint.file_timedate);
-      -- Last byte used to check password; 1/256 probability of success with any password!
-      if c /= Zip.Byte(Shift_Right( crc_check, 24 )) and not
-        -- Dec. 2012. This is a feature of Info-Zip (crypt.c).
-        -- Since CRC is only known at the end of a one-way stream
-        -- compression, and cannot be written back, they are using a byte of
-        -- the time stamp instead. This is NOT documented in appnote.txt v.6.3.3.
-        ( data_descriptor_after_data and c = Zip.Byte(Shift_Right(t, 8) and 16#FF#) )
-      then
-        raise UnZip.Wrong_password;
-      end if;
-    end Init_Decryption;
 
     package body UnZ_Meth is
 
@@ -1018,7 +989,6 @@ package body UnZip.Decompress is
         raise Zip.Archive_corrupted;
     end Process_descriptor;
 
-    work_index: Zip_Streams.ZS_Index_Type;
     use Zip, UnZ_Meth;
 
   begin -- Decompress_Data
@@ -1050,33 +1020,7 @@ package body UnZip.Decompress is
     end if;                                             -- From TT's version, 2008
     UnZ_Glob.uncompsize:= hint.dd.uncompressed_size;
     UnZ_IO.Init_Buffers;
-    if is_encrypted then
-      Set_mode(local_crypto_pack, encrypted);
-      work_index := Zip_Streams.Index(zip_file);
-      password_passes: for pass in 1..tolerance_wrong_password loop
-        begin
-          Init_Decryption( To_String(password), hint.dd.crc_32 );
-          exit password_passes; -- the current password fits, then go on!
-        exception
-          when Wrong_password =>
-            if pass = tolerance_wrong_password then
-              raise;
-            elsif get_new_password /= null then
-              get_new_password( password ); -- ask for a new one
-            end if;
-        end;
-        -- Go back to data beginning:
-        begin
-          Zip_Streams.Set_Index ( zip_file, work_index );
-        exception
-          when others =>
-            Raise_Exception(UnZip.Read_Error'Identity, "Failure after password interaction");
-        end;
-        UnZ_IO.Init_Buffers;
-      end loop password_passes;
-    else
-      Set_mode(local_crypto_pack, clear);
-    end if;
+    Set_mode(local_crypto_pack, clear);
 
     -- UnZip correct type
     begin

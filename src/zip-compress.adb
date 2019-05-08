@@ -46,7 +46,6 @@ package body Zip.Compress is
     input_size      : File_size_type;
     method          : Compression_Method;
     feedback        : Feedback_proc;
-    password        : String;
     content_hint    : Data_content_type;
     CRC             : out Interfaces.Unsigned_32;
     output_size     : out File_size_type;
@@ -61,9 +60,7 @@ package body Zip.Compress is
     compression_ok: Boolean;
     first_feedback: Boolean:= True;
     --
-    is_encrypted: constant Boolean:= password /= "";
-    encrypt_pack, mem_encrypt_pack: Crypto_pack;
-    encrypt_header: Byte_Buffer(1..12);
+    encrypt_pack: Crypto_pack;
     package Byte_soup is new Ada.Numerics.Discrete_Random(Byte);
     use Byte_soup;
     cg: Byte_soup.Generator;
@@ -118,31 +115,7 @@ package body Zip.Compress is
     procedure Compress_data_single_method(actual_method: Compression_Method) is
     begin
       Init(CRC);
-      if is_encrypted then
-        Init_keys(encrypt_pack, password);
-        Set_mode(encrypt_pack, encrypted);
-        --  A bit dumb from Zip spec: we need to know the final CRC in order to set up
-        --  the last byte of the encryption header, that allows for detecting if a password
-        --  is OK - this, with 255/256 probability of correct detection of a wrong password!
-        --  Result: 1st scan of the whole input stream with CRC calculation:
-        Store_data(do_write => False);
-        Reset(cg);
-        for i in 1..11 loop
-          encrypt_header(i):= Random(cg);
-        end loop;
-        encrypt_header(12):= Byte(Shift_Right( Final(CRC), 24 ));
-        Set_Index(input, idx_in);
-        Init(CRC);
-        Encode(encrypt_pack, encrypt_header);
-        BlockWrite(output, encrypt_header);
-        --
-        --  We need to remember at this point the encryption keys in case we need
-        --  to rewrite from here (compression failed, store data).
-        --
-        mem_encrypt_pack:= encrypt_pack;
-      else
-        Set_mode(encrypt_pack, clear);
-      end if;
+      Set_mode(encrypt_pack, clear);
       --
       --  Dispatch the work to child procedures doing the stream compression
       --  in different formats, depending on the actual compression method.
@@ -169,19 +142,10 @@ package body Zip.Compress is
       if not compression_ok then
         -- Go back to the beginning and just store the data
         Set_Index(input, idx_in);
-        if is_encrypted then
-          Set_Index(output, idx_out + 12);
-          --  Restore the encryption keys to their state just after the encryption header:
-          encrypt_pack:= mem_encrypt_pack;
-        else
-          Set_Index(output, idx_out);
-        end if;
+        Set_Index(output, idx_out);
         Init(CRC);
         Store_data(do_write => True);
         CRC:= Final(CRC);
-      end if;
-      if is_encrypted then
-        output_size:= output_size + 12;
       end if;
     end Compress_data_single_method;
   begin

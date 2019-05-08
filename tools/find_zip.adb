@@ -181,8 +181,6 @@ begin
   exception
     when Zip.Zip_file_open_error =>
       Put( "Can't open archive [" & n & ']' ); raise;
-    when UnZip.Wrong_password      =>
-      Put( "Archive has a password" ); raise;
   end;
   declare
     s: String:= Argument(2);

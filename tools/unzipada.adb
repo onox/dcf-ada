@@ -21,7 +21,7 @@ with Zip, UnZip;
 --  Pure Ada Text_IO-fashion feedback; should work on every
 --  computer having a screen [and some text console too] :
 
-with My_feedback, My_resolve_conflict, My_tell_data, My_get_password;
+with My_feedback, My_resolve_conflict, My_tell_data;
 with Summary;
 
 procedure UnZipAda is
@@ -53,12 +53,11 @@ procedure UnZipAda is
   fda:          Zip.Feedback_proc     := My_feedback'Access;
   rca:          Resolve_conflict_proc := My_resolve_conflict'Access;
   tda:          Tell_data_proc        := My_tell_data'Access;
-  gpw: constant Get_password_proc     := My_get_password'Access;
 
   last_option: Natural:= 0;
 
-  password, exdir: String( 1..1024 );
-  pass_len, exdir_len: Natural:= 0;
+  exdir: String( 1..1024 );
+  exdir_len: Natural:= 0;
 
   Directory_Separator: constant Character:= '/';
   -- '/' is also accepted by Windows
@@ -124,7 +123,6 @@ procedure UnZipAda is
     Put_Line("          -l     : force lower case on stored names");
     Put_Line("          -a     : output as text file, with native line endings");
     Put_Line("          -z     : display .zip archive comment only");
-    Put_Line("          -s pwd : define a password (e.g. ""pwd"")");
     Put_Line("          -q     : quiet mode");
   end Help;
 
@@ -168,18 +166,6 @@ begin
             lower_case_match:= True;
           when 'a' =>
             z_options( extract_as_text ):= True;
-          when 's' =>
-            if i = Argument_Count then
-              Help;
-              return; -- "-s" without the password or anything ?!
-            end if;
-            declare
-              arg_pass: constant String:= Argument(i+1);
-            begin
-              password( 1..arg_pass'Length ):= arg_pass;
-              pass_len:= arg_pass'Length;
-            end;
-            last_option:= i+1;
           when 'q' =>
             quiet:= True;
           when 'z' =>
@@ -258,18 +244,16 @@ begin
     elsif extract_all then
       Extract(
         Archive,
-        fda, rca, tda, gpw,
+        fda, rca, tda,
         z_options,
-        password( 1..pass_len ),
         My_FS_routines
       );
     else
       Zip.Load( zi, Archive );
       for i in last_option+2 .. Argument_Count loop
         Extract( zi, Argument(i),
-          fda, rca, tda, gpw,
+          fda, rca, tda,
           z_options,
-          password( 1..pass_len ),
           My_FS_routines
         );
       end loop;

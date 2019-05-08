@@ -53,9 +53,7 @@ package Zip.CRC_Crypto is
   type Crypto_Mode is (clear, encrypted);
   procedure Set_mode(obj: in out Crypto_pack; new_mode: Crypto_Mode);
   function Get_mode(obj: Crypto_pack) return Crypto_Mode;
-  --
-  procedure Init_keys(obj: in out Crypto_pack; password: String);
-  --
+
   procedure Encode(obj: in out Crypto_pack; buf: in out Zip.Byte_Buffer);
   pragma Inline(Encode);
   --

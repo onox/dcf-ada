@@ -53,7 +53,6 @@ procedure ZipAda is
   --  Final zipfile stream
   MyStream: aliased File_Zipstream;
   Info: Zip_Create_info;
-  password, password_confirm: Unbounded_String;
 
   procedure Add_1_Stream(Stream : in out Root_Zipstream_Type'Class) is
     Compressed_Size: Zip.File_size_type;
@@ -69,7 +68,7 @@ procedure ZipAda is
     end;
     --
     Add_Stream(
-      Info, Stream, My_feedback'Access, To_String(password), Compressed_Size, Final_Method
+      Info, Stream, My_feedback'Access, Compressed_Size, Final_Method
     );
     --
     if Size(Stream) = 0 then
@@ -176,18 +175,7 @@ procedure ZipAda is
   );
   scan: Scan_mode:= files_only;
 
-  procedure Enter_password(title: String; pwd: out Unbounded_String) is
-    c: Character;
-  begin
-    Put_Line(title);
-    loop
-      Get_Immediate(c);
-      exit when c < ' ';
-      pwd:= pwd & c;
-    end loop;
-  end Enter_password;
-
-  Wrong_password, Overwrite_disallowed: exception;
+  Overwrite_disallowed: exception;
 
   procedure Process_argument(i: Positive) is
     arg    : constant String:= Argument(i);
@@ -216,17 +204,6 @@ procedure ZipAda is
           scan:= files_and_dirs_recursive;
         elsif eX = "r2" then
           scan:= patterns_recursive;
-        elsif opt(opt'First) = 's' then
-          if arg'Length > 2 then  --  Password is appended to the option
-            password:= To_Unbounded_String(arg(arg'First+2..arg'Last));
-          else
-            Enter_password("Enter password", password);
-            Enter_password("Confirm password", password_confirm);
-            if password /= password_confirm then
-              Put_Line("Password mismatch.");
-              raise Wrong_password;
-            end if;
-          end if;
         end if;
       end;
     elsif not zip_name_set then
@@ -285,12 +262,8 @@ begin
     Put_Line("Usage: zipada [options] archive[.zip] name(s)");
     New_Line;
     Put_Line("Options:  -e0    : ""Store"": zero compression, archiving only (like tar)");
-    Put_Line("          -erN   : ""Reduce"" 2-pass method, factor N = 1..4");
-    Put_Line("          -es    : ""Shrink"" method (LZW algorithm)");
     Put_Line("          -edf   : ""Deflate"" method, with one ""fixed"" block (weak)");
     Put_Line("          -edN   : ""Deflate"" method, ""dynamic"" compression, strength N = 1..3");
-    Put_Line("          -elN   : ""LZMA"" method, strength N = 1..3");
-    Put_Line("          -epN   : preselection of an appropriate method, strength N = 1..2");
     New_Line;
     Put_Line("      NB: default method is ""Deflate"", strength 1 (-ed1)");
     New_Line;
@@ -301,6 +274,5 @@ begin
     Put_Line("          -r2    : search name(s) in current and all subdirectories as well;");
     Put_Line("                      please enclose name(s) that have wildcards with");
     Put_Line("                      single quotes, for example: '*.adb'");
-    Put_Line("          -s[X]  : set password X");
   end if;
 end ZipAda;

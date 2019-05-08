@@ -107,14 +107,6 @@ package body Zip.CRC_Crypto is
     return Zip.Byte(Shift_Right(temp * (temp xor 1), 8));
   end Crypto_code;
 
-  procedure Init_keys(obj: in out Crypto_pack; password: String) is
-  begin
-    obj.keys:= ( 16#12345678#, 16#23456789#, 16#34567890# );
-    for i in password'Range loop
-      Update_keys(obj, Character'Pos(password(i)));
-    end loop;
-  end Init_keys;
-
   procedure Encode(obj: in out Crypto_pack; buf: in out Zip.Byte_Buffer) is
     bc: Zip.Byte;
   begin

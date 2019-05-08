@@ -107,7 +107,6 @@ package UnZip is
 
   procedure Extract( from                 : String;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -116,7 +115,6 @@ package UnZip is
   procedure Extract( from                 : String;
                      what                 : String;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -127,7 +125,6 @@ package UnZip is
                      what                 : String;
                      rename               : String;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -140,7 +137,6 @@ package UnZip is
 
   procedure Extract( from                 : Zip.Zip_info;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -150,7 +146,6 @@ package UnZip is
   procedure Extract( from                 : Zip.Zip_info;
                      what                 : String;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -162,7 +157,6 @@ package UnZip is
                      what                 : String;
                      rename               : String;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -190,9 +184,6 @@ package UnZip is
                 new_name        : out String;
                 new_name_length : out Natural );
 
-  type Get_password_proc is access
-    procedure(password: out Ada.Strings.Unbounded.Unbounded_String);
-
   -- Data sizes in archive
   subtype File_size_type is Zip.File_size_type;
 
@@ -210,9 +201,7 @@ package UnZip is
                      feedback             : Zip.Feedback_proc;
                      help_the_file_exists : Resolve_conflict_proc;
                      tell_data            : Tell_data_proc;
-                     get_pwd              : Get_password_proc;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -223,9 +212,7 @@ package UnZip is
                      feedback             : Zip.Feedback_proc;
                      help_the_file_exists : Resolve_conflict_proc;
                      tell_data            : Tell_data_proc;
-                     get_pwd              : Get_password_proc;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -237,9 +224,7 @@ package UnZip is
                      rename      : String;
                      feedback    : Zip.Feedback_proc;
                      tell_data   : Tell_data_proc;
-                     get_pwd     : Get_password_proc;
                      options     : Option_set:= no_option;
-                     password    : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -252,9 +237,7 @@ package UnZip is
                      feedback             : Zip.Feedback_proc;
                      help_the_file_exists : Resolve_conflict_proc;
                      tell_data            : Tell_data_proc;
-                     get_pwd              : Get_password_proc;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -266,9 +249,7 @@ package UnZip is
                      feedback             : Zip.Feedback_proc;
                      help_the_file_exists : Resolve_conflict_proc;
                      tell_data            : Tell_data_proc;
-                     get_pwd              : Get_password_proc;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -281,9 +262,7 @@ package UnZip is
                      rename               : String;
                      feedback             : Zip.Feedback_proc;
                      tell_data            : Tell_data_proc;
-                     get_pwd              : Get_password_proc;
                      options              : Option_set:= no_option;
-                     password             : String:= "";
                      file_system_routines : FS_routines_type:= null_routines
                    );
 
@@ -293,13 +272,9 @@ package UnZip is
   Uncompressed_size_Error,
   Write_Error,
   Read_Error,
-  Wrong_password,
   User_abort,
   Not_supported,
   Unsupported_method : exception;
-
-  tolerance_wrong_password: constant:= 4;
-  -- If password is wrong at the Nth attempt, Wrong_password is raised
 
 private
 

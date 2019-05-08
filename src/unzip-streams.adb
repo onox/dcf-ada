@@ -55,7 +55,6 @@ package body UnZip.Streams is
     mem_ptr         :    out p_Stream_Element_Array;
     out_stream_ptr  :        p_Stream;
     -- if not null, extract to out_stream_ptr, not to memory
-    password        : in out Ada.Strings.Unbounded.Unbounded_String;
     hint_comp_size  : in     File_size_type; -- Added 2007 for .ODS files
     hint_crc_32     : in     Unsigned_32;    -- Added 2012 for decryption
     cat_uncomp_size : in     File_size_type
@@ -109,6 +108,7 @@ package body UnZip.Streams is
     end if;
 
     encrypted:= (local_header.bit_flag and Zip.Headers.Encryption_Flag_Bit) /= 0;
+    pragma Assert (not encrypted);
 
     begin
       Zip_Streams.Set_Index ( zip_stream, work_index ); -- eventually skips the file name
@@ -135,9 +135,6 @@ package body UnZip.Streams is
       explode_literal_tree       => (local_header.bit_flag and 4) /= 0,
       explode_slide_8KB_LZMA_EOS => (local_header.bit_flag and Zip.Headers.LZMA_EOS_Flag_Bit) /= 0,
       data_descriptor_after_data => data_descriptor_after_data,
-      is_encrypted               => encrypted,
-      password                   => password,
-      get_new_password           => null,
       hint                       => local_header
     );
 
@@ -162,7 +159,6 @@ package body UnZip.Streams is
   procedure S_Extract( from             : Zip.Zip_info;
                        zip_stream       : in out Zip_Streams.Root_Zipstream_Type'Class;
                        what             : String;
-                       password         : in String;
                        mem_ptr          : out p_Stream_Element_Array;
                        out_stream_ptr   : p_Stream;
                        Ignore_Directory : in Boolean
@@ -172,8 +168,6 @@ package body UnZip.Streams is
     comp_size    : File_size_type;
     uncomp_size  : File_size_type;
     crc_32: Interfaces.Unsigned_32;
-    work_password: Ada.Strings.Unbounded.Unbounded_String:=
-      Ada.Strings.Unbounded.To_Unbounded_String(password);
     dummy_name_encoding: Zip.Zip_name_encoding;
 
   begin
@@ -203,7 +197,6 @@ package body UnZip.Streams is
       header_index    => header_index,
       mem_ptr         => mem_ptr,
       out_stream_ptr  => out_stream_ptr,
-      password        => work_password,
       hint_comp_size  => comp_size,
       hint_crc_32     => crc_32,
       cat_uncomp_size => uncomp_size
@@ -245,7 +238,6 @@ package body UnZip.Streams is
      (File             : in out Zipped_File_Type; -- File-in-archive handle
       Archive_Info     : in Zip.Zip_info;         -- Archive's Zip_info
       Name             : in String;               -- Name of zipped entry
-      Password         : in String  := "";        -- Decryption password
       Ignore_Directory : in Boolean := False      -- True: will open Name in first directory found
      )
   is
@@ -274,7 +266,6 @@ package body UnZip.Streams is
         File.archive_info,
         input_stream.all,
         Name,
-        Password,
         File.uncompressed,
         null,
         Ignore_Directory
@@ -301,7 +292,6 @@ package body UnZip.Streams is
      (File             : in out Zipped_File_Type; -- File-in-archive handle
       Archive_Name     : in String;               -- Name of archive file
       Name             : in String;               -- Name of zipped entry
-      Password         : in String  := "";        -- Decryption password
       Case_sensitive   : in Boolean := False;
       Ignore_Directory : in Boolean := False      -- True: will open Name in first directory found
      )
@@ -310,14 +300,13 @@ package body UnZip.Streams is
     -- this local record (but not the full tree) is copied by Open(..)
   begin
     Zip.Load( temp_info, Archive_Name, Case_sensitive);
-    Open( File, temp_info, Name, Password );
+    Open( File, temp_info, Name);
   end Open;
 
   procedure Open
      (File             : in out Zipped_File_Type; -- File-in-archive handle
       Archive_Stream   : in out Zip_Streams.Root_Zipstream_Type'Class; -- Archive's stream
       Name             : in String;               -- Name of zipped entry
-      Password         : in String  := "";        -- Decryption password
       Case_sensitive   : in Boolean := False;
       Ignore_Directory : in Boolean := False      -- True: will open Name in first directory found
      )
@@ -326,7 +315,7 @@ package body UnZip.Streams is
     -- this local record (but not the full tree) is copied by Open(..)
   begin
     Zip.Load( temp_info, Archive_Stream, Case_sensitive);
-    Open( File, temp_info, Name, Password );
+    Open( File, temp_info, Name);
   end Open;
 
   ------------------------------------------
@@ -406,7 +395,6 @@ package body UnZip.Streams is
      Destination      : in out Ada.Streams.Root_Stream_Type'Class;
      Archive_Info     : in Zip.Zip_info;         -- Archive's Zip_info
      Name             : in String;               -- Name of zipped entry
-     Password         : in String  := "";        -- Decryption password
      Ignore_Directory : in Boolean := False      -- True: will open Name in first directory found
    )
   is
@@ -429,7 +417,6 @@ package body UnZip.Streams is
         Archive_Info,
         input_stream.all,
         Name,
-        Password,
         dummy_mem_ptr,
         Destination'Unchecked_Access,
         Ignore_Directory

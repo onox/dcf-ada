@@ -85,13 +85,11 @@ package Zip.Create is
    -- Add a new entry to a Zip archive, from a general input Zipstream
 
    procedure Add_Stream (Info     : in out Zip_Create_info;
-                         Stream   : in out Root_Zipstream_Type'Class;
-                         Password : in     String:= "");
+                         Stream   : in out Root_Zipstream_Type'Class);
 
    procedure Add_Stream (Info           : in out Zip_Create_info;
                          Stream         : in out Root_Zipstream_Type'Class;
                          Feedback       : in     Feedback_proc;
-                         Password       : in     String:= "";
                          Compressed_Size:    out Zip.File_size_type;
                          Final_Method   :    out Natural);
 
@@ -107,9 +105,7 @@ package Zip.Create is
                        Name_encoding     : Zip_name_encoding:= IBM_437;
                        Modification_time : Time:= default_time;
                        Is_read_only      : Boolean:= False;
-                       Feedback          : Feedback_proc:= null;
-                       Password          : String:= ""
-   );
+                       Feedback          : Feedback_proc:= null);
 
    -- Add a new entry to a Zip archive, from a buffer stored in a string
 
@@ -118,7 +114,6 @@ package Zip.Create is
                          Name_in_archive   : String;
                          --   Name_UTF_8_encoded = True if Name is actually UTF-8 encoded (Unicode)
                          Name_UTF_8_encoded: Boolean:= False;
-                         Password          : String:= "";
                          --  Time stamp for this entry, e.g. Zip.Convert(Ada.Calendar.Clock)
                          Creation_time     : Zip.Time:= default_time
    );
@@ -130,7 +125,6 @@ package Zip.Create is
                          Name_in_archive   : String;
                          --   Name_UTF_8_encoded = True if Name is actually UTF-8 encoded (Unicode)
                          Name_UTF_8_encoded: Boolean:= False;
-                         Password          : String:= "";
                          --  Time stamp for this entry, e.g. Zip.Convert(Ada.Calendar.Clock)
                          Creation_time     : Zip.Time:= default_time
    );

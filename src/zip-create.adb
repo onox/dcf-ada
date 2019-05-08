@@ -137,13 +137,12 @@ package body Zip.Create is
    end Insert_to_name_dictionary;
 
    procedure Add_Stream (Info     : in out Zip_Create_info;
-                         Stream   : in out Root_Zipstream_Type'Class;
-                         Password : in     String:= "")
+                         Stream   : in out Root_Zipstream_Type'Class)
    is
      Compressed_Size: Zip.File_size_type; -- dummy
      Final_Method   : Natural;            -- dummy
    begin
-     Add_Stream(Info, Stream, null, Password, Compressed_Size, Final_Method);
+     Add_Stream(Info, Stream, null, Compressed_Size, Final_Method);
    end Add_Stream;
 
    four_gb : constant := 4 * (1024 ** 3);
@@ -154,7 +153,6 @@ package body Zip.Create is
    procedure Add_Stream (Info           : in out Zip_Create_info;
                          Stream         : in out Root_Zipstream_Type'Class;
                          Feedback       : in     Feedback_proc;
-                         Password       : in     String:= "";
                          Compressed_Size:    out Zip.File_size_type;
                          Final_Method   :    out Natural)
    is
@@ -183,9 +181,7 @@ package body Zip.Create is
         if Zip_Streams.Is_Unicode_Name (Stream) then
           shi.bit_flag := shi.bit_flag or Zip.Headers.Language_Encoding_Flag_Bit;
         end if;
-        if Password /= "" then
-          shi.bit_flag := shi.bit_flag or Zip.Headers.Encryption_Flag_Bit;
-        end if;
+        pragma Assert (Zip.Headers.Encryption_Flag_Bit not in shi.bit_flag);
         if Is_Read_Only(Stream) then
           cfh.external_attributes:= cfh.external_attributes or 1;
         end if;
@@ -210,7 +206,6 @@ package body Zip.Create is
            input_size       => shi.dd.uncompressed_size,
            method           => Info.Compress,
            feedback         => Feedback,
-           password         => Password,
            content_hint     => Guess_type_from_name(entry_name),
            CRC              => shi.dd.crc_32,
            output_size      => shi.dd.compressed_size,
@@ -259,9 +254,7 @@ package body Zip.Create is
                        Name_encoding     : Zip_name_encoding:= IBM_437;
                        Modification_time : Time:= default_time;
                        Is_read_only      : Boolean:= False;
-                       Feedback          : Feedback_proc:= null;
-                       Password          : String:= ""
-   )
+                       Feedback          : Feedback_proc:= null)
    is
       temp_zip_stream     : aliased File_Zipstream;
       use Ada.Text_IO;
@@ -280,7 +273,7 @@ package body Zip.Create is
      Set_Read_Only_Flag(temp_zip_stream, Is_read_only);
      Set_Time(temp_zip_stream, Modification_time);
      -- Stuff into the .zip archive:
-     Add_Stream (Info, temp_zip_stream, Feedback, Password, Compressed_Size, Final_Method);
+     Add_Stream (Info, temp_zip_stream, Feedback, Compressed_Size, Final_Method);
      Close(temp_zip_stream);
      if Delete_file_after then
         Open(fd, In_File, Name);
@@ -299,7 +292,6 @@ package body Zip.Create is
                          Name_in_archive   : String;
                          --   Name_UTF_8_encoded = True if Name is actually UTF-8 encoded (Unicode)
                          Name_UTF_8_encoded: Boolean:= False;
-                         Password          : String:= "";
                          --  Time stamp for this entry, e.g. Zip.Convert(Ada.Calendar.Clock)
                          Creation_time     : Zip.Time:= default_time
    )
@@ -310,7 +302,6 @@ package body Zip.Create is
        Contents           => To_Unbounded_String(Contents),
        Name_in_archive    => Name_in_archive,
        Name_UTF_8_encoded => Name_UTF_8_encoded,
-       Password           => Password,
        Creation_time      => Creation_time
      );
    end Add_String;
@@ -320,7 +311,6 @@ package body Zip.Create is
                          Name_in_archive   : String;
                          --   Name_UTF_8_encoded = True if Name is actually UTF-8 encoded (Unicode)
                          Name_UTF_8_encoded: Boolean:= False;
-                         Password          : String:= "";
                          --  Time stamp for this entry, e.g. Zip.Convert(Ada.Calendar.Clock)
                          Creation_time     : Zip.Time:= default_time
    )
@@ -331,7 +321,7 @@ package body Zip.Create is
      Set_Name(temp_zip_stream, Name_in_archive);
      Set_Time(temp_zip_stream, Creation_time);
      Set_Unicode_Name_Flag(temp_zip_stream, Name_UTF_8_encoded);
-     Add_Stream (Info, temp_zip_stream, Password);
+     Add_Stream (Info, temp_zip_stream);
    end Add_String;
 
    procedure Add_Compressed_Stream (
