@@ -16,6 +16,9 @@ project ZipAda is
 
    for Create_Missing_Dirs use "True";
 
+   for Object_Dir use "obj";
+   for Exec_Dir use "bin";
+
    type Build_Mode_Type is
       ("Debug", 
        "Fast", 
@@ -27,8 +30,7 @@ project ZipAda is
        "Check_95"  
       );
    Build_Mode : Build_Mode_Type := external ("Build_Mode", "Fast");
-   for Exec_Dir use ".";
-   
+
    case Build_Mode is
       when "Check_95" =>
          for Source_Dirs use ("zip_lib");
@@ -41,13 +43,6 @@ project ZipAda is
            "comp_zip.adb", 
            "find_zip.adb"
          );
-   end case;
-
-   case Build_Mode is
-      when "Debug" | "Check_95" =>  for Object_Dir use "obj_dbg";
-      when "Fast" =>                for Object_Dir use "obj_opt";
-      when "Small" =>               for Object_Dir use "obj_small";
-      when "Profiling" =>           for Object_Dir use "obj_pro";
    end case;
 
    package Binder is
