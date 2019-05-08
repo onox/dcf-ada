@@ -25,10 +25,7 @@
 -- http://www.opensource.org/licenses/mit-license.php
 
 with Zip.CRC_Crypto,
-     Zip.Compress.Shrink,
-     Zip.Compress.Reduce,
-     Zip.Compress.Deflate,
-     Zip.Compress.LZMA_E;
+     Zip.Compress.Deflate;
 
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.Numerics.Discrete_Random;
@@ -118,7 +115,7 @@ package body Zip.Compress is
       compression_ok:= True;
     end Store_data;
     --
-    procedure Compress_data_single_method(actual_method: Single_Method) is
+    procedure Compress_data_single_method(actual_method: Compression_Method) is
     begin
       Init(CRC);
       if is_encrypted then
@@ -153,28 +150,8 @@ package body Zip.Compress is
       --  logically call Zip.Compress.LZMA_E for the job.
       --
       case actual_method is
-        --
         when Store =>
           Store_data(do_write => True);
-        --
-        when Shrink =>
-          Zip.Compress.Shrink(
-            input, output, input_size_known, input_size, feedback,
-            CRC, encrypt_pack, output_size, compression_ok
-          );
-          zip_type:= compression_format_code.shrink;
-        --
-        when Reduction_Method =>
-          Zip.Compress.Reduce(
-            input, output, input_size_known, input_size, feedback,
-            actual_method,
-            CRC, encrypt_pack, output_size, compression_ok
-          );
-          zip_type:= compression_format_code.reduce +
-            Unsigned_16(
-              Compression_Method'Pos(actual_method) -
-              Compression_Method'Pos(Reduce_1)
-            );
         when Deflation_Method =>
           Zip.Compress.Deflate(
             input, output, input_size_known, input_size, feedback,
@@ -182,13 +159,6 @@ package body Zip.Compress is
             CRC, encrypt_pack, output_size, compression_ok
           );
           zip_type:= compression_format_code.deflate;
-        when LZMA_Method =>
-          Zip.Compress.LZMA_E(
-            input, output, input_size_known, input_size, feedback,
-            actual_method,
-            CRC, encrypt_pack, output_size, compression_ok
-          );
-          zip_type:= compression_format_code.lzma;
       end case;
       CRC:= Final(CRC);
       --
@@ -214,71 +184,8 @@ package body Zip.Compress is
         output_size:= output_size + 12;
       end if;
     end Compress_data_single_method;
-
-    fast_presel: constant Boolean:=
-      method = Preselection_1 or (input_size_known and input_size < 22_805);
-
-    data_type_to_LZMA_method: constant array(Data_content_type) of LZMA_Method:=
-      (JPEG    => LZMA_for_JPEG,
-       ARW_RW2 => LZMA_for_ARW,
-       ORF_CR2 => LZMA_for_ORF,
-       MP3     => LZMA_for_MP3,
-       MP4     => LZMA_for_MP4,
-       PGM     => LZMA_for_PGM,
-       PPM     => LZMA_for_PPM,
-       PNG     => LZMA_for_PNG,
-       WAV     => LZMA_for_WAV,
-       others  => LZMA_1  --  Fake, should be unused as such.
-      );
-
   begin
-    case method is
-      --
-      when Single_Method =>
-        Compress_data_single_method(method);
-      --
-      when Preselection_Method =>
-        case content_hint is
-          when Neutral =>  --  No clue about what kind of data
-            if input_size_known and input_size < 9_000 then
-              Compress_data_single_method(Deflation_Method'Last);  --  Deflate
-            elsif fast_presel then
-              --  See: Optimum, LZ77 sheet in za_work.xls
-              --       or l2_vs_l3.xls with a larger data set.
-              Compress_data_single_method(LZMA_2);                 --  LZMA with IZ_10 match finder
-            else
-              Compress_data_single_method(LZMA_3);                 --  LZMA with BT4 match finder
-            end if;
-          when ARW_RW2 | ORF_CR2 | MP3 | MP4 | JPEG | PGM | PPM | PNG | WAV =>
-            if input_size_known and input_size < 2_250 then
-              Compress_data_single_method(Deflation_Method'Last);  --  Deflate
-            else
-              Compress_data_single_method(data_type_to_LZMA_method(content_hint));
-            end if;
-          when GIF =>
-            if input_size_known and input_size < 350 then
-              Compress_data_single_method(Deflate_1);
-            else
-              Compress_data_single_method(LZMA_for_GIF);
-            end if;
-          when Zip_in_Zip =>
-            if input_size_known and input_size < 1_000 then
-              Compress_data_single_method(Deflation_Method'Last);  --  Deflate
-            elsif fast_presel then
-              Compress_data_single_method(LZMA_2_for_Zip_in_Zip);
-            else
-              Compress_data_single_method(LZMA_3_for_Zip_in_Zip);
-            end if;
-          when Source_code =>
-            if input_size_known and input_size < 8_000 then
-              Compress_data_single_method(Deflation_Method'Last);  --  Deflate
-            elsif fast_presel then
-              Compress_data_single_method(LZMA_2_for_Source);
-            else
-              Compress_data_single_method(LZMA_3_for_Source);
-            end if;
-        end case;
-    end case;
+    Compress_data_single_method(method);
   end Compress_data;
 
   function Guess_type_from_name(name: String) return Data_content_type is

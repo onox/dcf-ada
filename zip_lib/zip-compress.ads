@@ -59,47 +59,15 @@ package Zip.Compress is
   type Compression_Method is
     (--  No compression:
      Store,
-     --  Shrink = LZW algorithm, as in GIF pictures:
-     Shrink,
-     --  Reduce combines LZ and a Markov predictor; 4 strengths available:
-     Reduce_1,
-     Reduce_2,
-     Reduce_3,
-     Reduce_4,
      --  Deflate combines LZ and Huffman encoding; 4 strengths available:
      Deflate_Fixed,
      Deflate_1,
      Deflate_2,
-     Deflate_3,
-     --  LZMA:
-     LZMA_1,
-     LZMA_2,
-     LZMA_3,           --  NB: LZMA_3 can be very slow on large data
-     --  LZMA with non-default parameters, targeted for specific data types:
-     LZMA_2_for_Zip_in_Zip,
-     LZMA_3_for_Zip_in_Zip,
-     LZMA_2_for_Source,
-     LZMA_3_for_Source,
-     LZMA_for_JPEG,
-     LZMA_for_ARW,   --  Raw camera picture
-     LZMA_for_ORF,   --  Raw camera picture
-     LZMA_for_MP3,
-     LZMA_for_MP4,
-     LZMA_for_PGM,  --  TBD: photo vs drawing (expect much LZ redundancy in the latter)
-     LZMA_for_PPM,  --  TBD: photo vs drawing (expect much LZ redundancy in the latter)
-     LZMA_for_PNG,
-     LZMA_for_GIF,
-     LZMA_for_WAV,
-     --  Multi-method:
-     --    Preselection: select a method depending on hints, like the uncompressed size
-     Preselection_1,  --  Not too slow; selects Deflate_3 or LZMA_2*
-     Preselection_2   --  Can be very slow on large data; selects Deflate_3, LZMA_2* or LZMA_3*
+     Deflate_3
     );
 
   type Method_to_Format_type is array(Compression_Method) of PKZip_method;
   Method_to_Format: constant Method_to_Format_type;
-
-  subtype Reduction_Method is Compression_Method range Reduce_1 .. Reduce_4;
 
   --  Deflate_Fixed compresses the data into a single block and with predefined
   --  ("fixed") compression structures. The data are basically LZ-compressed
@@ -109,15 +77,6 @@ package Zip.Compress is
   --  The multi-block Deflate methods use refined techniques to decide when to
   --  start a new block and what sort of block to put next.
   subtype Taillaule_Deflation_Method is Compression_Method range Deflate_1 .. Deflate_3;
-
-  subtype LZMA_Method is Compression_Method range LZMA_1 .. LZMA_for_WAV;
-
-  subtype Multi_Method is Compression_Method range Preselection_1 .. Preselection_2;
-
-  subtype Preselection_Method is Compression_Method range Preselection_1 .. Preselection_2;
-
-  subtype Single_Method is Compression_Method
-    range Compression_Method'First .. Compression_Method'Pred(Multi_Method'First);
 
   User_abort: exception;
 
@@ -160,14 +119,7 @@ private
 
   Method_to_Format: constant Method_to_Format_type :=
     (Store               => store,
-     Shrink              => shrink,
-     Reduce_1            => reduce_1,
-     Reduce_2            => reduce_2,
-     Reduce_3            => reduce_3,
-     Reduce_4            => reduce_4,
-     Deflation_Method    => deflate,
-     LZMA_Method         => lzma_meth,
-     Multi_Method        => unknown
+     Deflation_Method    => deflate
     );
 
 end Zip.Compress;

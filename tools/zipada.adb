@@ -203,32 +203,12 @@ procedure ZipAda is
       begin
         if eX = "e0" then
           method:= Store;
-        elsif eX = "er" then
-          case opt(opt'First+2) is
-            when '1'    => method:= Reduce_1;
-            when '2'    => method:= Reduce_2;
-            when '3'    => method:= Reduce_3;
-            when others => method:= Reduce_4;
-          end case;
-        elsif eX = "es" then
-          method:= Shrink;
         elsif eX = "ed" then
           case opt(opt'First+2) is
             when 'f'    => method:= Deflate_Fixed;
             when '1'    => method:= Deflate_1;
             when '2'    => method:= Deflate_2;
             when others => method:= Deflate_3;
-          end case;
-        elsif eX = "el" then
-          case opt(opt'First+2) is
-            when '1'    => method:= LZMA_1;
-            when '2'    => method:= LZMA_2;
-            when others => method:= LZMA_3;
-          end case;
-        elsif eX = "ep" then
-          case opt(opt'First+2) is
-            when '1'    => method:= Preselection_1;
-            when others => method:= Preselection_2;
           end case;
         elsif opt(opt'First..opt'First+3) = "dir " then
           scan:= Scan_mode'Max(scan, files_and_dirs);
