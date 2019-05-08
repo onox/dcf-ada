@@ -33,10 +33,10 @@ project ZipAda is
 
    case Build_Mode is
       when "Check_95" =>
-         for Source_Dirs use ("zip_lib");
+         for Source_Dirs use ("src");
          for Main use ();
       when others =>
-         for Source_Dirs use ("zip_lib", "tools");
+         for Source_Dirs use ("src", "tools");
          for Main use (
            "zipada.adb",
            "unzipada.adb",
