@@ -691,9 +691,7 @@ package body Zip is
          Entry_Name_Encoding :        Zip_Name_Encoding;
          Read_Only           :        Boolean;
          Encrypted_2_X       :        Boolean; -- PKZip 2.x encryption
-         User_Code           : in out Integer)
-      is
-         pragma Unreferenced (Date_Time, Method, Read_Only, Encrypted_2_X, User_Code);
+         User_Code           : in out Integer) is
       begin
          if Trash_Dir (Entry_Name) = Simple_Name then
             Name_Encoding := Entry_Name_Encoding;

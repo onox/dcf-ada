@@ -87,7 +87,6 @@ procedure Unzipada is
      (File_Name     : String;
       Name_Encoding : Zip.Zip_Name_Encoding) return String
    is
-      pragma Unreferenced (Name_Encoding);
       Fn1 : String := File_Name;
    begin
       if Lower_Case_Match then

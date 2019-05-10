@@ -13,7 +13,6 @@ procedure My_Resolve_Conflict
    New_Name        :    out String;
    New_Name_Length :    out Natural)
 is
-   pragma Unreferenced (Name_Encoding);
    C : Character;
 begin
    loop

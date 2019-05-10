@@ -58,7 +58,6 @@ procedure Find_Zip is
         (Stream : in out Search_Stream;
          Item   : in     Ada.Streams.Stream_Element_Array)
       is
-         pragma Unreferenced (Stream);
          C : Character;
          I : Buffer_Range := 0;
          J : Natural;
@@ -96,53 +95,6 @@ procedure Find_Zip is
          Put_Line (" in [" & To_Lower (Name) & "]'s contents");
       end if;
    end Search_1_File_Using_Output_Stream;
-
-   --  Old variant using an input stream (memory footprint is uncompressed
-   --  size plus fixed amounts: can be large!)
-
-   procedure Search_1_File_Using_Input_Stream (Name : String) is
-      F   : Zipped_File_Type;
-      S   : Stream_Access;
-      C   : Character;
-      Occ : Natural := 0;
-      --  Define a circular buffer
-      Siz : constant := Max;
-      type Buffer_Range is mod Siz;
-      Buf    : array (Buffer_Range) of Character := (others => ' ');
-      I, Bup : Buffer_Range                      := 0;
-      J      : Natural;
-   begin
-      Open (F, Z, Name);
-      S := Stream (F);
-      while not End_Of_File (F) loop
-         Character'Read (S, C);
-         if Ignore_Case then
-            C := To_Upper (C);
-         end if;
-         if C = L then -- last character do match, search further...
-            I := Bup;
-            J := Stl;
-            Match :
-            loop
-               I := I - 1;  --  this loops modulo max: 3, 2, 1, 0, max-1, max-2, ...
-               J := J - 1;
-               if J = 0 then -- we survived the whole search string
-                  Occ := Occ + 1;
-                  exit Match;
-               end if;
-               exit Match when Str (J) /= Buf (I);
-            end loop Match;
-         end if;
-         Buf (Bup) := C;
-         Bup       := Bup + 1;
-      end loop;
-      Close (F);
-      if Occ > 0 then
-         Put (Occ, 5);
-         Put_Line (" in [" & To_Lower (Name) & "] (inward stream method)");
-      end if;
-   end Search_1_File_Using_Input_Stream;
-   pragma Unreferenced (Search_1_File_Using_Input_Stream);
 
    procedure Search_All_Files is new Zip.Traverse (Search_1_File_Using_Output_Stream);
 

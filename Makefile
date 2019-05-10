@@ -24,7 +24,7 @@ debug:
 profile:
 	$(GNATMAKE) -P zip_ada.gpr -XMode=profiling -cargs $(CFLAGS) -largs $(LDFLAGS)
 
-tools: build
+tools:
 	$(GNATMAKE) -P tools.gpr -cargs $(CFLAGS) -largs $(LDFLAGS)
 
 format:

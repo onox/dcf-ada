@@ -9,7 +9,6 @@ with Ada.Command_Line;
 with Ada.Text_IO;
 
 with Zip;
-with Unzip;
 
 with Comp_Zip_Prc;
 
