@@ -1,71 +1,71 @@
-------------------------------------------------------------------------------
---  File:            Myteldat.adb or My_tell_data.adb
---  Description:     Part of the UnZipAda demo
-------------------------------------------------------------------------------
+with Interfaces;
 
-with UnZip, My_dots, Summary;
+with Ada.Text_IO;
 
-with Ada.Text_IO;                       use Ada.Text_IO;
+with Unzip;
 
-with Interfaces;                        use Interfaces;
+with My_Dots;
+with Summary;
 
-procedure My_tell_data
-            ( name               : String;
-              compressed_bytes   : UnZip.File_size_type;
-              uncompressed_bytes : UnZip.File_size_type;
-              method             : UnZip.PKZip_method ) is
+use Ada.Text_IO;
+use Interfaces;
 
-  package MIO is new Modular_IO(UnZip.File_size_type);
+procedure My_Tell_Data
+  (Name               : String;
+   Compressed_Bytes   : Unzip.File_Size_Type;
+   Uncompressed_Bytes : Unzip.File_Size_Type;
+   Method             : Unzip.Pkzip_Method)
+is
+   package Mio is new Modular_IO (Unzip.File_Size_Type);
 
-  function CutName(n:String; l:Natural) return String is
-    dots: constant String:= "...";
-  begin
-    if n'Length > l then
-      return dots & n( n'Last - (l-1) + dots'Length .. n'Last );
-    else
-      return n;
-    end if;
-  end CutName;
-
+   function Cutname (N : String; L : Natural) return String is
+      Dots : constant String := "...";
+   begin
+      if N'Length > L then
+         return Dots & N (N'Last - (L - 1) + Dots'Length .. N'Last);
+      else
+         return N;
+      end if;
+   end Cutname;
 begin
-  New_Line;
-  if Summary.total_entries = 0 then
-    Put_Line(" Name                      Method    Compressed size      Uncompressed size");
-    Put_Line(" ------------------------- --------- ---------------      -----------------");
-  end if;
-  Put(' ');
-  My_dots.done_dots:= 0;
-  declare
-    maxlen: constant:= 24;
-    cut: constant String:= CutName( name, maxlen );
-  begin
-    Put( cut );
-    for l in cut'Length .. maxlen loop
-      Put(' ');
-    end loop;
-  end;
-  Put(' ' & Summary.Nice_image(method));
-  MIO.Put(compressed_bytes  , 10);
-  if uncompressed_bytes = 0 then
-    Put(" :         ");
-  else
-    Put(" :");
-    MIO.Put(
-      UnZip.File_size_type(
-        (100.0*Long_Float(compressed_bytes)) / Long_Float(uncompressed_bytes)
-      ), 4);
-    Put("% of ");
-  end if;
-  MIO.Put(uncompressed_bytes, 10);
-  Put(' ');
-  -- We summarize here the length of processed files
-  Summary.total_uncompressed:=
-    Summary.total_uncompressed + uncompressed_bytes;
-  Summary.total_compressed:=
-    Summary.total_compressed   + compressed_bytes;
-  Summary.total_entries:= Summary.total_entries + 1;
-  -- Per-method statistics:
-  Summary.files_per_method(method):= Summary.files_per_method(method) + 1;
-  Summary.uncompressed_per_method(method):= Summary.uncompressed_per_method(method) + uncompressed_bytes;
-  Summary.compressed_per_method(method):= Summary.compressed_per_method(method) + compressed_bytes;
-end My_tell_data;
+   New_Line;
+   if Summary.Total_Entries = 0 then
+      Put_Line (" Name                      Method    Compressed size      Uncompressed size");
+      Put_Line (" ------------------------- --------- ---------------      -----------------");
+   end if;
+   Put (' ');
+   My_Dots.Done_Dots := 0;
+   declare
+      Maxlen : constant        := 24;
+      Cut    : constant String := Cutname (Name, Maxlen);
+   begin
+      Put (Cut);
+      for L in Cut'Length .. Maxlen loop
+         Put (' ');
+      end loop;
+   end;
+   Put (' ' & Summary.Nice_Image (Method));
+   Mio.Put (Compressed_Bytes, 10);
+   if Uncompressed_Bytes = 0 then
+      Put (" :         ");
+   else
+      Put (" :");
+      Mio.Put
+        (Unzip.File_Size_Type
+           ((100.0 * Long_Float (Compressed_Bytes)) / Long_Float (Uncompressed_Bytes)),
+         4);
+      Put ("% of ");
+   end if;
+   Mio.Put (Uncompressed_Bytes, 10);
+   Put (' ');
+   --  We summarize here the length of processed files
+   Summary.Total_Uncompressed := Summary.Total_Uncompressed + Uncompressed_Bytes;
+   Summary.Total_Compressed   := Summary.Total_Compressed + Compressed_Bytes;
+   Summary.Total_Entries      := Summary.Total_Entries + 1;
+   --  Per-method statistics:
+   Summary.Files_Per_Method (Method)        := Summary.Files_Per_Method (Method) + 1;
+   Summary.Uncompressed_Per_Method (Method) :=
+     Summary.Uncompressed_Per_Method (Method) + Uncompressed_Bytes;
+   Summary.Compressed_Per_Method (Method) :=
+     Summary.Compressed_Per_Method (Method) + Compressed_Bytes;
+end My_Tell_Data;

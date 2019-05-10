@@ -1,6 +1,6 @@
-package My_dots is
+package My_Dots is
 
-  dots: constant:= 8;
-  done_dots: Natural:= 0;
+   Dots      : constant := 8;
+   Done_Dots : Natural  := 0;
 
-end My_dots;
+end My_Dots;

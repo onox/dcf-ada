@@ -5,320 +5,315 @@
 --  Author:          Gautier de Montmollin
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;           use Ada.Characters.Handling;
-with Ada.Command_Line;                  use Ada.Command_Line;
-with Ada.Calendar;                      use Ada.Calendar;
-with Ada.Text_IO;                       use Ada.Text_IO;
-with Ada.Float_Text_IO;                 use Ada.Float_Text_IO;
-with Interfaces;                        use Interfaces;
+with Interfaces;
+
+with Ada.Calendar;
+with Ada.Characters.Handling;
+with Ada.Command_Line;
+with Ada.Float_Text_IO;
+with Ada.Text_IO;
 
 with Ada.Directories;  --  Ada 2005
 --  Non-standard; Ada 20XX items absent in Ada 2012:
 --  with Ada_Directories_Extensions;  --  This package's body is system-dependent
 
-with Zip, UnZip;
+with Zip;
+with Unzip;
+
+use Ada.Characters.Handling;
+use Ada.Command_Line;
+use Ada.Calendar;
+use Ada.Text_IO;
+use Ada.Float_Text_IO;
+use Interfaces;
 
 --  Pure Ada Text_IO-fashion feedback; should work on every
 --  computer having a screen [and some text console too] :
 
-with My_feedback, My_resolve_conflict, My_tell_data;
+with My_Feedback;
+with My_Resolve_Conflict;
+with My_Tell_Data;
 with Summary;
 
-procedure UnZipAda is
+procedure Unzipada is
 
-  procedure Set_Modification_Time_B (Name : in String;
-                                     To   : in Ada.Calendar.Time) is
-  begin
-    null;  --  If you want the time stamps, uncomment the following and the "with" above.
-    --  Ada_Directories_Extensions.Set_Modification_Time(Name, To);
-  exception
-    when others =>
-      null; -- !! utf-8 or ascii names with characters > pos 127 fail
-  end Set_Modification_Time_B;
+   procedure Set_Modification_Time_B (Name : in String; To : in Ada.Calendar.Time) is
+   begin
+      null;  --  If you want the time stamps, uncomment the following and the "with" above.
+      --  Ada_Directories_Extensions.Set_Modification_Time(Name, To);
+   exception
+      when others =>
+         null; -- !! UTF-8 or ASCII names with characters > pos 127 fail
+   end Set_Modification_Time_B;
 
-  Set_Time_Stamp: constant UnZip.Set_Time_Stamp_proc:=
-    --    If you want the time stamps, uncomment the following
-    --    and look into Set_Modification_Time_B above.
-    --
-    --  Set_Modification_Time_B'Unrestricted_Access;
-    null;
+   Set_Time_Stamp : constant Unzip.Set_Time_Stamp_Proc := null;
+   --  If you want the time stamps, uncomment the following
+   --  and look into Set_Modification_Time_B above.
+   --
+   --  Set_Modification_Time_B'Unrestricted_Access;
 
-  use UnZip;
+   use Unzip;
 
-  z_options        : UnZip.Option_set := UnZip.no_option;
-  quiet            : Boolean := False;
-  lower_case_match : Boolean := False;
-  comment          : Boolean := False;
+   Z_Options        : Unzip.Option_Set := Unzip.No_Option;
+   Quiet            : Boolean          := False;
+   Lower_Case_Match : Boolean          := False;
+   Comment          : Boolean          := False;
 
-  fda:          Zip.Feedback_proc     := My_feedback'Access;
-  rca:          Resolve_conflict_proc := My_resolve_conflict'Access;
-  tda:          Tell_data_proc        := My_tell_data'Access;
+   Fda : Zip.Feedback_Proc     := My_Feedback'Access;
+   Rca : Resolve_Conflict_Proc := My_Resolve_Conflict'Access;
+   Tda : Tell_Data_Proc        := My_Tell_Data'Access;
 
-  last_option: Natural:= 0;
+   Last_Option : Natural := 0;
 
-  exdir: String( 1..1024 );
-  exdir_len: Natural:= 0;
+   Exdir     : String (1 .. 1024);
+   Exdir_Len : Natural := 0;
 
-  Directory_Separator: constant Character:= '/';
-  -- '/' is also accepted by Windows
+   Directory_Separator : constant Character := '/';
+   --  '/' is also accepted by Windows
 
-  function Add_extract_directory(File_Name : String) return String is
-    -- OK for UNIX & Windows, but VMS has "[x.y.z]filename.ext"
-  begin
-    if exdir_len=0 then
-      return File_Name;
-    elsif exdir(exdir_len) = '\' or exdir(exdir_len) = '/' then
-      return exdir(1..exdir_len) & File_Name;
-    else
-      return exdir(1..exdir_len) & Directory_Separator & File_Name;
-    end if;
-  end Add_extract_directory;
+   function Add_Extract_Directory (File_Name : String) return String is
+   --  OK for UNIX & Windows, but VMS has "[x.y.z]filename.ext"
+   begin
+      if Exdir_Len = 0 then
+         return File_Name;
+      elsif Exdir (Exdir_Len) = '\' or Exdir (Exdir_Len) = '/' then
+         return Exdir (1 .. Exdir_Len) & File_Name;
+      else
+         return Exdir (1 .. Exdir_Len) & Directory_Separator & File_Name;
+      end if;
+   end Add_Extract_Directory;
 
-  function Compose_File_Name(
-    File_Name     : String;
-    Name_encoding : Zip.Zip_name_encoding
-  )
-  return String
-  is
-  pragma Unreferenced (Name_encoding);
-    fn1: String:= File_Name;
-  begin
-    if lower_case_match then
-      fn1:= To_Lower(fn1);
-    end if;
-    return Add_extract_directory(fn1);
-  end Compose_File_Name;
+   function Compose_File_Name
+     (File_Name     : String;
+      Name_Encoding : Zip.Zip_Name_Encoding) return String
+   is
+      pragma Unreferenced (Name_Encoding);
+      Fn1 : String := File_Name;
+   begin
+      if Lower_Case_Match then
+         Fn1 := To_Lower (Fn1);
+      end if;
+      return Add_Extract_Directory (Fn1);
+   end Compose_File_Name;
 
-  My_FS_routines: constant FS_routines_type:=
-   ( Create_Path         => Ada.Directories.Create_Path'Access, -- Ada 2005
-     Set_Time_Stamp      => Set_Time_Stamp,
-     Compose_File_Name   => Compose_File_Name'Unrestricted_Access,
-     others              => null
-   );
+   My_Fs_Routines : constant Fs_Routines_Type :=
+     (Create_Path       => Ada.Directories.Create_Path'Access, -- Ada 2005
+      Set_Time_Stamp    => Set_Time_Stamp,
+      Compose_File_Name => Compose_File_Name'Unrestricted_Access,
+      others            => null);
 
-  T0, T1 : Time;
-  seconds_elapsed : Duration;
+   T0, T1          : Time;
+   Seconds_Elapsed : Duration;
 
-  package IIO is new Integer_IO(Integer);
-  package MIO is new Modular_IO(UnZip.File_size_type);
+   package Iio is new Integer_IO (Integer);
+   package Mio is new Modular_IO (Unzip.File_Size_Type);
 
-  procedure Blurb is
-  begin
-    Put_Line("UnZipAda * minimal standalone unzipping tool");
-    Put_Line("Demo for the Zip-Ada library, by G. de Montmollin");
-    Put_Line("Library version " & Zip.version & " dated " & Zip.reference );
-    Put_Line("URL: " & Zip.web);
-    New_Line;
-  end Blurb;
+   procedure Blurb is
+   begin
+      Put_Line ("UnZipAda * minimal standalone unzipping tool");
+      Put_Line ("Demo for the Zip-Ada library, by G. de Montmollin");
+      Put_Line ("Library version " & Zip.Version & " dated " & Zip.Reference);
+      Put_Line ("URL: " & Zip.Web);
+      New_Line;
+   end Blurb;
 
-  procedure Help is
-  begin
-    Blurb;
-    Put_Line("Usage: unzipada [options] zipfile[.zip] [files...]");
-    New_Line;
-    Put_Line("options:  -t     : test .zip file integrity, no write");
-    Put_Line("          -j     : junk archived directory structure");
-    Put_Line("          -d dir : extract to ""dir"" instead of current");
-    Put_Line("          -c     : case sensitive name matching");
-    Put_Line("          -l     : force lower case on stored names");
-    Put_Line("          -a     : output as text file, with native line endings");
-    Put_Line("          -z     : display .zip archive comment only");
-    Put_Line("          -q     : quiet mode");
-  end Help;
+   procedure Help is
+   begin
+      Blurb;
+      Put_Line ("Usage: unzipada [options] zipfile[.zip] [files...]");
+      New_Line;
+      Put_Line ("options:  -t     : test .zip file integrity, no write");
+      Put_Line ("          -j     : junk archived directory structure");
+      Put_Line ("          -d dir : extract to ""dir"" instead of current");
+      Put_Line ("          -c     : case sensitive name matching");
+      Put_Line ("          -l     : force lower case on stored names");
+      Put_Line ("          -a     : output as text file, with native line endings");
+      Put_Line ("          -z     : display .zip archive comment only");
+      Put_Line ("          -q     : quiet mode");
+   end Help;
 
-  zi: Zip.Zip_info;
+   Zi : Zip.Zip_Info;
 
 begin
-  if Argument_Count=0 then
-    Help;
-    return;
-  end if;
-  for i in 1..Argument_Count loop
-    if Argument(i)(1)='-' or else Argument(i)(1)='/' then
-      if last_option = i then
-        null; -- was in fact an argument for previous option (e.g. "-s")
-      else
-        last_option:= i;
-        if Argument(i)'Length=1 then
-          Help;
-          return;
-        end if;
-        case To_Lower( Argument(i)(2) ) is
-          when 't' =>
-            z_options( test_only ):= True;
-          when 'j' =>
-            z_options( junk_directories ):= True;
-          when 'd' =>
-            if i = Argument_Count then
-              Help;
-              return;-- "-d" without the directory or anything ?!
+   if Argument_Count = 0 then
+      Help;
+      return;
+   end if;
+   for I in 1 .. Argument_Count loop
+      if Argument (I) (1) = '-' or else Argument (I) (1) = '/' then
+         if Last_Option = I then
+            null; -- was in fact an argument for previous option (e.g. "-s")
+         else
+            Last_Option := I;
+            if Argument (I)'Length = 1 then
+               Help;
+               return;
             end if;
-            declare
-              arg_exdir: constant String:= Argument(i+1);
-            begin
-              exdir( 1..arg_exdir'Length ):= arg_exdir;
-              exdir_len:= arg_exdir'Length;
-            end;
-            last_option:= i+1;
-          when 'c' =>
-            z_options( case_sensitive_match ):= True;
-          when 'l' =>
-            lower_case_match:= True;
-          when 'a' =>
-            z_options( extract_as_text ):= True;
-          when 'q' =>
-            quiet:= True;
-          when 'z' =>
-            comment:= True;
-          when others  =>
-            Help;
+            case To_Lower (Argument (I) (2)) is
+               when 't' =>
+                  Z_Options (Test_Only) := True;
+               when 'j' =>
+                  Z_Options (Junk_Directories) := True;
+               when 'd' =>
+                  if I = Argument_Count then
+                     Help;
+                     return;  --  "-d" without the directory or anything ?!
+                  end if;
+                  declare
+                     Arg_Exdir : constant String := Argument (I + 1);
+                  begin
+                     Exdir (1 .. Arg_Exdir'Length) := Arg_Exdir;
+                     Exdir_Len                     := Arg_Exdir'Length;
+                  end;
+                  Last_Option := I + 1;
+               when 'c' =>
+                  Z_Options (Case_Sensitive_Match) := True;
+               when 'l' =>
+                  Lower_Case_Match := True;
+               when 'a' =>
+                  Z_Options (Extract_As_Text) := True;
+               when 'q' =>
+                  Quiet := True;
+               when 'z' =>
+                  Comment := True;
+               when others =>
+                  Help;
+                  return;
+            end case;
+         end if;
+      end if;
+   end loop;
+
+   Current_User_Attitude := Yes;
+
+   if Quiet then
+      Fda := null;
+      Rca := null;
+      Tda := null;
+   end if;
+
+   Summary.Reset;
+
+   if Argument_Count = Last_Option then -- options only ?!
+      Help;
+      return;
+   end if;
+   declare
+      Archive_Given : constant String := Argument (Last_Option + 1);
+      Zip_Ext       : Boolean         := False;
+      Extract_All   : Boolean;
+      --
+      function Archive return String is
+      begin
+         if Zip_Ext then
+            return Archive_Given & ".zip";
+         else
+            return Archive_Given;
+         end if;
+      end Archive;
+   begin
+      if not Zip.Exists (Archive) then
+         Zip_Ext := True;
+         if not Zip.Exists (Archive) then
+            Put_Line ("Archive file '" & Archive_Given & "' or '" & Archive & "' not found");
             return;
-        end case;
+         end if;
       end if;
-    end if;
-  end loop;
+      Extract_All := Argument_Count = Last_Option + 1;
+      --  Options and zipfile only
 
-  current_user_attitude:= yes;
+      if not Quiet then
+         Blurb;
+      end if;
+      if not (Quiet or Comment) then
+         if Z_Options (Test_Only) then
+            Put ("Testing");
+         else
+            if Set_Time_Stamp = null then
+               Put_Line
+                 (" Warning: time stamps and attributes of files" &
+                  " in archive are not reproduced !");
+               New_Line;
+            end if;
+            Put ("Extracting");
+         end if;
+         if not Extract_All then
+            Put (" some file(s) from");
+         end if;
+         Put_Line (" archive " & Archive);
+      end if;
 
-  if quiet then
-    fda:= null;
-    rca:= null;
-    tda:= null;
-  end if;
-
-  Summary.Reset;
-
-  if Argument_Count = last_option then -- options only ?!
-    Help;
-    return;
-  end if;
-  declare
-    archive_given: constant String:= Argument(last_option+1);
-    zip_ext: Boolean:= False;
-    extract_all: Boolean;
-    --
-    function Archive return String is
-    begin
-      if zip_ext then
-        return archive_given & ".zip";
+      T0 := Clock;
+      if Comment then -- Option: -z , diplay comment only
+         Zip.Load (Zi, Archive);
+         Zip.Put_Multi_Line (Standard_Output, Zip.Zip_Comment (Zi));
+      elsif Extract_All then
+         Extract (Archive, Fda, Rca, Tda, Z_Options, My_Fs_Routines);
       else
-        return archive_given;
+         Zip.Load (Zi, Archive);
+         for I in Last_Option + 2 .. Argument_Count loop
+            Extract (Zi, Argument (I), Fda, Rca, Tda, Z_Options, My_Fs_Routines);
+         end loop;
       end if;
-    end Archive;
-  begin
-    if not Zip.Exists(Archive) then
-      zip_ext:= True;
-      if not Zip.Exists(Archive) then
-        Put_Line("Archive file '" & archive_given &
-                 "' or '" & Archive & "' not found");
-        return;
-      end if;
-    end if;
-    extract_all:= Argument_Count = last_option+1;
-    -- options and zipfile only
+      T1 := Clock;
+   end;
 
-    if not quiet then
-      Blurb;
-    end if;
-    if not (quiet or comment) then
-      if z_options( test_only ) then
-        Put("Testing");
+   Seconds_Elapsed := T1 - T0;
+
+   if not (Quiet or Comment) then
+      New_Line (2);
+      Iio.Put (Summary.Total_Entries, 7);
+      Put (" entries  ------ Total ------ ");
+      Mio.Put (Summary.Total_Compressed, 10);
+      if Summary.Total_Uncompressed = 0 then
+         Put (" :         ");
       else
-        if Set_Time_Stamp = null then
-          Put_Line(" Warning: time stamps and attributes of files" &
-                   " in archive are not reproduced !");
-          New_Line;
-        end if;
-        Put("Extracting");
+         Put (" :");
+         Iio.Put
+           (Natural
+              ((100.0 * Long_Float (Summary.Total_Compressed)) /
+               Long_Float (Summary.Total_Uncompressed)),
+            4);
+         Put ("% of ");
       end if;
-      if not extract_all then
-        Put(" some file(s) from");
+      Mio.Put (Summary.Total_Uncompressed, 10);
+      New_Line (2);
+
+      if Z_Options (Test_Only) then
+         Put_Line ("Test: no error found");
+         New_Line;
+         Put_Line ("Statistics per Zip sub-format (""method""):");
+         for M in Summary.Files_Per_Method'Range loop
+            if Summary.Files_Per_Method (M) > 0 then
+               Put ("  " & Summary.Nice_Image (M) & "... ");
+               Iio.Put (Summary.Files_Per_Method (M), 5);
+               Put (" files");
+               if Summary.Uncompressed_Per_Method (M) > 0 then
+                  Put (",");
+                  Iio.Put
+                    (Natural
+                       ((100.0 * Long_Float (Summary.Uncompressed_Per_Method (M))) /
+                        Long_Float (Summary.Total_Uncompressed)),
+                     4);
+                  Put ("% of all data; compr.-to-decompr. ratio: ");
+                  Iio.Put
+                    (Natural
+                       ((100.0 * Long_Float (Summary.Compressed_Per_Method (M))) /
+                        Long_Float (Summary.Uncompressed_Per_Method (M))),
+                     4);
+                  Put ('%');
+               end if;
+               New_Line;
+            end if;
+         end loop;
+         New_Line;
       end if;
-      Put_Line(" archive " & Archive);
-    end if;
 
-    T0:= Clock;
-    if comment then -- Option: -z , diplay comment only
-      Zip.Load( zi, Archive );
-      Zip.Put_Multi_Line(Standard_Output, Zip.Zip_comment(zi));
-    elsif extract_all then
-      Extract(
-        Archive,
-        fda, rca, tda,
-        z_options,
-        My_FS_routines
-      );
-    else
-      Zip.Load( zi, Archive );
-      for i in last_option+2 .. Argument_Count loop
-        Extract( zi, Argument(i),
-          fda, rca, tda,
-          z_options,
-          My_FS_routines
-        );
-      end loop;
-    end if;
-    T1:= Clock;
-  end;
+      Put ("Time elapsed : ");
+      Put (Float (Seconds_Elapsed), 4, 2, 0);
+      Put_Line (" sec");
 
-  seconds_elapsed:= T1-T0;
+      Put_Line ("Archive successfully processed (or empty archive, or no archive!)");
+   end if;
 
-  if not (quiet or comment) then
-    New_Line(2);
-    IIO.Put(Summary.total_entries, 7);
-    Put(" entries  ------ Total ------ ");
-    MIO.Put(Summary.total_compressed, 10);
-    if Summary.total_uncompressed = 0 then
-      Put(" :         ");
-    else
-      Put(" :");
-      IIO.Put(
-        Natural(
-          (100.0 * Long_Float(Summary.total_compressed)) /
-          Long_Float(Summary.total_uncompressed)
-        ), 4);
-      Put("% of ");
-    end if;
-    MIO.Put(Summary.total_uncompressed, 10);
-    New_Line(2);
-
-    if z_options( test_only ) then
-      Put_Line("Test: no error found");
-      New_Line;
-      Put_Line("Statistics per Zip sub-format (""method""):");
-      for m in Summary.files_per_method'Range loop
-        if Summary.files_per_method(m) > 0 then
-          Put("  " & Summary.Nice_image(m) & "... ");
-          IIO.Put(Summary.files_per_method(m),5);
-          Put(" files");
-          if Summary.uncompressed_per_method(m) > 0 then
-            Put(",");
-            IIO.Put(
-              Natural(
-                (100.0 * Long_Float(Summary.uncompressed_per_method(m))) /
-                Long_Float(Summary.total_uncompressed)
-              ), 4
-            );
-            Put("% of all data; compr.-to-decompr. ratio: ");
-            IIO.Put(
-              Natural(
-                (100.0 * Long_Float(Summary.compressed_per_method(m))) /
-                Long_Float(Summary.uncompressed_per_method(m))
-              ), 4
-            );
-            Put('%');
-          end if;
-          New_Line;
-        end if;
-      end loop;
-      New_Line;
-    end if;
-
-    Put("Time elapsed : ");
-    Put( Float( seconds_elapsed ), 4, 2, 0 );
-    Put_Line( " sec");
-
-    Put_Line("Archive successfully processed (or empty archive, or no archive!)");
-  end if;
-
-end UnZipAda;
+end Unzipada;

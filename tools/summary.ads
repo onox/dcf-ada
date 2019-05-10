@@ -1,19 +1,15 @@
-------------------------------------------------------------------------------
---  File:            Summary.ads
---  Description:     Part of the UnZipAda demo
-------------------------------------------------------------------------------
-with UnZip;
+with Unzip;
 
 package Summary is
 
-  total_uncompressed, total_compressed: UnZip.File_size_type;
-  total_entries: Natural;
-  files_per_method: array(UnZip.PKZip_method) of Natural;
-  uncompressed_per_method,
-  compressed_per_method: array(UnZip.PKZip_method) of UnZip.File_size_type;
+   Total_Uncompressed, Total_Compressed : Unzip.File_Size_Type;
+   Total_Entries                        : Natural;
+   Files_Per_Method                     : array (Unzip.Pkzip_Method) of Natural;
+   Uncompressed_Per_Method,
+   Compressed_Per_Method : array (Unzip.Pkzip_Method) of Unzip.File_Size_Type;
 
-  procedure Reset;
+   procedure Reset;
 
-  function Nice_image(format: UnZip.PKZip_method) return String;
+   function Nice_Image (Format : Unzip.Pkzip_Method) return String;
 
 end Summary;

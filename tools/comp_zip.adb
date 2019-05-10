@@ -5,67 +5,72 @@
 --  Author:          Gautier de Montmollin
 ------------------------------------------------------------------------------
 
-with Zip, UnZip, Comp_Zip_Prc;
+with Ada.Command_Line;
+with Ada.Text_IO;
 
-with Ada.Command_Line;                  use Ada.Command_Line;
-with Ada.Text_IO;                       use Ada.Text_IO;
+with Zip;
+with Unzip;
+
+with Comp_Zip_Prc;
+
+use Ada.Command_Line;
+use Ada.Text_IO;
 
 procedure Comp_Zip is
-  z: array(1..2) of Zip.Zip_info;
+   Z : array (1 .. 2) of Zip.Zip_Info;
 
-  function Try_with_zip(zip_name: String) return String is
-  begin
-    if Zip.Exists(zip_name) then
-      return zip_name;
-    else
-      return zip_name & ".zip";
-      -- Maybe the file doesn't exist, but we tried our best...
-    end if;
-  end Try_with_zip;
-
-  quiet: Natural:= 0;
-
-  procedure Blurb is
-  begin
-    Put_Line("Comp_Zip * compare two zip archive files, incl. contents");
-    Put_Line("Demo for the Zip-Ada library, by G. de Montmollin");
-    Put_Line("Library version " & Zip.version & " dated " & Zip.reference );
-    Put_Line("URL: " & Zip.web);
-    New_Line;
-  end Blurb;
-
-begin
-  if Argument_Count < 2 then
-    Blurb;
-    Put_Line("Usage: comp_zip archive1[.zip] archive2[.zip] [options]");
-    New_Line;
-    Put_Line("Options: -q1: (quiet level 1): summary only");
-    Put_Line("         -q2: (quiet level 2): shorter summary only");
-    return;
-  end if;
-  for i in 1..2 loop
-    declare
-      n: constant String:= Try_with_zip(Argument(i));
-    begin
-      Zip.Load( z(i), n );
-    exception
-      when Zip.Zip_file_open_error =>
-        Put( "Can't open archive [" & n & ']' ); raise;
-    end;
-  end loop;
-  for a in 3 .. Argument_Count loop
-    declare
-      arg: String renames Argument(a);
-    begin
-      if arg'Length > 2 and then arg(arg'First..arg'First+1) = "-q" then
-        quiet:= Natural'Value(arg(arg'First+2..arg'Last));
+   function Try_With_Zip (Zip_Name : String) return String is
+   begin
+      if Zip.Exists (Zip_Name) then
+         return Zip_Name;
+      else
+         return Zip_Name & ".zip";
+         --  Maybe the file doesn't exist, but we tried our best...
       end if;
-    end;
-  end loop;
-  --
-  if quiet = 0 then
-    Blurb;
-  end if;
-  Comp_Zip_Prc(z(1), z(2), quiet);
-  --
+   end Try_With_Zip;
+
+   Quiet : Natural := 0;
+
+   procedure Blurb is
+   begin
+      Put_Line ("Comp_Zip * compare two zip archive files, incl. contents");
+      Put_Line ("Demo for the Zip-Ada library, by G. de Montmollin");
+      Put_Line ("Library version " & Zip.Version & " dated " & Zip.Reference);
+      Put_Line ("URL: " & Zip.Web);
+      New_Line;
+   end Blurb;
+begin
+   if Argument_Count < 2 then
+      Blurb;
+      Put_Line ("Usage: comp_zip archive1[.zip] archive2[.zip] [options]");
+      New_Line;
+      Put_Line ("Options: -q1: (quiet level 1): summary only");
+      Put_Line ("         -q2: (quiet level 2): shorter summary only");
+      return;
+   end if;
+   for I in 1 .. 2 loop
+      declare
+         N : constant String := Try_With_Zip (Argument (I));
+      begin
+         Zip.Load (Z (I), N);
+      exception
+         when Zip.Zip_File_Open_Error =>
+            Put ("Can't open archive [" & N & ']');
+            raise;
+      end;
+   end loop;
+   for A in 3 .. Argument_Count loop
+      declare
+         Arg : String renames Argument (A);
+      begin
+         if Arg'Length > 2 and then Arg (Arg'First .. Arg'First + 1) = "-q" then
+            Quiet := Natural'Value (Arg (Arg'First + 2 .. Arg'Last));
+         end if;
+      end;
+   end loop;
+
+   if Quiet = 0 then
+      Blurb;
+   end if;
+   Comp_Zip_Prc (Z (1), Z (2), Quiet);
 end Comp_Zip;
