@@ -96,9 +96,6 @@ package Zip is
    --  ("Error") didn't clarify that it covered cases where the data
    --  is corrupted, which is different than an usual I/O error.
 
-   --  Zip_file_Error: exception renames Archive_corrupted;   --   Now really obsolete
-   --  pragma Obsolescent(Zip_file_Error);                    --   Now really obsolete
-
    function Is_Loaded (Info : in Zip_Info) return Boolean;
 
    function Zip_Name (Info : in Zip_Info) return String;
@@ -108,9 +105,6 @@ package Zip is
    function Zip_Stream (Info : in Zip_Info) return Zip_Streams.Zipstream_Class_Access;
 
    function Entries (Info : in Zip_Info) return Natural;
-
-   procedure Delete (Info : in out Zip_Info);
-   pragma Obsolescent (Delete);  --  Delete happens automatically since v.56
 
    Forgot_To_Load_Zip_Info : exception;
 
