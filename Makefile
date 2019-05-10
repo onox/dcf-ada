@@ -29,7 +29,8 @@ tools: build
 
 format:
 	$(GNATPP) -P zip_ada.gpr -XMode=debug -cargs $(CFLAGS)
-	rm src/*.npp
+	$(GNATPP) -P tools.gpr -XMode=debug -cargs $(CFLAGS)
+	rm **/*.npp
 
 clean:
 	$(GNATCLEAN) -P zip_ada.gpr
