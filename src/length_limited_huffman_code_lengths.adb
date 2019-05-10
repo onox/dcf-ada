@@ -23,8 +23,8 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found 21-Aug-2016 on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found 21-Aug-2016 on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
 --  Author: lode.vandevenne [*] gmail [*] com (Lode Vandevenne)
 --  Author: jyrki.alakuijala [*] gmail [*] com (Jyrki Alakuijala)
@@ -40,239 +40,239 @@
 --    - all structures are allocated on stack
 --    - sub-programs are nested, then unneeded parameters are removed
 
-procedure Length_limited_Huffman_code_lengths(
-  frequencies : in  Count_Array;
-  bit_lengths : out Length_Array
-)
+procedure Length_Limited_Huffman_Code_Lengths
+  (Frequencies : in     Count_Array;
+   Bit_Lengths :    out Length_Array)
 is
-  subtype Index_Type is Count_Type;
+   subtype Index_Type is Count_Type;
 
-  null_index: constant Index_Type:= Index_Type'Last;
+   Null_Index : constant Index_Type := Index_Type'Last;
 
-  --  Nodes forming chains.
-  type Node is record
-    weight : Count_Type;
-    count  : Count_Type;               --  Number of leaves before this chain.
-    tail   : Index_Type:= null_index;  --  Previous node(s) of this chain, or null_index if none.
-    in_use : Boolean:= False;          --  Tracking for garbage collection.
-  end record;
+   --  Nodes forming chains.
+   type Node is record
+      Weight : Count_Type;
+      Count  : Count_Type;                --  Number of leaves before this chain
+      Tail   : Index_Type := Null_Index;  --  Previous node(s) of this chain, or null_index if none
+      In_Use : Boolean    := False;       --  Tracking for garbage collection
+   end record;
 
-  type Leaf_Node is record
-    weight : Count_Type;
-    symbol : Alphabet;
-  end record;
+   type Leaf_Node is record
+      Weight : Count_Type;
+      Symbol : Alphabet;
+   end record;
 
-  --  Memory pool for nodes.
-  pool: array(0 .. Index_Type(2 * max_bits * (max_bits + 1) - 1)) of Node;
-  pool_next: Index_Type:= pool'First;
+   --  Memory pool for nodes
+   Pool      : array (0 .. Index_Type (2 * Max_Bits * (Max_Bits + 1) - 1)) of Node;
+   Pool_Next : Index_Type := Pool'First;
 
-  type Index_pair is array(Index_Type'(0)..1) of Index_Type;
-  lists: array(0..Index_Type(max_bits-1)) of Index_pair;
+   type Index_Pair is array (Index_Type'(0) .. 1) of Index_Type;
+   Lists : array (0 .. Index_Type (Max_Bits - 1)) of Index_Pair;
 
-  type Leaf_array is array(Index_Type range <>) of Leaf_Node;
-  leaves: Leaf_array(0..frequencies'Length-1);
+   type Leaf_Array is array (Index_Type range <>) of Leaf_Node;
+   Leaves : Leaf_Array (0 .. Frequencies'Length - 1);
 
-  num_symbols: Count_Type := 0;  --  Amount of symbols with frequency > 0.
-  num_Boundary_PM_runs: Count_Type;
+   Num_Symbols          : Count_Type := 0;  --  Amount of symbols with frequency > 0
+   Num_Boundary_Pm_Runs : Count_Type;
 
-  too_many_symbols_for_length_limit : exception;
-  zero_length_but_nonzero_frequency : exception;
-  nonzero_length_but_zero_frequency : exception;
-  length_exceeds_length_limit       : exception;
-  buggy_sorting                     : exception;
+   Too_Many_Symbols_For_Length_Limit : exception;
+   Zero_Length_But_Nonzero_Frequency : exception;
+   Nonzero_Length_But_Zero_Frequency : exception;
+   Length_Exceeds_Length_Limit       : exception;
+   Buggy_Sorting                     : exception;
 
-  procedure Init_Node(weight, count: Count_Type; tail, node_idx: Index_Type) is
-  begin
-    pool(node_idx).weight := weight;
-    pool(node_idx).count  := count;
-    pool(node_idx).tail   := tail;
-    pool(node_idx).in_use := True;
-  end Init_Node;
+   procedure Init_Node (Weight, Count : Count_Type; Tail, Node_Idx : Index_Type) is
+   begin
+      Pool (Node_Idx).Weight := Weight;
+      Pool (Node_Idx).Count  := Count;
+      Pool (Node_Idx).Tail   := Tail;
+      Pool (Node_Idx).In_Use := True;
+   end Init_Node;
 
-  --  Finds a free location in the memory pool. Performs garbage collection if needed.
-  --  If use_lists = True, used to mark in-use nodes during garbage collection.
+   --  Finds a free location in the memory pool. Performs garbage collection if needed
+   --  If use_lists = True, used to mark in-use nodes during garbage collection
 
-  function Get_Free_Node(use_lists: Boolean) return Index_Type is
-    node_idx: Index_Type;
-  begin
-    loop
-      if pool_next > pool'Last then
-        --  Garbage collection.
-        for i in pool'Range loop
-          pool(i).in_use := False;
-        end loop;
-        if use_lists then
-          for i in 0 .. Index_Type(max_bits * 2 - 1) loop
-            node_idx:= lists(i / 2)(i mod 2);
-            while node_idx /= null_index loop
-              pool(node_idx).in_use := True;
-              node_idx := pool(node_idx).tail;
+   function Get_Free_Node (Use_Lists : Boolean) return Index_Type is
+      Node_Idx : Index_Type;
+   begin
+      loop
+         if Pool_Next > Pool'Last then
+            --  Garbage collection
+            for I in Pool'Range loop
+               Pool (I).In_Use := False;
             end loop;
-          end loop;
-        end if;
-        pool_next:= pool'First;
+            if Use_Lists then
+               for I in 0 .. Index_Type (Max_Bits * 2 - 1) loop
+                  Node_Idx := Lists (I / 2) (I mod 2);
+                  while Node_Idx /= Null_Index loop
+                     Pool (Node_Idx).In_Use := True;
+                     Node_Idx               := Pool (Node_Idx).Tail;
+                  end loop;
+               end loop;
+            end if;
+            Pool_Next := Pool'First;
+         end if;
+         exit when not Pool (Pool_Next).In_Use;  -- Found one
+         Pool_Next := Pool_Next + 1;
+      end loop;
+      Pool_Next := Pool_Next + 1;
+      return Pool_Next - 1;
+   end Get_Free_Node;
+
+   --  Performs a Boundary Package-Merge step. Puts a new chain in the given list. The
+   --  new chain is, depending on the weights, a leaf or a combination of two chains
+   --  from the previous list.
+   --  index: The index of the list in which a new chain or leaf is required.
+   --  final: Whether this is the last time this function is called. If it is then it
+   --  is no more needed to recursively call self.
+
+   procedure Boundary_Pm (Index : Index_Type; Final : Boolean) is
+      Newchain  : Index_Type;
+      Oldchain  : Index_Type;
+      Lastcount : constant Count_Type :=
+        Pool (Lists (Index) (1)).Count;  --  Count of last chain of list
+      Sum : Count_Type;
+   begin
+      if Index = 0 and Lastcount >= Num_Symbols then
+         return;
       end if;
-      exit when not pool(pool_next).in_use;  -- Found one.
-      pool_next:= pool_next + 1;
-    end loop;
-    pool_next:= pool_next + 1;
-    return pool_next - 1;
-  end Get_Free_Node;
+      Newchain := Get_Free_Node (Use_Lists => True);
+      Oldchain := Lists (Index) (1);
+      --  These are set up before the recursive calls below, so that there is a list
+      --  pointing to the new node, to let the garbage collection know it's in use
+      Lists (Index) := (Oldchain, Newchain);
 
-  --  Performs a Boundary Package-Merge step. Puts a new chain in the given list. The
-  --  new chain is, depending on the weights, a leaf or a combination of two chains
-  --  from the previous list.
-  --  index: The index of the list in which a new chain or leaf is required.
-  --  final: Whether this is the last time this function is called. If it is then it
-  --  is no more needed to recursively call self.
-
-  procedure Boundary_PM(index: Index_Type; final: Boolean) is
-    newchain: Index_Type;
-    oldchain: Index_Type;
-    lastcount: constant Count_Type:= pool(lists(index)(1)).count;  --  Count of last chain of list.
-    sum: Count_Type;
-  begin
-    if index = 0 and lastcount >= num_symbols then
-      return;
-    end if;
-    newchain:= Get_Free_Node(use_lists => True);
-    oldchain:= lists(index)(1);
-    --  These are set up before the recursive calls below, so that there is a list
-    --  pointing to the new node, to let the garbage collection know it's in use.
-    lists(index) := (oldchain, newchain);
-
-    if index = 0 then
-      --  New leaf node in list 0.
-      Init_Node(leaves(lastcount).weight, lastcount + 1, null_index, newchain);
-    else
-      sum:= pool(lists(index - 1)(0)).weight + pool(lists(index - 1)(1)).weight;
-      if lastcount < num_symbols and then sum > leaves(lastcount).weight then
-        --  New leaf inserted in list, so count is incremented.
-        Init_Node(leaves(lastcount).weight, lastcount + 1, pool(oldchain).tail, newchain);
+      if Index = 0 then
+         --  New leaf node in list 0
+         Init_Node (Leaves (Lastcount).Weight, Lastcount + 1, Null_Index, Newchain);
       else
-        Init_Node(sum, lastcount, lists(index - 1)(1), newchain);
-        if not final then
-          --  Two lookahead chains of previous list used up, create new ones.
-          Boundary_PM(index - 1, False);
-          Boundary_PM(index - 1, False);
-        end if;
+         Sum := Pool (Lists (Index - 1) (0)).Weight + Pool (Lists (Index - 1) (1)).Weight;
+         if Lastcount < Num_Symbols and then Sum > Leaves (Lastcount).Weight then
+            --  New leaf inserted in list, so count is incremented
+            Init_Node (Leaves (Lastcount).Weight, Lastcount + 1, Pool (Oldchain).Tail, Newchain);
+         else
+            Init_Node (Sum, Lastcount, Lists (Index - 1) (1), Newchain);
+            if not Final then
+               --  Two lookahead chains of previous list used up, create new ones
+               Boundary_Pm (Index - 1, False);
+               Boundary_Pm (Index - 1, False);
+            end if;
+         end if;
       end if;
-    end if;
-  end Boundary_PM;
+   end Boundary_Pm;
 
-  --  Initializes each list with as lookahead chains the two leaves with lowest weights.
+   --  Initializes each list with as lookahead chains the two leaves with lowest weights
 
-  procedure Init_Lists is
-    node0: constant Index_Type:= Get_Free_Node(use_lists => False);
-    node1: constant Index_Type:= Get_Free_Node(use_lists => False);
-  begin
-    Init_Node(leaves(0).weight, 1, null_index, node0);
-    Init_Node(leaves(1).weight, 2, null_index, node1);
-    lists:= (others => (node0, node1));
-  end Init_Lists;
+   procedure Init_Lists is
+      Node0 : constant Index_Type := Get_Free_Node (Use_Lists => False);
+      Node1 : constant Index_Type := Get_Free_Node (Use_Lists => False);
+   begin
+      Init_Node (Leaves (0).Weight, 1, Null_Index, Node0);
+      Init_Node (Leaves (1).Weight, 2, Null_Index, Node1);
+      Lists := (others => (Node0, Node1));
+   end Init_Lists;
 
-  --  Converts result of boundary package-merge to the bit_lengths. The result in the
-  --  last chain of the last list contains the amount of active leaves in each list.
-  --  chain: Chain to extract the bit length from (last chain from last list).
+   --  Converts result of boundary package-merge to the bit_lengths. The result in the
+   --  last chain of the last list contains the amount of active leaves in each list.
+   --  chain: Chain to extract the bit length from (last chain from last list).
 
-  procedure Extract_Bit_Lengths(chain: Index_Type) is
-    node_idx: Index_Type:= chain;
-  begin
-    while node_idx /= null_index loop
-      for i in 0 .. pool(node_idx).count - 1 loop
-        bit_lengths(leaves(i).symbol):= bit_lengths(leaves(i).symbol) + 1;
+   procedure Extract_Bit_Lengths (Chain : Index_Type) is
+      Node_Idx : Index_Type := Chain;
+   begin
+      while Node_Idx /= Null_Index loop
+         for I in 0 .. Pool (Node_Idx).Count - 1 loop
+            Bit_Lengths (Leaves (I).Symbol) := Bit_Lengths (Leaves (I).Symbol) + 1;
+         end loop;
+         Node_Idx := Pool (Node_Idx).Tail;
       end loop;
-      node_idx := pool(node_idx).tail;
-    end loop;
-  end Extract_Bit_Lengths;
+   end Extract_Bit_Lengths;
 
-  function "<"(a, b: Leaf_Node) return Boolean is
-  begin
-    return a.weight < b.weight;
-  end "<";
+   function "<" (A, B : Leaf_Node) return Boolean is
+   begin
+      return A.Weight < B.Weight;
+   end "<";
 
-  procedure Quick_sort (a: in out Leaf_array) is
-    n: constant Index_Type:= a'Length;
-    i, j: Index_Type;
-    p, t: Leaf_Node;
-  begin
-    if n < 2 then
-      return;
-    end if;
-    p := a(n / 2 + a'First);
-    i:= 0;
-    j:= n - 1;
-    loop
-      while a(i + a'First) < p loop
-        i:= i + 1;
+   procedure Quick_Sort (A : in out Leaf_Array) is
+      N    : constant Index_Type := A'Length;
+      I, J : Index_Type;
+      P, T : Leaf_Node;
+   begin
+      if N < 2 then
+         return;
+      end if;
+      P := A (N / 2 + A'First);
+      I := 0;
+      J := N - 1;
+      loop
+         while A (I + A'First) < P loop
+            I := I + 1;
+         end loop;
+         while P < A (J + A'First) loop
+            J := J - 1;
+         end loop;
+         exit when I >= J;
+         T               := A (I + A'First);
+         A (I + A'First) := A (J + A'First);
+         A (J + A'First) := T;
+         I               := I + 1;
+         J               := J - 1;
       end loop;
-      while p < a(j + a'First) loop
-        j:= j - 1;
-      end loop;
-      exit when i >= j;
-      t := a(i + a'First);
-      a(i + a'First) := a(j + a'First);
-      a(j + a'First) := t;
-      i:= i + 1;
-      j:= j - 1;
-    end loop;
-    Quick_sort(a(a'First .. a'First + i - 1));
-    Quick_sort(a(a'First + i .. a'Last));
-  end Quick_sort;
+      Quick_Sort (A (A'First .. A'First + I - 1));
+      Quick_Sort (A (A'First + I .. A'Last));
+   end Quick_Sort;
 
-  paranoid: constant Boolean:= False;
+   Paranoid : constant Boolean := False;
 
 begin
-  bit_lengths:= (others => 0);
-  --  Count used symbols and place them in the leaves.
-  for a in Alphabet loop
-    if frequencies(a) > 0 then
-      leaves(num_symbols):= (frequencies(a), a);
-      num_symbols:= num_symbols + 1;
-    end if;
-  end loop;
-  --  Check special cases and error conditions.
-  if num_symbols > 2 ** max_bits then
-    raise too_many_symbols_for_length_limit;  --  Error, too few max_bits to represent symbols.
-  end if;
-  if num_symbols = 0 then
-    return;  --  No symbols at all. OK.
-  end if;
-  if num_symbols = 1 then
-    bit_lengths(leaves(0).symbol) := 1;
-    return;  --  Only one symbol, give it bit length 1, not 0. OK.
-  end if;
-  --  Sort the leaves from lightest to heaviest.
-  Quick_sort(leaves(0..num_symbols-1));
-  if paranoid then
-    for i in 1..num_symbols-1 loop
-      if leaves(i) < leaves(i-1) then
-        raise buggy_sorting;
+   Bit_Lengths := (others => 0);
+   --  Count used symbols and place them in the leaves
+   for A in Alphabet loop
+      if Frequencies (A) > 0 then
+         Leaves (Num_Symbols) := (Frequencies (A), A);
+         Num_Symbols          := Num_Symbols + 1;
       end if;
-    end loop;
-  end if;
-  Init_Lists;
-  --  In the last list, 2 * num_symbols - 2 active chains need to be created. Two
-  --  are already created in the initialization. Each Boundary_PM run creates one.
-  num_Boundary_PM_runs := 2 * num_symbols - 4;
-  for i in 1 .. num_Boundary_PM_runs loop
-    Boundary_PM(Index_Type(max_bits - 1), i = num_Boundary_PM_runs);
-  end loop;
-  Extract_Bit_Lengths(lists(Index_Type(max_bits - 1))(1));
-  if paranoid then
-    --  Done; some checks before leaving. Not checked: completeness of Huffman codes.
-    for a in Alphabet loop
-      if frequencies(a) = 0 then
-        if bit_lengths(a) > 0 then
-          raise nonzero_length_but_zero_frequency;  --  Never happened so far
-        end if;
-      else
-        if bit_lengths(a) = 0 then
-          raise zero_length_but_nonzero_frequency;  --  Happened before null_index fix
-        elsif bit_lengths(a) > max_bits then
-          raise length_exceeds_length_limit;        --  Never happened so far
-        end if;
-      end if;
-    end loop;
-  end if;
-end Length_limited_Huffman_code_lengths;
+   end loop;
+   --  Check special cases and error conditions
+   if Num_Symbols > 2**Max_Bits then
+      raise Too_Many_Symbols_For_Length_Limit;  --  Error, too few max_bits to represent symbols
+   end if;
+   if Num_Symbols = 0 then
+      return;  --  No symbols at all. OK
+   end if;
+   if Num_Symbols = 1 then
+      Bit_Lengths (Leaves (0).Symbol) := 1;
+      return;  --  Only one symbol, give it bit length 1, not 0. OK
+   end if;
+   --  Sort the leaves from lightest to heaviest
+   Quick_Sort (Leaves (0 .. Num_Symbols - 1));
+   if Paranoid then
+      for I in 1 .. Num_Symbols - 1 loop
+         if Leaves (I) < Leaves (I - 1) then
+            raise Buggy_Sorting;
+         end if;
+      end loop;
+   end if;
+   Init_Lists;
+   --  In the last list, 2 * num_symbols - 2 active chains need to be created. Two
+   --  are already created in the initialization. Each Boundary_PM run creates one.
+   Num_Boundary_Pm_Runs := 2 * Num_Symbols - 4;
+   for I in 1 .. Num_Boundary_Pm_Runs loop
+      Boundary_Pm (Index_Type (Max_Bits - 1), I = Num_Boundary_Pm_Runs);
+   end loop;
+   Extract_Bit_Lengths (Lists (Index_Type (Max_Bits - 1)) (1));
+   if Paranoid then
+      --  Done; some checks before leaving. Not checked: completeness of Huffman codes
+      for A in Alphabet loop
+         if Frequencies (A) = 0 then
+            if Bit_Lengths (A) > 0 then
+               raise Nonzero_Length_But_Zero_Frequency;  --  Never happened so far
+            end if;
+         else
+            if Bit_Lengths (A) = 0 then
+               raise Zero_Length_But_Nonzero_Frequency;  --  Happened before null_index fix
+            elsif Bit_Lengths (A) > Max_Bits then
+               raise Length_Exceeds_Length_Limit;        --  Never happened so far
+            end if;
+         end if;
+      end loop;
+   end if;
+end Length_Limited_Huffman_Code_Lengths;

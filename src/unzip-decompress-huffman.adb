@@ -1,4 +1,4 @@
--- Legal licensing note:
+--  Legal licensing note:
 
 --  Copyright (c) 1999 .. 2018 Gautier de Montmollin
 --  SWITZERLAND
@@ -21,341 +21,336 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
 with Interfaces;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
-package body UnZip.Decompress.Huffman is
+package body Unzip.Decompress.Huffman is
 
-  -- Note from Pascal source:
-  -- C code by info-zip group, translated to pascal by Christian Ghisler
-  -- based on unz51g.zip
+   --  Note from Pascal source:
+   --  C code by info-zip group, translated to pascal by Christian Ghisler
+   --  based on unz51g.zip
 
-  -- Free huffman tables starting with table where t points to
+   --  Free huffman tables starting with table where t points to
 
-  procedure HufT_free ( tl: in out p_Table_list ) is
+   procedure Huft_Free (Tl : in out P_Table_List) is
+      procedure Dispose is new Ada.Unchecked_Deallocation (Huft_Table, P_Huft_Table);
+      procedure Dispose is new Ada.Unchecked_Deallocation (Table_List, P_Table_List);
 
-    procedure  Dispose is new
-      Ada.Unchecked_Deallocation( HufT_table, p_HufT_table );
-    procedure  Dispose is new
-      Ada.Unchecked_Deallocation( Table_list, p_Table_list );
-
-    current: p_Table_list;
-    tcount : Natural:= 0; -- just a stat. Idea: replace table_list with an array
-
-  begin
-    if full_trace then
-      Ada.Text_IO.Put("[HufT_Free... ");
-    end if;
-    while tl /= null loop
-      Dispose( tl.table ); -- destroy the Huffman table
-      current:= tl;
-      tl     := tl.next;
-      Dispose( current );  -- destroy the current node
-      if full_trace then
-        tcount:= tcount+1;
+      Current : P_Table_List;
+      Tcount  : Natural := 0;  --  Just a stat. Idea: replace table_list with an array
+   begin
+      if Full_Trace then
+         Ada.Text_IO.Put ("[HufT_Free... ");
       end if;
-    end loop;
-    if full_trace then
-      Ada.Text_IO.Put_Line( Integer'Image(tcount)& " tables]" );
-    end if;
-  end HufT_free;
-
-  -- Build huffman table from code lengths given by array b
-
-  procedure HufT_build ( b    : Length_array;
-                         s    : Integer;
-                         d, e : Length_array;
-                         tl   :    out p_Table_list;
-                         m    : in out Integer;
-              huft_incomplete :    out Boolean)
-  is
-    use Interfaces;
-
-    b_max  : constant:= 16;
-    b_maxp1: constant:= b_max + 1;
-
-    -- bit length count table
-    count : array( 0 .. b_maxp1 ) of Integer:= (others=> 0);
-
-    f   : Integer;                    -- i repeats in table every f entries
-    g   : Integer;                    -- max. code length
-    i,                                -- counter, current code
-      j : Integer;                    -- counter
-    kcc : Integer;                    -- number of bits in current code
-
-    c_idx, v_idx: Natural;            -- array indices
-
-    current_table_ptr : p_HufT_table:= null;
-    current_node_ptr  : p_Table_list:= null; -- curr. node for the curr. table
-    new_node_ptr      : p_Table_list;        -- new node for the new table
-
-    new_entry: HufT;                  -- table entry for structure assignment
-
-    u : array( 0..b_max ) of p_HufT_table;   -- table stack
-
-    n_max : constant:= 288;
-    -- values in order of bit length
-    v : array( 0..n_max ) of Integer:= (others=> 0);
-    el_v, el_v_m_s: Integer;
-
-    w : Natural:= 0;                        -- bits before this table
-
-    offset, code_stack : array( 0..b_maxp1 ) of Integer;
-
-    table_level : Integer:= -1;
-    bits : array( Integer'(-1)..b_maxp1 ) of Integer;
-    -- ^bits(table_level) = # bits in table of level table_level
-
-    y  : Integer;                     -- number of dummy codes added
-    z  : Natural:= 0;                 -- number of entries in current table
-    el : Integer;                     -- length of eob code=code 256
-
-    no_copy_length_array: constant Boolean:= d'Length=0 or e'Length=0;
-
-  begin
-    if full_trace then
-      Ada.Text_IO.Put("[HufT_Build...");
-    end if;
-    tl:= null;
-
-    if b'Length > 256 then -- set length of EOB code, if any
-      el := b(256);
-    else
-      el := b_max;
-    end if;
-
-    -- Generate counts for each bit length
-
-    for k in b'Range loop
-      if b(k) > b_max then
-        -- m := 0; -- GNAT 2005 doesn't like it (warning).
-        raise huft_error;
+      while Tl /= null loop
+         Dispose (Tl.Table);  --  Destroy the Huffman table
+         Current := Tl;
+         Tl      := Tl.Next;
+         Dispose (Current);   --  Destroy the current node
+         if Full_Trace then
+            Tcount := Tcount + 1;
+         end if;
+      end loop;
+      if Full_Trace then
+         Ada.Text_IO.Put_Line (Integer'Image (Tcount) & " tables]");
       end if;
-      count( b(k) ):= count( b(k) ) + 1;
-    end loop;
+   end Huft_Free;
 
-    if count(0) = b'Length then
-      m := 0;
-      huft_incomplete:= False; -- spotted by Tucker Taft, 19-Aug-2004
-      return; -- complete
-    end if;
+   --  Build huffman table from code lengths given by array b
 
-    -- Find minimum and maximum length, bound m by those
+   procedure Huft_Build
+     (B               :        Length_Array;
+      S               :        Integer;
+      D, E            :        Length_Array;
+      Tl              :    out P_Table_List;
+      M               : in out Integer;
+      Huft_Incomplete :    out Boolean)
+   is
+      use Interfaces;
 
-    j := 1;
-    while j <= b_max and then count(j) = 0 loop
-      j:= j + 1;
-    end loop;
-    kcc := j;
-    if m < j then
-      m := j;
-    end if;
-    i := b_max;
-    while i > 0 and then count(i) = 0 loop
-      i:= i - 1;
-    end loop;
-    g := i;
-    if m > i then
-      m := i;
-    end if;
+      B_Max   : constant := 16;
+      B_Maxp1 : constant := B_Max + 1;
 
-    -- Adjust last length count to fill out codes, if needed
+      --  Bit length count table
+      Count : array (0 .. B_Maxp1) of Integer := (others => 0);
 
-    y := Integer( Shift_Left(Unsigned_32'(1), j) ); -- y:= 2 ** j;
-    while j < i loop
-      y := y - count(j);
-      if y < 0 then
-        raise huft_error;
+      F : Integer;    --  I repeats in table every f entries
+      G : Integer;    --  Maximum code length
+      I : Integer;    --  Counter, current code
+      J   : Integer;  --  Counter
+      Kcc : Integer;  --  Number of bits in current code
+
+      C_Idx, V_Idx : Natural;  --  Array indices
+
+      Current_Table_Ptr : P_Huft_Table := null;
+      Current_Node_Ptr  : P_Table_List := null;  --  Current node for the current table
+      New_Node_Ptr      : P_Table_List;          --  New node for the new table
+
+      New_Entry : Huft;                        -- Table entry for structure assignment
+
+      U : array (0 .. B_Max) of P_Huft_Table;  --  Table stack
+
+      N_Max : constant := 288;
+      --  Values in order of bit length
+      V              : array (0 .. N_Max) of Integer := (others => 0);
+      El_V, El_V_M_S : Integer;
+
+      W : Natural := 0;                        --  Bits before this table
+
+      Offset, Code_Stack : array (0 .. B_Maxp1) of Integer;
+
+      Table_Level : Integer := -1;
+      Bits        : array (Integer'(-1) .. B_Maxp1) of Integer;
+      --  ^ bits(table_level) = # bits in table of level table_level
+
+      Y  : Integer;       --  Number of dummy codes added
+      Z  : Natural := 0;  --  Number of entries in current table
+      El : Integer;       --  Length of eob code=code 256
+
+      No_Copy_Length_Array : constant Boolean := D'Length = 0 or E'Length = 0;
+
+   begin
+      if Full_Trace then
+         Ada.Text_IO.Put ("[HufT_Build...");
       end if;
-      y:= y * 2;
-      j:= j + 1;
-    end loop;
+      Tl := null;
 
-    y:= y - count(i);
-    if y < 0 then
-      raise huft_error;
-    end if;
-    count(i):= count(i) + y;
-
-    -- Generate starting offsets into the value table for each length
-
-    offset(1) := 0;
-    j:= 0;
-    for idx in 2..i loop
-      j:= j + count( idx-1 );
-      offset( idx ) := j;
-    end loop;
-
-    -- Make table of values in order of bit length
-
-    for idx in b'Range loop
-      j := b(idx);
-      if j /= 0 then
-        v( offset(j) ) := idx-b'First;
-        offset(j):= offset(j) + 1;
+      if B'Length > 256 then  --  Set length of EOB code, if any
+         El := B (256);
+      else
+         El := B_Max;
       end if;
-    end loop;
 
-    -- Generate huffman codes and for each, make the table entries
+      --  Generate counts for each bit length
 
-    code_stack(0) := 0;
-    i := 0;
-    v_idx:= v'First;
-    bits(-1) := 0;
+      for K in B'Range loop
+         if B (K) > B_Max then
+            --  m := 0; -- GNAT 2005 doesn't like it (warning).
+            raise Huft_Error;
+         end if;
+         Count (B (K)) := Count (B (K)) + 1;
+      end loop;
 
-    -- go through the bit lengths (kcc already is bits in shortest code)
-    for k in kcc .. g loop
+      if Count (0) = B'Length then
+         M               := 0;
+         Huft_Incomplete := False;  --  Spotted by Tucker Taft, 19-Aug-2004
+         return;  --  Complete
+      end if;
 
-      for am1 in reverse 0 .. count(k)-1 loop -- a counts codes of length k
+      --  Find minimum and maximum length, bound m by those
 
-        -- here i is the huffman code of length k bits for value v(v_idx)
-        while k > w + bits(table_level) loop
+      J := 1;
+      while J <= B_Max and then Count (J) = 0 loop
+         J := J + 1;
+      end loop;
+      Kcc := J;
+      if M < J then
+         M := J;
+      end if;
+      I := B_Max;
+      while I > 0 and then Count (I) = 0 loop
+         I := I - 1;
+      end loop;
+      G := I;
+      if M > I then
+         M := I;
+      end if;
 
-          w:= w + bits(table_level);    -- Length of tables to this position
-          table_level:= table_level+ 1;
-          z:= g - w;                    -- Compute min size table <= m bits
-          if z > m then
-            z := m;
-          end if;
-          j := k - w;
-          f := Integer(Shift_Left(Unsigned_32'(1), j)); -- f:= 2 ** j;
-          if f > am1 + 2 then   -- Try a k-w bit table
-            f:= f - (am1 + 2);
-            c_idx:= k;
-            loop              -- Try smaller tables up to z bits
-              j:= j + 1;
-              exit when j >= z;
-              f := f * 2;
-              c_idx:= c_idx + 1;
-              exit when f - count(c_idx) <= 0;
-              f:= f - count(c_idx);
+      --  Adjust last length count to fill out codes, if needed
+
+      Y := Integer (Shift_Left (Unsigned_32'(1), J)); -- y:= 2 ** j;
+      while J < I loop
+         Y := Y - Count (J);
+         if Y < 0 then
+            raise Huft_Error;
+         end if;
+         Y := Y * 2;
+         J := J + 1;
+      end loop;
+
+      Y := Y - Count (I);
+      if Y < 0 then
+         raise Huft_Error;
+      end if;
+      Count (I) := Count (I) + Y;
+
+      --  Generate starting offsets into the value table for each length
+
+      Offset (1) := 0;
+      J          := 0;
+      for Idx in 2 .. I loop
+         J            := J + Count (Idx - 1);
+         Offset (Idx) := J;
+      end loop;
+
+      --  Make table of values in order of bit length
+
+      for Idx in B'Range loop
+         J := B (Idx);
+         if J /= 0 then
+            V (Offset (J)) := Idx - B'First;
+            Offset (J)     := Offset (J) + 1;
+         end if;
+      end loop;
+
+      --  Generate huffman codes and for each, make the table entries
+
+      Code_Stack (0) := 0;
+      I              := 0;
+      V_Idx          := V'First;
+      Bits (-1)      := 0;
+
+      --  Go through the bit lengths (kcc already is bits in shortest code)
+      for K in Kcc .. G loop
+         for Am1 in reverse 0 .. Count (K) - 1 loop  --  A counts codes of length k
+            --  Here i is the huffman code of length k bits for value v(v_idx)
+            while K > W + Bits (Table_Level) loop
+               W           := W + Bits (Table_Level);  --  Length of tables to this position
+               Table_Level := Table_Level + 1;
+               Z           := G - W;                   --  Compute min size table <= m bits
+               if Z > M then
+                  Z := M;
+               end if;
+               J := K - W;
+               F := Integer (Shift_Left (Unsigned_32'(1), J)); -- f:= 2 ** j;
+               if F > Am1 + 2 then
+                  --  Try a k-w bit table
+                  F     := F - (Am1 + 2);
+                  C_Idx := K;
+
+                  --  Try smaller tables up to z bits
+                  loop
+                     J := J + 1;
+                     exit when J >= Z;
+                     F     := F * 2;
+                     C_Idx := C_Idx + 1;
+                     exit when F - Count (C_Idx) <= 0;
+                     F := F - Count (C_Idx);
+                  end loop;
+               end if;
+
+               if W + J > El and then W < El then
+                  J := El - W;  --  Make EOB code end at table
+               end if;
+               if W = 0 then
+                  J := M;  --  Fix: main table always m bits!
+               end if;
+               Z                  := Integer (Shift_Left (Unsigned_32'(1), J)); -- z:= 2 ** j;
+               Bits (Table_Level) := J;
+
+               --  Allocate and link new table
+
+               begin
+                  Current_Table_Ptr := new Huft_Table (0 .. Z);
+                  New_Node_Ptr      := new Table_List'(Current_Table_Ptr, null);
+               exception
+                  when Storage_Error =>
+                     raise Huft_Out_Of_Memory;
+               end;
+
+               if Current_Node_Ptr = null then  --  First table
+                  Tl := New_Node_Ptr;
+               else
+                  Current_Node_Ptr.Next := New_Node_Ptr;  --  Not my first...
+               end if;
+
+               Current_Node_Ptr := New_Node_Ptr;  --  Always non-Null from there
+
+               U (Table_Level) := Current_Table_Ptr;
+
+               --  Connect to last table, if there is one
+
+               if Table_Level > 0 then
+                  Code_Stack (Table_Level) := I;
+                  New_Entry.Bits           := Bits (Table_Level - 1);
+                  New_Entry.Extra_Bits     := 16 + J;
+                  New_Entry.Next_Table     := Current_Table_Ptr;
+
+                  J :=
+                    Integer
+                      (Shift_Right
+                         (Unsigned_32 (I) and (Shift_Left (Unsigned_32'(1), W) - 1),
+                          W - Bits (Table_Level - 1)));
+
+                  --  Test against bad input!
+
+                  if J > U (Table_Level - 1)'Last then
+                     raise Huft_Error;
+                  end if;
+                  U (Table_Level - 1) (J) := New_Entry;
+               end if;
+
             end loop;
-          end if;
 
-          if w + j > el and then  w < el  then
-            j:= el - w;       -- Make EOB code end at table
-          end if;
-          if w = 0 then
-            j := m;  -- Fix: main table always m bits!
-          end if;
-          z:= Integer(Shift_Left(Unsigned_32'(1), j)); -- z:= 2 ** j;
-          bits(table_level) := j;
+            --  Set up table entry in new_entry
 
-          -- Allocate and link new table
+            New_Entry.Bits       := K - W;
+            New_Entry.Next_Table := null;   -- Unused
 
-          begin
-            current_table_ptr := new HufT_table ( 0..z );
-            new_node_ptr      := new Table_list'( current_table_ptr, null );
-          exception
-            when Storage_Error =>
-              raise huft_out_of_memory;
-          end;
-
-          if current_node_ptr = null then -- first table
-            tl:= new_node_ptr;
-          else
-            current_node_ptr.next:= new_node_ptr;   -- not my first...
-          end if;
-
-          current_node_ptr:= new_node_ptr; -- always non-Null from there
-
-          u( table_level ):= current_table_ptr;
-
-          -- Connect to last table, if there is one
-
-          if table_level > 0 then
-            code_stack(table_level) := i;
-            new_entry.bits          := bits(table_level-1);
-            new_entry.extra_bits    := 16 + j;
-            new_entry.next_table    := current_table_ptr;
-
-            j :=  Integer(
-              Shift_Right( Unsigned_32(i) and
-                (Shift_Left(Unsigned_32'(1), w) - 1 ),
-                w - bits(table_level-1) )
-              );
-
-            -- Test against bad input!
-
-            if j > u( table_level - 1 )'Last then
-              raise huft_error;
-            end if;
-            u( table_level - 1 ) (j) := new_entry;
-          end if;
-
-        end loop;
-
-        -- Set up table entry in new_entry
-
-        new_entry.bits      := k - w;
-        new_entry.next_table:= null;   -- Unused
-
-        if v_idx >= b'Length then
-          new_entry.extra_bits := invalid;
-        else
-          el_v:= v(v_idx);
-          el_v_m_s:= el_v - s;
-          if el_v_m_s < 0 then -- Simple code, raw value
-            if el_v < 256 then
-              new_entry.extra_bits:= 16;
+            if V_Idx >= B'Length then
+               New_Entry.Extra_Bits := Invalid;
             else
-              new_entry.extra_bits:= 15;
+               El_V     := V (V_Idx);
+               El_V_M_S := El_V - S;
+               if El_V_M_S < 0 then
+                  --  Simple code, raw value
+                  if El_V < 256 then
+                     New_Entry.Extra_Bits := 16;
+                  else
+                     New_Entry.Extra_Bits := 15;
+                  end if;
+                  New_Entry.N := El_V;
+               else
+                  --  Non-simple -> lookup in lists
+                  if No_Copy_Length_Array then
+                     raise Huft_Error;
+                  end if;
+                  New_Entry.Extra_Bits := E (El_V_M_S);
+                  New_Entry.N          := D (El_V_M_S);
+               end if;
+               V_Idx := V_Idx + 1;
             end if;
-            new_entry.n := el_v;
-          else                    -- Non-simple -> lookup in lists
-            if no_copy_length_array then
-              raise huft_error;
-            end if;
-            new_entry.extra_bits := e( el_v_m_s );
-            new_entry.n          := d( el_v_m_s );
-          end if;
-          v_idx:= v_idx + 1;
-        end if;
 
-        -- fill code-like entries with new_entry
-        f := Integer( Shift_Left( Unsigned_32'(1) , k - w ));
-        -- i.e. f := 2 ** (k-w);
-        j := Integer( Shift_Right( Unsigned_32(i), w ) );
-        while j < z loop
-          current_table_ptr(j) := new_entry;
-          j:= j + f;
-        end loop;
+            --  Fill code-like entries with new_entry
+            F := Integer (Shift_Left (Unsigned_32'(1), K - W));
+            --  i.e. f := 2 ** (k-w);
+            J := Integer (Shift_Right (Unsigned_32 (I), W));
+            while J < Z loop
+               Current_Table_Ptr (J) := New_Entry;
+               J                     := J + F;
+            end loop;
 
-        -- backwards increment the k-bit code i
-        j := Integer( Shift_Left( Unsigned_32'(1) , k - 1 ));
-        -- i.e.: j:= 2 ** (k-1)
-        while ( Unsigned_32(i) and Unsigned_32(j) ) /= 0 loop
-          i := Integer( Unsigned_32(i) xor Unsigned_32(j) );
-          j :=  j / 2;
-        end loop;
-        i := Integer( Unsigned_32(i) xor Unsigned_32(j) );
+            --  Backwards increment the k-bit code i
+            J := Integer (Shift_Left (Unsigned_32'(1), K - 1));
+            --  i.e.: j:= 2 ** (k-1)
+            while (Unsigned_32 (I) and Unsigned_32 (J)) /= 0 loop
+               I := Integer (Unsigned_32 (I) xor Unsigned_32 (J));
+               J := J / 2;
+            end loop;
+            I := Integer (Unsigned_32 (I) xor Unsigned_32 (J));
 
-        -- backup over finished tables
-        while
-          Integer(Unsigned_32(i) and (Shift_Left(1, w)-1)) /=
-          code_stack(table_level)
-        loop
-          table_level:= table_level - 1;
-          w:= w - bits(table_level); -- Size of previous table!
-        end loop;
+            --  Backup over finished tables
+            while Integer (Unsigned_32 (I) and (Shift_Left (1, W) - 1)) /= Code_Stack (Table_Level)
+            loop
+               Table_Level := Table_Level - 1;
+               W           := W - Bits (Table_Level);  --  Size of previous table!
+            end loop;
+         end loop;
+      end loop;
 
-      end loop;  -- am1
-    end loop;  -- k
+      if Full_Trace then
+         Ada.Text_IO.Put_Line ("finished]");
+      end if;
 
-    if full_trace then
-      Ada.Text_IO.Put_Line("finished]");
-    end if;
+      Huft_Incomplete := Y /= 0 and G /= 1;
+   exception
+      when others =>
+         Huft_Free (Tl);
+         raise;
+   end Huft_Build;
 
-    huft_incomplete:= y /= 0 and g /= 1;
-
-  exception
-    when others =>
-      HufT_free( tl );
-      raise;
-  end HufT_build;
-
-end UnZip.Decompress.Huffman;
+end Unzip.Decompress.Huffman;

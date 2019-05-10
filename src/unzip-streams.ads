@@ -1,17 +1,17 @@
 --  ________  ___   ______       ______      ___
--- /___..._/  |.|   |.___.\     /. __ .\   __|.|   ____
+--  /___..._/  |.|   |.___.\     /. __ .\   __|.|   ____
 --    /../    |.|   |.____/     |.|__|.|  /....|  __\..\
 --  _/../___  |.|   |.|    ===  |..__..| |. = .| | = ..|
--- /_______/  |_|  /__|        /__|  |_|  \__\_|  \__\_|
+--  /_______/  |_|  /__|        /__|  |_|  \__\_|  \__\_|
 
--- UnZip.Streams
-----------------
+--  UnZip.Streams
+--  -------------
 --
--- Extracts, as a stream, a file which is has been compressed into a Zip archive.
--- The Zip archive itself (the input) can be a file or a more general stream.
--- This package is resembling Ada.Streams.Stream_IO, to facilitate transition.
+--  Extracts, as a stream, a file which is has been compressed into a Zip archive.
+--  The Zip archive itself (the input) can be a file or a more general stream.
+--  This package is resembling Ada.Streams.Stream_IO, to facilitate transition.
 
--- Legal licensing note:
+--  Legal licensing note:
 
 --  Copyright (c) 1999 .. 2018 Gautier de Montmollin
 --  SWITZERLAND
@@ -34,14 +34,16 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
-with Zip, Zip_Streams;
+with Ada.IO_Exceptions;
+with Ada.Streams;
 
-with Ada.Streams, Ada.IO_Exceptions;
+with Zip;
+with Zip_Streams;
 
-package UnZip.Streams is
+package Unzip.Streams is
 
    ----------------------------------------------------------------------------
    --                           ** Input Stream **                           --
@@ -60,61 +62,58 @@ package UnZip.Streams is
 
    type Zipped_File_Type is private;
 
-   type Count is new Zip_Streams.ZS_Size_Type;
+   type Count is new Zip_Streams.Zs_Size_Type;
 
-   -- Opens an input stream for the compressed file named Name stored
-   -- in the archive file named Archive_Name. The function Stream(..)
-   -- then gives access to the opened stream.
+   --  Opens an input stream for the compressed file named Name stored
+   --  in the archive file named Archive_Name. The function Stream(..)
+   --  then gives access to the opened stream.
 
-   -- Version: Zip as a file
+   --  Version: Zip as a file
    procedure Open
-     (File             : in out Zipped_File_Type; -- File-in-archive handle
-      Archive_Name     : in String;               -- Name of archive file
-      Name             : in String;               -- Name of zipped entry
-      Case_sensitive   : in Boolean := False;
-      Ignore_Directory : in Boolean := False      -- True: will open Name in first directory found
-     );
+     (File             : in out Zipped_File_Type;  --  File-in-archive handle
+      Archive_Name     : in     String;            --  Name of archive file
+      Name             : in     String;            --  Name of zipped entry
+      Case_Sensitive   : in     Boolean := False;
+      Ignore_Directory : in Boolean := False);     --  Open Name in first directory found
 
-   -- Version: Zip as a stream
+   --  Version: Zip as a stream
    procedure Open
-     (File             : in out Zipped_File_Type; -- File-in-archive handle
+     (File             : in out Zipped_File_Type;  --  File-in-archive handle
       Archive_Stream   : in out Zip_Streams.Root_Zipstream_Type'Class; -- Archive's stream
-      Name             : in String;               -- Name of zipped entry
-      Case_sensitive   : in Boolean := False;
-      Ignore_Directory : in Boolean := False      -- True: will open Name in first directory found
-     );
+      Name             : in     String;            --  Name of zipped entry
+      Case_Sensitive   : in     Boolean := False;
+      Ignore_Directory : in Boolean := False);     --  Open Name in first directory found
 
-   -- Same as above, but uses a the pre-loaded contents of the archive's
-   -- Central Directory; hence Archive_Info is passed instead of
-   -- Archive_Name or Archive_Stream.
-   -- You need to call Zip.Load( Archive_Info... ) prior to opening the
-   -- compressed file.
+   --  Same as above, but uses a the pre-loaded contents of the archive's
+   --  Central Directory; hence Archive_Info is passed instead of
+   --  Archive_Name or Archive_Stream.
+   --  You need to call Zip.Load( Archive_Info... ) prior to opening the
+   --  compressed file.
 
    procedure Open
-     (File             : in out Zipped_File_Type; -- File-in-archive handle
-      Archive_Info     : in Zip.Zip_info;         -- Archive's Zip_info
-      Name             : in String;               -- Name of zipped entry
-      Ignore_Directory : in Boolean := False      -- True: will open Name in first directory found
-     );
+     (File             : in out Zipped_File_Type;  --  File-in-archive handle
+      Archive_Info     : in     Zip.Zip_Info;      --  Archive's Zip_info
+      Name             : in     String;            --  Name of zipped entry
+      Ignore_Directory : in Boolean := False);     --  Open Name in first directory found
 
    procedure Close (File : in out Zipped_File_Type);
 
    function Name (File : in Zipped_File_Type) return String;
 
-   function Is_Open     (File : in Zipped_File_Type) return Boolean;
+   function Is_Open (File : in Zipped_File_Type) return Boolean;
    function End_Of_File (File : in Zipped_File_Type) return Boolean;
 
    type Stream_Access is access all Ada.Streams.Root_Stream_Type'Class;
 
-   ------------------------------------------------------------------------
-   -- The function Stream gives access to the uncompressed data as input --
-   ------------------------------------------------------------------------
+   --------------------------------------------------------------------------
+   --  The function Stream gives access to the uncompressed data as input  --
+   --------------------------------------------------------------------------
    function Stream (File : Zipped_File_Type) return Stream_Access;
 
    function Size (File : in Zipped_File_Type) return Count;
 
-   Use_Error    : exception renames Ada.IO_Exceptions.Use_Error;
-   End_Error    : exception renames Ada.IO_Exceptions.End_Error;
+   Use_Error : exception renames Ada.IO_Exceptions.Use_Error;
+   End_Error : exception renames Ada.IO_Exceptions.End_Error;
 
    ------------------------------------------------------------------
    --                    ** Output Stream **                       --
@@ -125,45 +124,44 @@ package UnZip.Streams is
    --      structures and buffering, so the outward stream can be  --
    --      an interesting alternative to the inward, albeit less   --
    --      comfortable.                                            --
-   --                                                              --
    ------------------------------------------------------------------
 
-   procedure Extract(
-     Destination      : in out Ada.Streams.Root_Stream_Type'Class;
-     Archive_Info     : in Zip.Zip_info;         -- Archive's Zip_info
-     Name             : in String;               -- Name of zipped entry
-     Ignore_Directory : in Boolean := False      -- True: will open Name in first directory found
-   );
+   procedure Extract
+     (Destination      : in out Ada.Streams.Root_Stream_Type'Class;
+      Archive_Info     : in     Zip.Zip_Info;   --  Archive's Zip_info
+      Name             : in     String;         --  Name of zipped entry
+      Ignore_Directory : in Boolean := False);  --  Open Name in first directory found
 
 private
 
-   type UZS_state is (
-      uninitialized,
-      data_uncompressed, -- In that model, all data is unzipped in one
-                         --   time, into memory. If you have a smarter
-                         --   idea (small buffer with tasking, write me!)
-      end_of_zip         -- We have reached the end, not yet closed
-     );
+   type Uzs_State is
+     (Uninitialized,
+      Data_Uncompressed,  --  In that model, all data is unzipped in one
+                          --  time, into memory. If you have a smarter
+                          --  idea (small buffer with tasking, write me!)
+      End_Of_Zip);        --  We have reached the end, not yet closed
 
-   type p_String is access String;
+   type P_String is access String;
 
-   type UnZip_Stream_Type is new Ada.Streams.Root_Stream_Type with record
-      state        : UZS_state:= uninitialized;
-      archive_info : Zip.Zip_info; -- archive info (.zip file, directory)
-      file_name    : p_String; -- name of zipped file to unzip from archive
-      uncompressed : p_Stream_Element_Array; -- whole uncompressed data
-      index        : Ada.Streams.Stream_Element_Offset;
+   type Unzip_Stream_Type is new Ada.Streams.Root_Stream_Type with record
+      State        : Uzs_State := Uninitialized;
+      Archive_Info : Zip.Zip_Info;            --  Archive info (.zip file, directory)
+      File_Name    : P_String;                --  Name of zipped file to unzip from archive
+      Uncompressed : P_Stream_Element_Array;  --  Whole uncompressed data
+      Index        : Ada.Streams.Stream_Element_Offset;
    end record;
 
+   overriding
    procedure Read
-     (Stream : in out UnZip_Stream_Type;
+     (Stream : in out Unzip_Stream_Type;
       Item   :    out Ada.Streams.Stream_Element_Array;
       Last   :    out Ada.Streams.Stream_Element_Offset);
 
+   overriding
    procedure Write
-     (Stream : in out UnZip_Stream_Type;
-      Item   : in     Ada.Streams.Stream_Element_Array);
+     (Stream : in out Unzip_Stream_Type;
+      Item   : in Ada.Streams.Stream_Element_Array);
 
-   type Zipped_File_Type is access UnZip_Stream_Type;
+   type Zipped_File_Type is access Unzip_Stream_Type;
 
-end UnZip.Streams;
+end Unzip.Streams;

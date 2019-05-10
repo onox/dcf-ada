@@ -1,4 +1,4 @@
--- Legal licensing note:
+--  Legal licensing note:
 
 --  Copyright (c) 1999 .. 2018 Gautier de Montmollin
 --  SWITZERLAND
@@ -21,110 +21,104 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
-package body Zip.CRC_Crypto is
+package body Zip.Crc_Crypto is
 
-  CRC32_Table : array( Unsigned_32'(0)..255 ) of Unsigned_32;
+   Crc32_Table : array (Unsigned_32'(0) .. 255) of Unsigned_32;
 
-  procedure Prepare_table is
-    -- CRC-32 algorithm, ISO-3309
-    Seed: constant:= 16#EDB88320#;
-    l: Unsigned_32;
-  begin
-    for i in CRC32_Table'Range loop
-      l:= i;
-      for bit in 0..7 loop
-        if (l and 1) = 0 then
-          l:= Shift_Right(l,1);
-        else
-          l:= Shift_Right(l,1) xor Seed;
-        end if;
+   procedure Prepare_Table is
+      --  CRC-32 algorithm, ISO-3309
+      Seed : constant := 16#EDB88320#;
+      L    : Unsigned_32;
+   begin
+      for I in Crc32_Table'Range loop
+         L := I;
+         for Bit in 0 .. 7 loop
+            if (L and 1) = 0 then
+               L := Shift_Right (L, 1);
+            else
+               L := Shift_Right (L, 1) xor Seed;
+            end if;
+         end loop;
+         Crc32_Table (I) := L;
       end loop;
-      CRC32_Table(i):= l;
-    end loop;
-  end Prepare_table;
+   end Prepare_Table;
 
-  procedure Update( CRC: in out Unsigned_32; InBuf: Zip.Byte_Buffer ) is
-    local_CRC: Unsigned_32;
-  begin
-    local_CRC:= CRC ;
-    for i in InBuf'Range loop
-      local_CRC :=
-        CRC32_Table( 16#FF# and ( local_CRC xor Unsigned_32( InBuf(i) ) ) )
-        xor
-        Shift_Right( local_CRC , 8 );
-    end loop;
-    CRC:= local_CRC;
-  end Update;
-
-  table_empty: Boolean:= True;
-
-  procedure Init( CRC: out Unsigned_32 ) is
-  begin
-    if table_empty then
-      Prepare_table;
-      table_empty:= False;
-    end if;
-    CRC:= 16#FFFF_FFFF#;
-  end Init;
-
-  function Final( CRC: Unsigned_32 ) return Unsigned_32 is
-  begin
-    return not CRC;
-  end Final;
-
-  --
-
-  procedure Set_mode(obj: in out Crypto_pack; new_mode: Crypto_Mode) is
-  begin
-    obj.current_mode:= new_mode;
-  end Set_mode;
-
-  function Get_mode(obj: Crypto_pack) return Crypto_Mode is
-  begin
-    return obj.current_mode;
-  end Get_mode;
-
-  procedure Update_keys(obj: in out Crypto_pack; by: Zip.Byte ) is
-  begin
-    Update( obj.keys(0), (0 => by) );
-    obj.keys(1) := obj.keys(1) + (obj.keys(0) and 16#000000ff#);
-    obj.keys(1) := obj.keys(1) * 134775813 + 1;
-    Update(
-      obj.keys(2),
-      (0 => Zip.Byte(Shift_Right( obj.keys(1), 24 )))
-    );
-  end Update_keys;
-
-  --  Crypto_code: Pseudo-random byte to be XOR'ed with.
-  function Crypto_code(obj: Crypto_pack) return Zip.Byte is
-  pragma Inline(Crypto_code);
-    temp: Unsigned_16;
-  begin
-    temp:= Unsigned_16(obj.keys(2) and 16#ffff#) or 2;
-    return Zip.Byte(Shift_Right(temp * (temp xor 1), 8));
-  end Crypto_code;
-
-  procedure Encode(obj: in out Crypto_pack; buf: in out Zip.Byte_Buffer) is
-    bc: Zip.Byte;
-  begin
-    if obj.current_mode = encrypted then
-      for i in buf'Range loop
-        bc:= buf(i);
-        buf(i):= bc xor Crypto_code(obj);
-        Update_keys(obj, bc);  -- Keys are updated with the unencrypted byte
+   procedure Update (Crc : in out Unsigned_32; Inbuf : Zip.Byte_Buffer) is
+      Local_Crc : Unsigned_32;
+   begin
+      Local_Crc := Crc;
+      for I in Inbuf'Range loop
+         Local_Crc :=
+           Crc32_Table (16#FF# and (Local_Crc xor Unsigned_32 (Inbuf (I)))) xor
+           Shift_Right (Local_Crc, 8);
       end loop;
-    end if;
-  end Encode;
+      Crc := Local_Crc;
+   end Update;
 
-  procedure Decode(obj: in out Crypto_pack; b: in out Unsigned_8) is
-  begin
-    if obj.current_mode = encrypted then
-      b:= b xor Crypto_code(obj);
-      Update_keys(obj, b);     -- Keys are updated with the unencrypted byte
-    end if;
-  end Decode;
+   Table_Empty : Boolean := True;
 
-end Zip.CRC_Crypto;
+   procedure Init (Crc : out Unsigned_32) is
+   begin
+      if Table_Empty then
+         Prepare_Table;
+         Table_Empty := False;
+      end if;
+      Crc := 16#FFFF_FFFF#;
+   end Init;
+
+   function Final (Crc : Unsigned_32) return Unsigned_32 is
+   begin
+      return not Crc;
+   end Final;
+
+   procedure Set_Mode (Obj : in out Crypto_Pack; New_Mode : Crypto_Mode) is
+   begin
+      Obj.Current_Mode := New_Mode;
+   end Set_Mode;
+
+   function Get_Mode (Obj : Crypto_Pack) return Crypto_Mode is
+   begin
+      return Obj.Current_Mode;
+   end Get_Mode;
+
+   procedure Update_Keys (Obj : in out Crypto_Pack; By : Zip.Byte) is
+   begin
+      Update (Obj.Keys (0), (0 => By));
+      Obj.Keys (1) := Obj.Keys (1) + (Obj.Keys (0) and 16#000000ff#);
+      Obj.Keys (1) := Obj.Keys (1) * 134775813 + 1;
+      Update (Obj.Keys (2), (0 => Zip.Byte (Shift_Right (Obj.Keys (1), 24))));
+   end Update_Keys;
+
+   --  Crypto_code: Pseudo-random byte to be XOR'ed with.
+   function Crypto_Code (Obj : Crypto_Pack) return Zip.Byte is
+      pragma Inline (Crypto_Code);
+      Temp : Unsigned_16;
+   begin
+      Temp := Unsigned_16 (Obj.Keys (2) and 16#ffff#) or 2;
+      return Zip.Byte (Shift_Right (Temp * (Temp xor 1), 8));
+   end Crypto_Code;
+
+   procedure Encode (Obj : in out Crypto_Pack; Buf : in out Zip.Byte_Buffer) is
+      Bc : Zip.Byte;
+   begin
+      if Obj.Current_Mode = Encrypted then
+         for I in Buf'Range loop
+            Bc      := Buf (I);
+            Buf (I) := Bc xor Crypto_Code (Obj);
+            Update_Keys (Obj, Bc);  --  Keys are updated with the unencrypted byte
+         end loop;
+      end if;
+   end Encode;
+
+   procedure Decode (Obj : in out Crypto_Pack; B : in out Unsigned_8) is
+   begin
+      if Obj.Current_Mode = Encrypted then
+         B := B xor Crypto_Code (Obj);
+         Update_Keys (Obj, B);  --  Keys are updated with the unencrypted byte
+      end if;
+   end Decode;
+
+end Zip.Crc_Crypto;

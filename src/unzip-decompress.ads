@@ -1,8 +1,8 @@
--- UnZip.Decompress
--------------------
--- Private, internal to the UnZip package.
+--  UnZip.Decompress
+--  ---------------
+--  Private, internal to the UnZip package.
 
--- Legal licensing note:
+--  Legal licensing note:
 
 --  Copyright (c) 2007 .. 2018 Gautier de Montmollin
 --  SWITZERLAND
@@ -25,65 +25,61 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
 ---------------------
 --
--- Created 9-Mar-2007
+--  Created 9-Mar-2007
 --
--- This package includes the decompression algorithms for methods
--- Store, Reduce, Shrink (LZW), Implode, Deflate, BZip2 and LZMA.
+--  This package includes the decompression algorithms for methods
+--  Store, Reduce, Shrink (LZW), Implode, Deflate, BZip2 and LZMA.
 --
--- The package body contains the packages UnZ_IO, UnZ_Glob, UnZ_Infl,
--- UnZ_Olds and UnZ_Misc that were separate in previous versions of Zip-Ada.
--- They became local packages inside the Decompress_Data procedure.
--- Previously global variables are since then local and task-safe
--- with one copy per concurrent call.
+--  The package body contains the packages UnZ_IO, UnZ_Glob, UnZ_Infl,
+--  UnZ_Olds and UnZ_Misc that were separate in previous versions of Zip-Ada.
+--  They became local packages inside the Decompress_Data procedure.
+--  Previously global variables are since then local and task-safe
+--  with one copy per concurrent call.
 
 with Zip.Headers;
-with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with Zip_Streams;
 
-private package UnZip.Decompress is
+private package Unzip.Decompress is
 
-   procedure Decompress_data(
-    zip_file                   : in out Zip_Streams.Root_Zipstream_Type'Class;
-    -- zip_file must be open and its index is meant
-    -- to point to the beginning of compressed data
-    format                     : PKZip_method;
-    mode                       : Write_mode;
-    output_file_name           : String; -- relevant only if mode = write_to_file
-    output_memory_access       : out p_Stream_Element_Array; -- \ = write_to_memory
-    output_stream_access       : p_Stream;                   -- \ = write_to_stream
-    feedback                   : Zip.Feedback_proc;
-    explode_literal_tree       : Boolean; -- relevant for the "explode" format
-    explode_slide_8KB_LZMA_EOS : Boolean; -- relevant for the "explode" and "LZMA" formats
-    data_descriptor_after_data : Boolean;
-    hint                       : in out Zip.Headers.Local_File_Header
-    -- Values are known, or smart fakes, and are later corrected if a closing
-    -- Data_descriptor is appended to the compressed data (1-pass written
-    -- zip files, like JAR, OpenDocument, etc.)
-  );
+   procedure Decompress_Data
+     (Zip_File : in out Zip_Streams.Root_Zipstream_Type'Class;
+      --  Zip_File must be open and its index is meant
+      --  to point to the beginning of compressed data
+      Format                     :        Pkzip_Method;
+      Mode                       :        Write_Mode;
+      Output_File_Name           :        String;   --  Relevant only if mode = write_to_file
+      Output_Memory_Access       :    out P_Stream_Element_Array;  --  \ = write_to_memory
+      Output_Stream_Access       :        P_Stream;                --  \ = write_to_stream
+      Feedback                   :        Zip.Feedback_Proc;
+      Explode_Literal_Tree       :        Boolean;  --  Relevant for the "explode" format
+      Explode_Slide_8kb_Lzma_Eos :        Boolean;  --  Relevant for the "explode" and "LZMA" formats
+      Data_Descriptor_After_Data :        Boolean;
+      Hint                       : in out Zip.Headers.Local_File_Header);
+      --  Values are known, or smart fakes, and are later corrected if a closing
+      --  Data_descriptor is appended to the compressed data (1-pass written
+      --  zip files, like JAR, OpenDocument, etc.)
 
 private
 
-  --  When deflate_strict = True, stop if there is an incomplete Huffman
-  --  code set for decoding LZ distances. This is the correct and safe behaviour.
-  --  When dealing with Zip files from some old compression programs like PKZIP 1.93a,
-  --  the check can be bypassed with deflate_strict = False, but this lessens the
-  --  data error detection.
-  --
-  deflate_strict: constant Boolean:= True;
+   --  When deflate_strict = True, stop if there is an incomplete Huffman
+   --  code set for decoding LZ distances. This is the correct and safe behaviour.
+   --  When dealing with Zip files from some old compression programs like PKZIP 1.93a,
+   --  the check can be bypassed with deflate_strict = False, but this lessens the
+   --  data error detection.
+   Deflate_Strict : constant Boolean := True;
 
-  -- Primitive tracing using Ada.Text_IO, plus a few statistics
-  --
-  type Trace_type is (none, some_t, full);
+   --  Primitive tracing using Ada.Text_IO, plus a few statistics
+   type Trace_Type is (None, Some_T, Full);
 
-  trace: constant Trace_type:= none; --  <==  Choice is here
+   Trace : constant Trace_Type := None; --  <==  Choice is here
 
-  no_trace  : constant Boolean:= trace = none;
-  some_trace: constant Boolean:= trace >= some_t;
-  full_trace: constant Boolean:= trace = full;
+   No_Trace   : constant Boolean := Trace = None;
+   Some_Trace : constant Boolean := Trace >= Some_T;
+   Full_Trace : constant Boolean := Trace = Full;
 
-end UnZip.Decompress;
+end Unzip.Decompress;

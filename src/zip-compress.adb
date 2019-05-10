@@ -1,4 +1,4 @@
--- Legal licensing note:
+--  Legal licensing note:
 
 --  Copyright (c) 2007 .. 2018 Gautier de Montmollin (Maintainer of the Ada version)
 --  SWITZERLAND
@@ -21,210 +21,236 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
-with Zip.CRC_Crypto,
-     Zip.Compress.Deflate;
+with Zip.Crc_Crypto, Zip.Compress.Deflate;
 
-with Ada.Characters.Handling;           use Ada.Characters.Handling;
+with Ada.Characters.Handling;
+use Ada.Characters.Handling;
 with Ada.Numerics.Discrete_Random;
-with Ada.Strings.Fixed;                 use Ada.Strings.Fixed;
+with Ada.Strings.Fixed;
+use Ada.Strings.Fixed;
 
 package body Zip.Compress is
 
-  use Zip_Streams, Zip.CRC_Crypto;
+   use Zip_Streams, Zip.Crc_Crypto;
 
-  -------------------
-  -- Compress_data --
-  -------------------
+   ---------------------
+   --  Compress_data  --
+   ---------------------
 
-  procedure Compress_data
-   (input,
-    output          : in out Zip_Streams.Root_Zipstream_Type'Class;
-    input_size_known: Boolean;
-    input_size      : File_size_type;
-    method          : Compression_Method;
-    feedback        : Feedback_proc;
-    content_hint    : Data_content_type;
-    CRC             : out Interfaces.Unsigned_32;
-    output_size     : out File_size_type;
-    zip_type        : out Interfaces.Unsigned_16
-   )
-  is
-    use Interfaces;
-    counted: File_size_type;
-    user_aborting: Boolean;
-    idx_in:  constant ZS_Index_Type:= Index(input);
-    idx_out: constant ZS_Index_Type:= Index(output);
-    compression_ok: Boolean;
-    first_feedback: Boolean:= True;
-    --
-    encrypt_pack: Crypto_pack;
-    package Byte_soup is new Ada.Numerics.Discrete_Random(Byte);
-    use Byte_soup;
-    cg: Byte_soup.Generator;
-    --
-    --  Store data as is, or, if do_write = False, just compute CRC (this is for encryption).
-    --
-    procedure Store_data(do_write: Boolean) is
-      Buffer      : Byte_Buffer (1 .. buffer_size);
-      Last_Read   : Natural;
-    begin
-      zip_type:= compression_format_code.store;
-      counted:= 0;
-      while not End_Of_Stream(input) loop
-        if input_size_known and counted >= input_size then
-          exit;
-        end if;
-        -- Copy data
-        BlockRead (input, Buffer, Last_Read);
-        counted:= counted + File_size_type (Last_Read);
-        Update(CRC, Buffer (1 .. Last_Read));
-        if do_write then
-          Encode(encrypt_pack, Buffer (1 .. Last_Read));
-          BlockWrite(output, Buffer (1 .. Last_Read));
-        end if;
-        -- Feedback
-        if feedback /= null and then
-          (first_feedback or (counted mod (2**16)=0) or
-          (input_size_known and counted = input_size))
-        then
-          if input_size_known then
-            feedback(
-              percents_done =>
-                Natural( (100.0 * Float(counted)) / Float(input_size) ),
-              entry_skipped => False,
-              user_abort    => user_aborting );
-          else
-            feedback(
-              percents_done => 0,
-              entry_skipped => False,
-              user_abort    => user_aborting );
-          end if;
-          first_feedback:= False;
-          if user_aborting then
-            raise User_abort;
-          end if;
-        end if;
-      end loop;
-      output_size:= counted;
-      compression_ok:= True;
-    end Store_data;
-    --
-    procedure Compress_data_single_method(actual_method: Compression_Method) is
-    begin
-      Init(CRC);
-      Set_mode(encrypt_pack, clear);
+   procedure Compress_Data
+     (Input, Output    : in out Zip_Streams.Root_Zipstream_Type'Class;
+      Input_Size_Known :        Boolean;
+      Input_Size       :        File_Size_Type;
+      Method           :        Compression_Method;
+      Feedback         :        Feedback_Proc;
+      Content_Hint     :        Data_Content_Type;
+      Crc              :    out Interfaces.Unsigned_32;
+      Output_Size      :    out File_Size_Type;
+      Zip_Type         :    out Interfaces.Unsigned_16)
+   is
+      use Interfaces;
+      Counted        : File_Size_Type;
+      User_Aborting  : Boolean;
+      Idx_In         : constant Zs_Index_Type := Index (Input);
+      Idx_Out        : constant Zs_Index_Type := Index (Output);
+      Compression_Ok : Boolean;
+      First_Feedback : Boolean                := True;
       --
-      --  Dispatch the work to child procedures doing the stream compression
-      --  in different formats, depending on the actual compression method.
-      --  For example, for methods LZMA_for_JPEG, LZMA_for_WAV, or LZMA_3, we
-      --  logically call Zip.Compress.LZMA_E for the job.
+      Encrypt_Pack : Crypto_Pack;
+      package Byte_Soup is new Ada.Numerics.Discrete_Random (Byte);
+      use Byte_Soup;
+      Cg : Byte_Soup.Generator;
+      --  Store data as is, or, if do_write = False, just compute
+      --  CRC (this is for encryption)
+      procedure Store_Data (Do_Write : Boolean) is
+         Buffer    : Byte_Buffer (1 .. Buffer_Size);
+         Last_Read : Natural;
+      begin
+         Zip_Type := Compression_Format_Code.Store;
+         Counted  := 0;
+         while not End_Of_Stream (Input) loop
+            if Input_Size_Known and Counted >= Input_Size then
+               exit;
+            end if;
+            --  Copy data
+            Blockread (Input, Buffer, Last_Read);
+            Counted := Counted + File_Size_Type (Last_Read);
+            Update (Crc, Buffer (1 .. Last_Read));
+            if Do_Write then
+               Encode (Encrypt_Pack, Buffer (1 .. Last_Read));
+               Blockwrite (Output, Buffer (1 .. Last_Read));
+            end if;
+            --  Feedback
+            if Feedback /= null
+              and then
+              (First_Feedback or
+               (Counted mod (2**16) = 0) or
+               (Input_Size_Known and Counted = Input_Size))
+            then
+               if Input_Size_Known then
+                  Feedback
+                    (Percents_Done => Natural ((100.0 * Float (Counted)) / Float (Input_Size)),
+                     Entry_Skipped => False,
+                     User_Abort    => User_Aborting);
+               else
+                  Feedback
+                    (Percents_Done => 0,
+                     Entry_Skipped => False,
+                     User_Abort    => User_Aborting);
+               end if;
+               First_Feedback := False;
+               if User_Aborting then
+                  raise User_Abort;
+               end if;
+            end if;
+         end loop;
+         Output_Size    := Counted;
+         Compression_Ok := True;
+      end Store_Data;
       --
-      case actual_method is
-        when Store =>
-          Store_data(do_write => True);
-        when Deflation_Method =>
-          Zip.Compress.Deflate(
-            input, output, input_size_known, input_size, feedback,
-            actual_method,
-            CRC, encrypt_pack, output_size, compression_ok
-          );
-          zip_type:= compression_format_code.deflate;
-      end case;
-      CRC:= Final(CRC);
-      --
-      -- Handle case where compression has been unefficient:
-      -- data to be compressed is too "random"; then compressed data
-      -- happen to be larger than uncompressed data
-      --
-      if not compression_ok then
-        -- Go back to the beginning and just store the data
-        Set_Index(input, idx_in);
-        Set_Index(output, idx_out);
-        Init(CRC);
-        Store_data(do_write => True);
-        CRC:= Final(CRC);
+      procedure Compress_Data_Single_Method (Actual_Method : Compression_Method) is
+      begin
+         Init (Crc);
+         Set_Mode (Encrypt_Pack, Clear);
+         --  Dispatch the work to child procedures doing the stream compression
+         --  in different formats, depending on the actual compression method.
+         --  For example, for methods LZMA_for_JPEG, LZMA_for_WAV, or LZMA_3, we
+         --  logically call Zip.Compress.LZMA_E for the job.
+         case Actual_Method is
+            when Store =>
+               Store_Data (Do_Write => True);
+            when Deflation_Method =>
+               Zip.Compress.Deflate
+                 (Input,
+                  Output,
+                  Input_Size_Known,
+                  Input_Size,
+                  Feedback,
+                  Actual_Method,
+                  Crc,
+                  Encrypt_Pack,
+                  Output_Size,
+                  Compression_Ok);
+               Zip_Type := Compression_Format_Code.Deflate;
+         end case;
+         Crc := Final (Crc);
+         --  Handle case where compression has been unefficient:
+         --  data to be compressed is too "random"; then compressed data
+         --  happen to be larger than uncompressed data
+         if not Compression_Ok then
+            --  Go back to the beginning and just store the data
+            Set_Index (Input, Idx_In);
+            Set_Index (Output, Idx_Out);
+            Init (Crc);
+            Store_Data (Do_Write => True);
+            Crc := Final (Crc);
+         end if;
+      end Compress_Data_Single_Method;
+   begin
+      Compress_Data_Single_Method (Method);
+   end Compress_Data;
+
+   function Guess_Type_From_Name (Name : String) return Data_Content_Type is
+      Up    : constant String := To_Upper (Name);
+      Ext_1 : constant String := Tail (Up, 2);
+      Ext_2 : constant String := Tail (Up, 3);
+      Ext_3 : constant String := Tail (Up, 4);
+      Ext_4 : constant String := Tail (Up, 5);
+   begin
+      if Ext_3 = ".JPG" or else Ext_4 = ".JPEG" then
+         return Jpeg;
       end if;
-    end Compress_data_single_method;
-  begin
-    Compress_data_single_method(method);
-  end Compress_data;
-
-  function Guess_type_from_name(name: String) return Data_content_type is
-    up: constant String:= To_Upper(name);
-    ext_1: constant String:= Tail(up, 2);
-    ext_2: constant String:= Tail(up, 3);
-    ext_3: constant String:= Tail(up, 4);
-    ext_4: constant String:= Tail(up, 5);
-  begin
-    if ext_3 = ".JPG" or else ext_4 = ".JPEG" then
-      return JPEG;
-    end if;
-    if ext_3 = ".ADA" or else ext_3 = ".ADS" or else ext_3 = ".ADB"
-      or else ext_1 = ".C" or else ext_1 = ".H"
-      or else ext_3 = ".CPP" or else ext_3 = ".HPP"
-      or else ext_3 = ".DEF" or else ext_3 = ".ASM"
-      or else ext_4 = ".JAVA" or else ext_2 = ".CS"
-      or else ext_3 = ".PAS" or else ext_3 = ".INC" or else ext_2 = ".PP" or else ext_3 = ".LPR"
-      or else ext_3 = ".MAK" or else ext_2 = ".IN"
-      or else ext_2 = ".SH" or else ext_3 = ".BAT" or else ext_3 = ".CMD"
-      or else ext_3 = ".XML" or else ext_3 = ".XSL" or else ext_4 = ".SGML"
-      or else ext_3 = ".HTM" or else ext_4 = ".HTML"
-      or else ext_2 = ".JS" or else ext_3 = ".LSP"
-      or else ext_3 = ".CSV" or else ext_3 = ".SQL"
-    then
-      return Source_code;
-    end if;
-    --  Zip archives happen to be zipped...
-    if ext_4 = ".EPUB"  --  EPUB: e-book reader format
-      or else ext_3 = ".JAR" or else ext_3 = ".ZIP"
-      or else ext_3 = ".ODB" or else ext_3 = ".ODS" or else ext_3 = ".ODT"
-      or else ext_3 = ".OTR" or else ext_3 = ".OTS" or else ext_3 = ".OTT"
-      or else ext_3 = ".CRX" or else ext_3 = ".NTH"
-      or else ext_4 = ".DOCX" or else ext_4 = ".PPTX" or else ext_4 = ".XLSX"
-    then
-      return Zip_in_Zip;
-    end if;
-    --  Some raw camera picture data
-    if ext_3 = ".ORF"          --  Raw Olympus
-      or else ext_3 = ".CR2"   --  Raw Canon
-      or else ext_3 = ".RAF"   --  Raw Fujifilm
-      or else ext_3 = ".SRW"   --  Raw Samsung
-    then
-      return ORF_CR2;
-    end if;
-    if ext_3 = ".ARW"          --  Raw Sony
-      or else ext_3 = ".RW2"   --  Raw Panasonic
-      or else ext_3 = ".NEF"   --  Raw Nikon
-      or else ext_3 = ".DNG"   --  Raw Leica, Pentax
-      or else ext_3 = ".X3F"   --  Raw Sigma
-    then
-      return ARW_RW2;
-    end if;
-    if ext_3 = ".PGM" then
-      return PGM;
-    end if;
-    if ext_3 = ".PPM" then
-      return PPM;
-    end if;
-    if ext_3 = ".MP3" then
-      return MP3;
-    end if;
-    if ext_3 = ".MTS" or else ext_3 = ".MP4" or else ext_3 = ".M4A" or else ext_3 = ".M4P" then
-      return MP4;
-    end if;
-    if ext_3 = ".PNG" then
-      return PNG;
-    end if;
-    if ext_3 = ".GIF" then
-      return GIF;
-    end if;
-    if ext_3 = ".WAV" or else ext_3 = ".UAX" then
-      return WAV;
-    end if;
-    return Neutral;
-  end Guess_type_from_name;
+      if Ext_3 = ".ADA"
+        or else Ext_3 = ".ADS"
+        or else Ext_3 = ".ADB"
+        or else Ext_1 = ".C"
+        or else Ext_1 = ".H"
+        or else Ext_3 = ".CPP"
+        or else Ext_3 = ".HPP"
+        or else Ext_3 = ".DEF"
+        or else Ext_3 = ".ASM"
+        or else Ext_4 = ".JAVA"
+        or else Ext_2 = ".CS"
+        or else Ext_3 = ".PAS"
+        or else Ext_3 = ".INC"
+        or else Ext_2 = ".PP"
+        or else Ext_3 = ".LPR"
+        or else Ext_3 = ".MAK"
+        or else Ext_2 = ".IN"
+        or else Ext_2 = ".SH"
+        or else Ext_3 = ".BAT"
+        or else Ext_3 = ".CMD"
+        or else Ext_3 = ".XML"
+        or else Ext_3 = ".XSL"
+        or else Ext_4 = ".SGML"
+        or else Ext_3 = ".HTM"
+        or else Ext_4 = ".HTML"
+        or else Ext_2 = ".JS"
+        or else Ext_3 = ".LSP"
+        or else Ext_3 = ".CSV"
+        or else Ext_3 = ".SQL"
+      then
+         return Source_Code;
+      end if;
+      --  Zip archives happen to be zipped...
+      if Ext_4 = ".EPUB"  --  EPUB: e-book reader format
+        or else Ext_3 = ".JAR"
+        or else Ext_3 = ".ZIP"
+        or else Ext_3 = ".ODB"
+        or else Ext_3 = ".ODS"
+        or else Ext_3 = ".ODT"
+        or else Ext_3 = ".OTR"
+        or else Ext_3 = ".OTS"
+        or else Ext_3 = ".OTT"
+        or else Ext_3 = ".CRX"
+        or else Ext_3 = ".NTH"
+        or else Ext_4 = ".DOCX"
+        or else Ext_4 = ".PPTX"
+        or else Ext_4 = ".XLSX"
+      then
+         return Zip_In_Zip;
+      end if;
+      --  Some raw camera picture data
+      if Ext_3 = ".ORF"          --  Raw Olympus
+        or else Ext_3 = ".CR2"   --  Raw Canon
+        or else Ext_3 = ".RAF"   --  Raw Fujifilm
+        or else Ext_3 = ".SRW"   --  Raw Samsung
+      then
+         return Orf_Cr2;
+      end if;
+      if Ext_3 = ".ARW"          --  Raw Sony
+        or else Ext_3 = ".RW2"   --  Raw Panasonic
+        or else Ext_3 = ".NEF"   --  Raw Nikon
+        or else Ext_3 = ".DNG"   --  Raw Leica, Pentax
+        or else Ext_3 = ".X3F"   --  Raw Sigma
+      then
+         return Arw_Rw2;
+      end if;
+      if Ext_3 = ".PGM" then
+         return Pgm;
+      end if;
+      if Ext_3 = ".PPM" then
+         return Ppm;
+      end if;
+      if Ext_3 = ".MP3" then
+         return Mp3;
+      end if;
+      if Ext_3 = ".MTS" or else Ext_3 = ".MP4" or else Ext_3 = ".M4A" or else Ext_3 = ".M4P" then
+         return Mp4;
+      end if;
+      if Ext_3 = ".PNG" then
+         return Png;
+      end if;
+      if Ext_3 = ".GIF" then
+         return Gif;
+      end if;
+      if Ext_3 = ".WAV" or else Ext_3 = ".UAX" then
+         return Wav;
+      end if;
+      return Neutral;
+   end Guess_Type_From_Name;
 
 end Zip.Compress;

@@ -1,8 +1,8 @@
 --  Zip.CRC_Crypto deals with hash-like functions
 --  for data integrity check and encryption
--------------------------------------------------
+--  ---------------------------------------------
 
--- Legal licensing note:
+--  Legal licensing note:
 
 --  Copyright (c) 1999 .. 2018 Gautier de Montmollin
 --  SWITZERLAND
@@ -25,46 +25,46 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
-package Zip.CRC_Crypto is
+package Zip.Crc_Crypto is
 
-  use Interfaces;
+   use Interfaces;
 
-  -------------------------------------------------------------
-  --  CRC: Cyclic Redundancy Check to verify data integrity  --
-  -------------------------------------------------------------
+   -------------------------------------------------------------
+   --  CRC: Cyclic Redundancy Check to verify data integrity  --
+   -------------------------------------------------------------
 
-  procedure Init( CRC: out Unsigned_32 );
+   procedure Init (Crc : out Unsigned_32);
 
-  procedure Update( CRC: in out Unsigned_32; InBuf: Zip.Byte_Buffer );
-  pragma Inline( Update );
+   procedure Update (Crc : in out Unsigned_32; Inbuf : Zip.Byte_Buffer);
+   pragma Inline (Update);
 
-  function  Final( CRC: Unsigned_32 ) return Unsigned_32;
-  pragma Inline( Final );
+   function Final (Crc : Unsigned_32) return Unsigned_32;
+   pragma Inline (Final);
 
-  ------------------
-  --  Encryption  --
-  ------------------
+   ------------------
+   --  Encryption  --
+   ------------------
 
-  type Crypto_pack is private;
-  --
-  type Crypto_Mode is (clear, encrypted);
-  procedure Set_mode(obj: in out Crypto_pack; new_mode: Crypto_Mode);
-  function Get_mode(obj: Crypto_pack) return Crypto_Mode;
+   type Crypto_Pack is private;
+   --
+   type Crypto_Mode is (Clear, Encrypted);
+   procedure Set_Mode (Obj : in out Crypto_Pack; New_Mode : Crypto_Mode);
+   function Get_Mode (Obj : Crypto_Pack) return Crypto_Mode;
 
-  procedure Encode(obj: in out Crypto_pack; buf: in out Zip.Byte_Buffer);
-  pragma Inline(Encode);
-  --
-  procedure Decode(obj: in out Crypto_pack; b: in out Unsigned_8);
-  pragma Inline(Decode);
+   procedure Encode (Obj : in out Crypto_Pack; Buf : in out Zip.Byte_Buffer);
+   pragma Inline (Encode);
+
+   procedure Decode (Obj : in out Crypto_Pack; B : in out Unsigned_8);
+   pragma Inline (Decode);
 
 private
-  type Decrypt_keys is array( 0..2 ) of Unsigned_32;
-  type Crypto_pack is record
-    keys         : Decrypt_keys;
-    current_mode : Crypto_Mode;
-  end record;
+   type Decrypt_Keys is array (0 .. 2) of Unsigned_32;
+   type Crypto_Pack is record
+      Keys         : Decrypt_Keys;
+      Current_Mode : Crypto_Mode;
+   end record;
 
-end Zip.CRC_Crypto;
+end Zip.Crc_Crypto;

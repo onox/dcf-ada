@@ -1,9 +1,9 @@
--- UnZip.Decompress.Huffman
----------------------------
--- Huffman tree generation and deletion.
--- Originally from info-zip's unzip, data structure rewritten by G. de Montmollin
+--  UnZip.Decompress.Huffman
+--  -----------------------
+--  Huffman tree generation and deletion.
+--  Originally from info-zip's unzip, data structure rewritten by G. de Montmollin
 
--- Legal licensing note:
+--  Legal licensing note:
 
 --  Copyright (c) 1999 .. 2018 Gautier de Montmollin
 --  SWITZERLAND
@@ -26,52 +26,52 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
-private package UnZip.Decompress.Huffman is
+private package Unzip.Decompress.Huffman is
 
-  type HufT_table;
-  type p_HufT_table is access HufT_table;
+   type Huft_Table;
+   type P_Huft_Table is access Huft_Table;
 
-  type HufT is record
-    extra_bits : Natural;
-    bits       : Natural;
-    n          : Natural;
-    next_table : p_HufT_table;
-  end record;
+   type Huft is record
+      Extra_Bits : Natural;
+      Bits       : Natural;
+      N          : Natural;
+      Next_Table : P_Huft_Table;
+   end record;
 
-  invalid: constant:= 99; -- invalid value for extra bits
+   Invalid : constant := 99;  --  Invalid value for extra bits
 
-  type HufT_table is array( Natural range <> ) of HufT;
+   type Huft_Table is array (Natural range <>) of Huft;
 
-  -- Linked list just for destroying Huffman tables
+   --  Linked list just for destroying Huffman tables
 
-  type Table_list;
-  type p_Table_list is access Table_list;
+   type Table_List;
+   type P_Table_List is access Table_List;
 
-  type Table_list is record
-    table: p_HufT_table;
-    next : p_Table_list;
-  end record;
+   type Table_List is record
+      Table : P_Huft_Table;
+      Next  : P_Table_List;
+   end record;
 
-  type Length_array is array(Integer range <>) of Natural;
+   type Length_Array is array (Integer range <>) of Natural;
 
-  empty : constant Length_array( 1..0 ):= ( others=> 0 );
+   Empty : constant Length_Array (1 .. 0) := (others => 0);
 
-  -- Free huffman tables starting with table where t points to
-  procedure HufT_free ( tl: in out p_Table_list );
+   --  Free huffman tables starting with table where t points to
+   procedure Huft_Free (Tl : in out P_Table_List);
 
-  -- Build huffman table from code lengths given by array b.all
-  procedure HufT_build ( b    : Length_array;
-                         s    : Integer;
-                         d, e : Length_array;
-                         tl   :    out p_Table_list;
-                         m    : in out Integer;
-              huft_incomplete :    out Boolean);
+   --  Build huffman table from code lengths given by array b.all
+   procedure Huft_Build
+     (B               :        Length_Array;
+      S               :        Integer;
+      D, E            :        Length_Array;
+      Tl              :    out P_Table_List;
+      M               : in out Integer;
+      Huft_Incomplete :    out Boolean);
 
-  -- Possible exceptions occuring in huft_build
-  huft_error,                    -- bad tree constructed
-  huft_out_of_memory: exception; -- not enough memory
+   Huft_Error         : exception;  --  Bad tree constructed
+   Huft_Out_Of_Memory : exception;  --  Not enough memory
 
-end UnZip.Decompress.Huffman;
+end Unzip.Decompress.Huffman;

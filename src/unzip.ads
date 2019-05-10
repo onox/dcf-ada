@@ -1,16 +1,16 @@
 --  ________  ___   ______       ______      ___
--- /___..._/  |.|   |.___.\     /. __ .\   __|.|   ____
+--  /___..._/  |.|   |.___.\     /. __ .\   __|.|   ____
 --    /../    |.|   |.____/     |.|__|.|  /....|  __\..\
 --  _/../___  |.|   |.|    ===  |..__..| |. = .| | = ..|
--- /_______/  |_|  /__|        /__|  |_|  \__\_|  \__\_|
+--  /_______/  |_|  /__|        /__|  |_|  \__\_|  \__\_|
 
--- UnZip
---------
+--  UnZip
+--  -----
 --
--- This library allows to uncompress deflated, enhanced deflated, bzip2-ed, lzma-ed,
--- imploded, reduced, shrunk and stored streams from a Zip archive stream.
+--  This library allows to uncompress deflated, enhanced deflated, bzip2-ed, lzma-ed,
+--  imploded, reduced, shrunk and stored streams from a Zip archive stream.
 --
--- Pure Ada 2005+ code, 100% portable: OS-, CPU- and compiler- independent.
+--  Pure Ada 2005+ code, 100% portable: OS-, CPU- and compiler- independent.
 
 --  Ada translation and substantial rewriting by Gautier de Montmollin
 --    On the web: see the Zip.web constant.
@@ -20,9 +20,9 @@
 --  itself based on C code by Info-Zip group (Mark Adler et al.)
 --    http://www.info-zip.org/UnZip.html
 
--- Technical documentation: read appnote.txt
+--  Technical documentation: read appnote.txt
 
--- Legal licensing note:
+--  Legal licensing note:
 
 --  Copyright (c) 1999 .. 2018 Gautier de Montmollin
 --  SWITZERLAND
@@ -45,252 +45,237 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found 12-Sep-2007 on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found 12-Sep-2007 on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
 with Zip;
 
-with Ada.Calendar, Ada.Streams, Ada.Strings.Unbounded;
+with Ada.Calendar;
+with Ada.Streams;
 
-package UnZip is
+package Unzip is
 
-  type option is (
-    test_only,            -- test .zip file integrity, no write
-    junk_directories,     -- ignore directory info -> extract to current one
-    case_sensitive_match, -- case sensitive name matching
-    extract_as_text       -- files will be written with native line endings
-  );
+   type Option is
+     (Test_Only,             --  test .zip file integrity, no write
+      Junk_Directories,      --  ignore directory info -> extract to current one
+      Case_Sensitive_Match,  --  case sensitive name matching
+      Extract_As_Text);      --  files will be written with native line endings
 
-  type Option_set is array( option ) of Boolean;
+   type Option_Set is array (Option) of Boolean;
 
-  no_option: constant Option_set:= ( others=> False );
+   No_Option : constant Option_Set := (others => False);
 
-  -- Ada 2005's Ada.Directories.Create_Path.
-  -- For Ada 95 compatibility we pass it as an optional procedure access.
-  type Create_Path_proc is access
-    procedure (New_Directory : in String;
-               Form          : in String := "");
+   --  Ada 2005's Ada.Directories.Create_Path
+   --  For Ada 95 compatibility we pass it as an optional procedure access
+   type Create_Path_Proc is access procedure (New_Directory : in String; Form : in String := "");
 
-  -- This is system-dependent (or in a future Ada)
-  type Set_Time_Stamp_proc is access
-    procedure (file_name: String; stamp: Ada.Calendar.Time);
+   --  This is system-dependent (or in a future Ada)
+   type Set_Time_Stamp_Proc is access procedure (File_Name : String; Stamp : Ada.Calendar.Time);
 
-  -- Alternatively, you can use Zip.Time to set file time stamps
-  type Set_ZTime_Stamp_proc is access
-    procedure (file_name: String; stamp: Zip.Time);
-  -- NB: you can use Zip.Convert to change Ada.Calendar.Time from/to Zip.Time
-  --     or use our Split to avoid using Ada.Calendar at all.
+   --  Alternatively, you can use Zip.Time to set file time stamps
+   type Set_Ztime_Stamp_Proc is access procedure (File_Name : String; Stamp : Zip.Time);
+   --  NB: you can use Zip.Convert to change Ada.Calendar.Time from/to Zip.Time
+   --     or use our Split to avoid using Ada.Calendar at all
 
-  -- This is for modifying output file names (e.g. adding a
-  -- work directory, modifying the archived path, etc.)
-  type Compose_func is access function (
-    File_Name     : String;
-    Name_encoding : Zip.Zip_name_encoding
-  )
-  return String;
+   --  This is for modifying output file names (e.g. adding a
+   --  work directory, modifying the archived path, etc.)
+   type Compose_Func is access function
+     (File_Name     : String;
+      Name_Encoding : Zip.Zip_Name_Encoding) return String;
 
-  -- File System dependent settings
-  type FS_routines_type is record
-    Create_Path            : Create_Path_proc;
-    Set_Time_Stamp         : Set_Time_Stamp_proc;
-    Compose_File_Name      : Compose_func;
-    Set_ZTime_Stamp        : Set_ZTime_Stamp_proc; -- alt. to Set_Time_Stamp
-  end record;
+   --  File System dependent settings
+   type Fs_Routines_Type is record
+      Create_Path       : Create_Path_Proc;
+      Set_Time_Stamp    : Set_Time_Stamp_Proc;
+      Compose_File_Name : Compose_Func;
+      Set_Ztime_Stamp   : Set_Ztime_Stamp_Proc;  --  alt. to Set_Time_Stamp
+   end record;
 
-  null_routines: constant FS_routines_type:= (null,null,null,null);
+   Null_Routines : constant Fs_Routines_Type := (null, null, null, null);
 
-  ----------------------------------
-  -- Simple extraction procedures --
-  ----------------------------------
+   ----------------------------------
+   -- Simple extraction procedures --
+   ----------------------------------
 
-  -- Extract all files from an archive (from)
+   --  Extract all files from an archive (from)
 
-  procedure Extract( from                 : String;
-                     options              : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : String;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  -- Extract one precise file (what) from an archive (from)
+   --  Extract one precise file (what) from an archive (from)
 
-  procedure Extract( from                 : String;
-                     what                 : String;
-                     options              : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : String;
+      What                 : String;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  -- Extract one precise file (what) from an archive (from),
-  -- but save under a new name (rename)
+   --  Extract one precise file (what) from an archive (from),
+   --  but save under a new name (rename)
 
-  procedure Extract( from                 : String;
-                     what                 : String;
-                     rename               : String;
-                     options              : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : String;
+      What                 : String;
+      Rename               : String;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  -------------------------------------------------------------------------
-  -- Simple extraction procedures without re-searching central directory --
-  -------------------------------------------------------------------------
+   -------------------------------------------------------------------------
+   -- Simple extraction procedures without re-searching central directory --
+   -------------------------------------------------------------------------
 
-  -- Extract all files from an archive (from)
-  -- Needs Zip.Load(from, ...) prior to the extraction
+   --  Extract all files from an archive (from)
+   --  Needs Zip.Load(from, ...) prior to the extraction
 
-  procedure Extract( from                 : Zip.Zip_info;
-                     options              : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : Zip.Zip_Info;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  -- Extract one precise file (what) from an archive (from)
-  -- Needs Zip.Load(from, ...) prior to the extraction
+   --  Extract one precise file (what) from an archive (from)
+   --  Needs Zip.Load(from, ...) prior to the extraction
 
-  procedure Extract( from                 : Zip.Zip_info;
-                     what                 : String;
-                     options              : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : Zip.Zip_Info;
+      What                 : String;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  -- Extract one precise file (what) from an archive (from),
-  -- but save under a new name (rename)
-  -- Needs Zip.Load(from, ...) prior to the extraction
+   --  Extract one precise file (what) from an archive (from),
+   --  but save under a new name (rename)
+   --  Needs Zip.Load(from, ...) prior to the extraction
 
-  procedure Extract( from                 : Zip.Zip_info;
-                     what                 : String;
-                     rename               : String;
-                     options              : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : Zip.Zip_Info;
+      What                 : String;
+      Rename               : String;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  subtype PKZip_method is Zip.PKZip_method;
+   subtype Pkzip_Method is Zip.Pkzip_Method;
 
-  ----------------------------------------------
-  -- Extraction procedures for user interface --
-  ----------------------------------------------
+   ----------------------------------------------
+   -- Extraction procedures for user interface --
+   ----------------------------------------------
 
-  -- NB: the *_proc types are accesses to procedures - their usage
-  -- may require the non-standard attribute "unrestricted_access",
-  -- or some changes.
-  -- Read unzipada.adb for details and examples.
+   --  NB: the *_proc types are accesses to procedures - their usage
+   --  may require the non-standard attribute "unrestricted_access",
+   --  or some changes.
+   --  Read unzipada.adb for details and examples.
 
-  type Name_conflict_intervention is
-    ( yes, no, yes_to_all, none, rename_it, abort_now );
+   type Name_Conflict_Intervention is (Yes, No, Yes_To_All, None, Rename_It, Abort_Now);
 
-  current_user_attitude : Name_conflict_intervention:= yes;
-  -- reset to "yes" for a new session (in case of yes_to_all / none state!)
+   Current_User_Attitude : Name_Conflict_Intervention := Yes;
+   --  reset to "yes" for a new session (in case of yes_to_all / none state!)
 
-  type Resolve_conflict_proc is access
-    procedure ( name            :  in String;
-                name_encoding   :  in Zip.Zip_name_encoding;
-                action          : out Name_conflict_intervention;
-                new_name        : out String;
-                new_name_length : out Natural );
+   type Resolve_Conflict_Proc is access procedure
+     (Name            : in     String;
+      Name_Encoding   : in     Zip.Zip_Name_Encoding;
+      Action          :    out Name_Conflict_Intervention;
+      New_Name        :    out String;
+      New_Name_Length :    out Natural);
 
-  -- Data sizes in archive
-  subtype File_size_type is Zip.File_size_type;
+   --  Data sizes in archive
+   subtype File_Size_Type is Zip.File_Size_Type;
 
-  -- Inform user about some archive data
+   --  Inform user about some archive data
 
-  type Tell_data_proc is access
-    procedure ( name               : String;
-                compressed_bytes   : File_size_type;
-                uncompressed_bytes : File_size_type;
-                method             : PKZip_method );
+   type Tell_Data_Proc is access procedure
+     (Name               : String;
+      Compressed_Bytes   : File_Size_Type;
+      Uncompressed_Bytes : File_Size_Type;
+      Method             : Pkzip_Method);
 
-  -- Extract all files from an archive (from)
+   --  Extract all files from an archive (from)
 
-  procedure Extract( from                 : String;
-                     feedback             : Zip.Feedback_proc;
-                     help_the_file_exists : Resolve_conflict_proc;
-                     tell_data            : Tell_data_proc;
-                     options              : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : String;
+      Feedback             : Zip.Feedback_Proc;
+      Help_The_File_Exists : Resolve_Conflict_Proc;
+      Tell_Data            : Tell_Data_Proc;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  -- Extract one precise file (what) from an archive (from)
+   --  Extract one precise file (what) from an archive (from)
 
-  procedure Extract( from                 : String;
-                     what                 : String;
-                     feedback             : Zip.Feedback_proc;
-                     help_the_file_exists : Resolve_conflict_proc;
-                     tell_data            : Tell_data_proc;
-                     options              : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : String;
+      What                 : String;
+      Feedback             : Zip.Feedback_Proc;
+      Help_The_File_Exists : Resolve_Conflict_Proc;
+      Tell_Data            : Tell_Data_Proc;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  -- Extract one precise file (what) from an archive (from),
-  -- but save under a new name (rename)
+   --  Extract one precise file (what) from an archive (from),
+   --  but save under a new name (rename)
 
-  procedure Extract( from        : String;
-                     what        : String;
-                     rename      : String;
-                     feedback    : Zip.Feedback_proc;
-                     tell_data   : Tell_data_proc;
-                     options     : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : String;
+      What                 : String;
+      Rename               : String;
+      Feedback             : Zip.Feedback_Proc;
+      Tell_Data            : Tell_Data_Proc;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  -- Using Zip_info structure:
+   --  Using Zip_info structure:
 
-  -- Extract all files from an archive (from)
-  -- Needs Zip.Load(from, ...) prior to the extraction
+   --  Extract all files from an archive (from)
+   --  Needs Zip.Load(from, ...) prior to the extraction
 
-  procedure Extract( from                 : Zip.Zip_info;
-                     feedback             : Zip.Feedback_proc;
-                     help_the_file_exists : Resolve_conflict_proc;
-                     tell_data            : Tell_data_proc;
-                     options              : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : Zip.Zip_Info;
+      Feedback             : Zip.Feedback_Proc;
+      Help_The_File_Exists : Resolve_Conflict_Proc;
+      Tell_Data            : Tell_Data_Proc;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  -- Extract one precise file (what) from an archive (from)
-  -- Needs Zip.Load(from, ...) prior to the extraction
+   --  Extract one precise file (what) from an archive (from)
+   --  Needs Zip.Load(from, ...) prior to the extraction
 
-  procedure Extract( from                 : Zip.Zip_info;
-                     what                 : String;
-                     feedback             : Zip.Feedback_proc;
-                     help_the_file_exists : Resolve_conflict_proc;
-                     tell_data            : Tell_data_proc;
-                     options              : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : Zip.Zip_Info;
+      What                 : String;
+      Feedback             : Zip.Feedback_Proc;
+      Help_The_File_Exists : Resolve_Conflict_Proc;
+      Tell_Data            : Tell_Data_Proc;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  -- Extract one precise file (what) from an archive (from),
-  -- but save under a new name (rename)
-  -- Needs Zip.Load(from, ...) prior to the extraction
+   --  Extract one precise file (what) from an archive (from),
+   --  but save under a new name (rename)
+   --  Needs Zip.Load(from, ...) prior to the extraction
 
-  procedure Extract( from                 : Zip.Zip_info;
-                     what                 : String;
-                     rename               : String;
-                     feedback             : Zip.Feedback_proc;
-                     tell_data            : Tell_data_proc;
-                     options              : Option_set:= no_option;
-                     file_system_routines : FS_routines_type:= null_routines
-                   );
+   procedure Extract
+     (From                 : Zip.Zip_Info;
+      What                 : String;
+      Rename               : String;
+      Feedback             : Zip.Feedback_Proc;
+      Tell_Data            : Tell_Data_Proc;
+      Options              : Option_Set       := No_Option;
+      File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-  -- Errors
-
-  CRC_Error,
-  Uncompressed_size_Error,
-  Write_Error,
-  Read_Error,
-  User_abort,
-  Not_supported,
-  Unsupported_method : exception;
+   Crc_Error               : exception;
+   Uncompressed_Size_Error : exception;
+   Write_Error             : exception;
+   Read_Error              : exception;
+   User_Abort              : exception;
+   Not_Supported           : exception;
+   Unsupported_Method      : exception;
 
 private
 
-  type Write_mode is
-    ( write_to_binary_file,
-      write_to_text_file,
-      write_to_memory,
-      write_to_stream,
-      just_test
-    );
+   type Write_Mode is
+     (Write_To_Binary_File, Write_To_Text_File, Write_To_Memory, Write_To_Stream, Just_Test);
 
-  subtype Write_to_file is Write_mode
-    range write_to_binary_file..write_to_text_file;
+   subtype Write_To_File is Write_Mode range Write_To_Binary_File .. Write_To_Text_File;
 
-  type p_Stream is access all Ada.Streams.Root_Stream_Type'Class;
+   type P_Stream is access all Ada.Streams.Root_Stream_Type'Class;
 
-  type p_Stream_Element_Array is access all Ada.Streams.Stream_Element_Array;
+   type P_Stream_Element_Array is access all Ada.Streams.Stream_Element_Array;
 
-end UnZip;
+end Unzip;

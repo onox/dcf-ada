@@ -1,11 +1,12 @@
 --  Length_limited_Huffman_code_lengths
----------------------------------------
---    This algorithm builds optimal Huffman codes for a given alphabet
---    and occurrence counts (frequencies) of this alphabet. These occurrences
---    are supposed to have been counted in a message to be sent in a
---    compressed form using the Huffman codes. As output, only the bit lengths
---    of the Huffman codes are given; the Huffman codes themselves are built
---    with these bit lengths when the message actually needs to be sent.
+--  -----------------------------------
+--
+--  This algorithm builds optimal Huffman codes for a given alphabet
+--  and occurrence counts (frequencies) of this alphabet. These occurrences
+--  are supposed to have been counted in a message to be sent in a
+--  compressed form using the Huffman codes. As output, only the bit lengths
+--  of the Huffman codes are given; the Huffman codes themselves are built
+--  with these bit lengths when the message actually needs to be sent.
 --
 --  Pure Ada 95+ code, 100% portable: OS-, CPU- and compiler- independent.
 
@@ -34,8 +35,8 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found 21-Aug-2016 on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found 21-Aug-2016 on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
 --  Author: lode.vandevenne [*] gmail [*] com (Lode Vandevenne)
 --  Author: jyrki.alakuijala [*] gmail [*] com (Jyrki Alakuijala)
@@ -48,15 +49,13 @@
 --  Translation notes in procedure's body.
 
 generic
-  type Alphabet is (<>);  --  Any discrete type
-  --  Count_Type is an integer type large enough for counting
-  --  and indexing. See body for actual bounds.
-  type Count_Type is range <>;
-  type Count_Array is array(Alphabet) of Count_Type;
-  type Length_Array is array(Alphabet) of Natural;
-  max_bits: Positive;  --  Length limit in Huffman codes
-
-procedure Length_limited_Huffman_code_lengths(
-  frequencies : in  Count_Array;
-  bit_lengths : out Length_Array
-);
+   type Alphabet is (<>);  --  Any discrete type
+   --  Count_Type is an integer type large enough for counting
+   --  and indexing. See body for actual bounds.
+   type Count_Type is range <>;
+   type Count_Array is array (Alphabet) of Count_Type;
+   type Length_Array is array (Alphabet) of Natural;
+   Max_Bits : Positive;  --  Length limit in Huffman codes
+procedure Length_Limited_Huffman_Code_Lengths
+  (Frequencies : in Count_Array;
+   Bit_Lengths : out Length_Array);

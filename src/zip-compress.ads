@@ -1,8 +1,8 @@
 --  ________  ___   ______       ______      ___
--- /___..._/  |.|   |.___.\     /. __ .\   __|.|   ____
+--  /___..._/  |.|   |.___.\     /. __ .\   __|.|   ____
 --    /../    |.|   |.____/     |.|__|.|  /....|  __\..\
 --  _/../___  |.|   |.|    ===  |..__..| |. = .| | = ..|
--- /_______/  |_|  /__|        /__|  |_|  \__\_|  \__\_|
+--  /_______/  |_|  /__|        /__|  |_|  \__\_|  \__\_|
 
 --  Zip.Compress
 ----------------
@@ -20,7 +20,7 @@
 --  two criteria that usually go in opposite directions: speed and
 --  compression ratio, a bit like risk and return in finance.
 
--- Legal licensing note:
+--  Legal licensing note:
 
 --  Copyright (c) 2007 .. 2018 Gautier de Montmollin (Maintainer of the Ada version)
 --  SWITZERLAND
@@ -43,8 +43,8 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
 ---------------------------------------------------------------------------------
 
@@ -52,73 +52,59 @@ with Zip_Streams;
 
 package Zip.Compress is
 
-  --  Compression_Method is actually reflecting the way of compressing
-  --  data, not only the final compression format called "method" in
-  --  Zip specifications.
+   --  Compression_Method is actually reflecting the way of compressing
+   --  data, not only the final compression format called "method" in
+   --  Zip specifications.
 
-  type Compression_Method is
-    (--  No compression:
-     Store,
-     --  Deflate combines LZ and Huffman encoding; 4 strengths available:
-     Deflate_Fixed,
-     Deflate_1,
-     Deflate_2,
-     Deflate_3
-    );
+   type Compression_Method is
+      --  No compression:
+     (Store,
+      --  Deflate combines LZ and Huffman encoding; 4 strengths available:
+      Deflate_Fixed, Deflate_1, Deflate_2, Deflate_3);
 
-  type Method_to_Format_type is array(Compression_Method) of PKZip_method;
-  Method_to_Format: constant Method_to_Format_type;
+   type Method_To_Format_Type is array (Compression_Method) of Pkzip_Method;
+   Method_To_Format : constant Method_To_Format_Type;
 
-  --  Deflate_Fixed compresses the data into a single block and with predefined
-  --  ("fixed") compression structures. The data are basically LZ-compressed
-  --  only, since the Huffman code sets are flat and not tailored for the data.
-  subtype Deflation_Method is Compression_Method range Deflate_Fixed .. Deflate_3;
+   --  Deflate_Fixed compresses the data into a single block and with predefined
+   --  ("fixed") compression structures. The data are basically LZ-compressed
+   --  only, since the Huffman code sets are flat and not tailored for the data.
+   subtype Deflation_Method is Compression_Method range Deflate_Fixed .. Deflate_3;
 
-  --  The multi-block Deflate methods use refined techniques to decide when to
-  --  start a new block and what sort of block to put next.
-  subtype Taillaule_Deflation_Method is Compression_Method range Deflate_1 .. Deflate_3;
+   --  The multi-block Deflate methods use refined techniques to decide when to
+   --  start a new block and what sort of block to put next.
+   subtype Taillaule_Deflation_Method is Compression_Method range Deflate_1 .. Deflate_3;
 
-  User_abort: exception;
+   User_Abort : exception;
 
-  type Data_content_type is (
-    Neutral,
-    Source_code,
-    JPEG,
-    ARW_RW2,     --  Raw digital camera image
-    ORF_CR2,     --  Raw digital camera image
-    Zip_in_Zip,
-    GIF, PNG, PGM, PPM,
-    WAV,
-    MP3, MP4
-  );
+   type Data_Content_Type is
+     (Neutral, Source_Code, Jpeg, Arw_Rw2,  --  Raw digital camera image
+     Orf_Cr2,                               --  Raw digital camera image
+     Zip_In_Zip, Gif, Png, Pgm, Ppm, Wav, Mp3, Mp4);
 
-  --  Compress data from an input stream to an output stream until
-  --  End_Of_File(input) = True, or number of input bytes = input_size .
-  --  If password /= "", an encryption header is written.
+   --  Compress data from an input stream to an output stream until
+   --  End_Of_File(input) = True, or number of input bytes = input_size.
+   --  If password /= "", an encryption header is written.
 
-  procedure Compress_data(
-    input,
-    output          : in out Zip_Streams.Root_Zipstream_Type'Class;
-    input_size_known: Boolean;
-    input_size      : File_size_type; -- ignored if input_size_known = False
-    method          : Compression_Method;
-    feedback        : Feedback_proc;
-    content_hint    : Data_content_type;
-    CRC             : out Interfaces.Unsigned_32;
-    output_size     : out File_size_type;
-    zip_type        : out Interfaces.Unsigned_16
-    -- ^ code corresponding to the compression method actually used
-  );
+   procedure Compress_Data
+     (Input, Output    : in out Zip_Streams.Root_Zipstream_Type'Class;
+      Input_Size_Known :        Boolean;
+      Input_Size       :        File_Size_Type;  --  Ignored if input_size_known = False
+      Method           :        Compression_Method;
+      Feedback         :        Feedback_Proc;
+      Content_Hint     :        Data_Content_Type;
+      Crc              :    out Interfaces.Unsigned_32;
+      Output_Size      :    out File_Size_Type;
+      Zip_Type         :    out Interfaces.Unsigned_16
+      --  ^ code corresponding to the compression method actually used
+   );
 
-  function Guess_type_from_name(name: String) return Data_content_type;
+   function Guess_Type_From_Name (Name : String) return Data_Content_Type;
 
 private
 
-  buffer_size: constant:= 1024 * 1024; -- 1 MB
+   Buffer_Size : constant := 1024 * 1024;  --  1 MiB
 
-  Method_to_Format: constant Method_to_Format_type :=
-    (Store               => store,
-     Deflation_Method    => deflate
-    );
+   Method_To_Format : constant Method_To_Format_Type :=
+     (Store => Store, Deflation_Method => Deflate);
 
 end Zip.Compress;

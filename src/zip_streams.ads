@@ -37,8 +37,8 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found 21-Aug-2016 on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found 21-Aug-2016 on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
 --  Change log:
 --  ==========
@@ -64,8 +64,10 @@
 --  18-Jan-2009: GdM: Fixed Zip_Streams.Read which did read
 --                      only Item's first element
 
-with Ada.Streams;           use Ada.Streams;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Streams;
+use Ada.Streams;
+with Ada.Strings.Unbounded;
+use Ada.Strings.Unbounded;
 with Ada.Streams.Stream_IO;
 
 with Ada.Calendar, Interfaces;
@@ -78,7 +80,7 @@ package Zip_Streams is
    --  Ada.Calendar.Time.
    type Time is private;
 
-   default_time: constant Time;  --  some default time
+   Default_Time : constant Time;  --  some default time
 
    ------------------------------------------------------
    --  Root_Zipstream_Type: root abstract stream type  --
@@ -87,58 +89,48 @@ package Zip_Streams is
    type Root_Zipstream_Type is abstract new Ada.Streams.Root_Stream_Type with private;
    type Zipstream_Class_Access is access all Root_Zipstream_Type'Class;
 
-   subtype ZS_Size_Type is Integer_64 range 0 .. Integer_64'Last;
-   subtype ZS_Index_Type is ZS_Size_Type range 1 .. ZS_Size_Type'Last;
+   subtype Zs_Size_Type is Integer_64 range 0 .. Integer_64'Last;
+   subtype Zs_Index_Type is Zs_Size_Type range 1 .. Zs_Size_Type'Last;
 
    --  Set the index on the stream
-   procedure Set_Index (S : in out Root_Zipstream_Type;
-                        To : ZS_Index_Type) is abstract;
+   procedure Set_Index (S : in out Root_Zipstream_Type; To : Zs_Index_Type) is abstract;
 
    --  Returns the index of the stream
-   function Index (S : in Root_Zipstream_Type) return ZS_Index_Type is abstract;
+   function Index (S : in Root_Zipstream_Type) return Zs_Index_Type is abstract;
 
    --  Returns the Size of the stream
-   function Size (S : in Root_Zipstream_Type) return ZS_Size_Type is abstract;
+   function Size (S : in Root_Zipstream_Type) return Zs_Size_Type is abstract;
 
    --  This procedure sets the name of the stream
-   procedure Set_Name(S : in out Root_Zipstream_Type; Name : String);
+   procedure Set_Name (S : in out Root_Zipstream_Type; Name : String);
 
    --  This procedure returns the name of the stream
-   function Get_Name(S : in Root_Zipstream_Type) return String;
+   function Get_Name (S : in Root_Zipstream_Type) return String;
 
-   procedure Set_Unicode_Name_Flag (S     : out Root_Zipstream_Type;
-                                    Value : in Boolean);
-   function Is_Unicode_Name(S : in Root_Zipstream_Type)
-                            return Boolean;
+   procedure Set_Unicode_Name_Flag (S : out Root_Zipstream_Type; Value : in Boolean);
+   function Is_Unicode_Name (S : in Root_Zipstream_Type) return Boolean;
 
-   procedure Set_Read_Only_Flag (S     : out Root_Zipstream_Type;
-                                 Value : in Boolean);
-   function Is_Read_Only(S : in Root_Zipstream_Type)
-                         return Boolean;
+   procedure Set_Read_Only_Flag (S : out Root_Zipstream_Type; Value : in Boolean);
+   function Is_Read_Only (S : in Root_Zipstream_Type) return Boolean;
 
    --  This procedure sets the Modification_Time of the stream
-   procedure Set_Time(S : in out Root_Zipstream_Type;
-                      Modification_Time : Time);
+   procedure Set_Time (S : in out Root_Zipstream_Type; Modification_Time : Time);
 
    --  Set_Time again, but with the standard Ada Time type.
    --  Overriding is useless and potentially harmful, so we prevent it with
    --  a class-wide profile.
-   procedure Set_Time(S : out Root_Zipstream_Type'Class;
-                      Modification_Time : Ada.Calendar.Time);
+   procedure Set_Time (S : out Root_Zipstream_Type'Class; Modification_Time : Ada.Calendar.Time);
 
    --  This procedure returns the ModificationTime of the stream
-   function Get_Time(S : in Root_Zipstream_Type)
-                     return Time;
+   function Get_Time (S : in Root_Zipstream_Type) return Time;
 
    --  Get_Time again, but with the standard Ada Time type.
    --  Overriding is useless and potentially harmful, so we prevent it with
    --  a class-wide profile.
-   function Get_Time(S : in Root_Zipstream_Type'Class)
-                     return Ada.Calendar.Time;
+   function Get_Time (S : in Root_Zipstream_Type'Class) return Ada.Calendar.Time;
 
    --  Returns true if the index is at the end of the stream, else false
-   function End_Of_Stream (S : in Root_Zipstream_Type)
-      return Boolean is abstract;
+   function End_Of_Stream (S : in Root_Zipstream_Type) return Boolean is abstract;
 
    -----------------------------------------------------------------------
    --  Memory_Zipstream: stream based on an in-memory Unbounded_String  --
@@ -179,17 +171,17 @@ package Zip_Streams is
 
    package Calendar is
       --
-      function Convert(date : in Ada.Calendar.Time) return Time;
-      function Convert(date : in Time) return Ada.Calendar.Time;
+      function Convert (Date : in Ada.Calendar.Time) return Time;
+      function Convert (Date : in Time) return Ada.Calendar.Time;
       --
-      subtype DOS_Time is Interfaces.Unsigned_32;
-      function Convert(date : in DOS_Time) return Time;
-      function Convert(date : in Time) return DOS_Time;
+      subtype Dos_Time is Interfaces.Unsigned_32;
+      function Convert (Date : in Dos_Time) return Time;
+      function Convert (Date : in Time) return Dos_Time;
       --
       use Ada.Calendar;
       --
       procedure Split
-        (Date    : Time;
+        (Date    :     Time;
          Year    : out Year_Number;
          Month   : out Month_Number;
          Day     : out Day_Number;
@@ -201,16 +193,16 @@ package Zip_Streams is
          Day     : Day_Number;
          Seconds : Day_Duration := 0.0) return Time;
       --
-      function ">"  (Left, Right : Time) return Boolean;
+      function ">" (Left, Right : Time) return Boolean;
       --
       Time_Error : exception;
    end Calendar;
 
-  --  Parameter Form added to *_IO.[Open|Create]
-  --  See RM A.8.2: File Management
-  --  Example: "encoding=8bits", "encoding=utf8"
-  Form_For_IO_Open_and_Create : Ada.Strings.Unbounded.Unbounded_String
-    := Ada.Strings.Unbounded.Null_Unbounded_String;
+   --  Parameter Form added to *_IO.[Open|Create]
+   --  See RM A.8.2: File Management
+   --  Example: "encoding=8bits", "encoding=utf8"
+   Form_For_Io_Open_And_Create : Ada.Strings.Unbounded.Unbounded_String :=
+     Ada.Strings.Unbounded.Null_Unbounded_String;
 
 private
 
@@ -218,73 +210,80 @@ private
    --  in Zip archives. Subject to change, this is why this type is private.
    type Time is new Interfaces.Unsigned_32;
 
-   default_time: constant Time:= 16789 * 65536;
+   Default_Time : constant Time := 16789 * 65536;
 
-   type Root_Zipstream_Type is abstract new Ada.Streams.Root_Stream_Type with
-      record
-         Name              : Unbounded_String;
-         Modification_Time : Time := default_time;
-         Is_Unicode_Name   : Boolean := False;
-         Is_Read_Only      : Boolean := False;  --  only indicative
-      end record;
+   type Root_Zipstream_Type is abstract new Ada.Streams.Root_Stream_Type with record
+      Name              : Unbounded_String;
+      Modification_Time : Time    := Default_Time;
+      Is_Unicode_Name   : Boolean := False;
+      Is_Read_Only      : Boolean := False;  --  only indicative
+   end record;
 
    --  Memory_Zipstream spec
-   type Memory_Zipstream is new Root_Zipstream_Type with
-      record
-         Unb : Unbounded_String;
-         Loc : Integer := 1;
-      end record;
-   --  Read data from the stream.
+   type Memory_Zipstream is new Root_Zipstream_Type with record
+      Unb : Unbounded_String;
+      Loc : Integer := 1;
+   end record;
+
+   --  Read data from the stream
+   overriding
    procedure Read
      (Stream : in out Memory_Zipstream;
-      Item   : out Stream_Element_Array;
-      Last   : out Stream_Element_Offset);
+      Item   :    out Stream_Element_Array;
+      Last   :    out Stream_Element_Offset);
 
    --  Write data to the stream, starting from the current index.
    --  Data will be overwritten from index if already available.
-   procedure Write
-     (Stream : in out Memory_Zipstream;
-      Item   : Stream_Element_Array);
+   overriding
+   procedure Write (Stream : in out Memory_Zipstream; Item : Stream_Element_Array);
 
    --  Set the index on the stream
-   procedure Set_Index (S : in out Memory_Zipstream; To : ZS_Index_Type);
+   overriding
+   procedure Set_Index (S : in out Memory_Zipstream; To : Zs_Index_Type);
 
    --  Returns the index of the stream
-   function Index (S : in Memory_Zipstream) return ZS_Index_Type;
+   overriding
+   function Index (S : in Memory_Zipstream) return Zs_Index_Type;
 
    --  Returns the Size of the stream
-   function Size (S : in Memory_Zipstream) return ZS_Size_Type;
+   overriding
+   function Size (S : in Memory_Zipstream) return Zs_Size_Type;
 
    --  Returns true if the index is at the end of the stream
+   overriding
    function End_Of_Stream (S : in Memory_Zipstream) return Boolean;
 
    --  File_Zipstream spec
-   type File_Zipstream is new Root_Zipstream_Type with
-      record
-         File : Ada.Streams.Stream_IO.File_Type;
-      end record;
-   --  Read data from the stream.
+   type File_Zipstream is new Root_Zipstream_Type with record
+      File : Ada.Streams.Stream_IO.File_Type;
+   end record;
+
+   --  Read data from the stream
+   overriding
    procedure Read
      (Stream : in out File_Zipstream;
-      Item   : out Stream_Element_Array;
-      Last   : out Stream_Element_Offset);
+      Item   :    out Stream_Element_Array;
+      Last   :    out Stream_Element_Offset);
 
    --  Write data to the stream, starting from the current index.
    --  Data will be overwritten from index if already available.
-   procedure Write
-     (Stream : in out File_Zipstream;
-      Item   : Stream_Element_Array);
+   overriding
+   procedure Write (Stream : in out File_Zipstream; Item : Stream_Element_Array);
 
    --  Set the index on the stream
-   procedure Set_Index (S : in out File_Zipstream; To : ZS_Index_Type);
+   overriding
+   procedure Set_Index (S : in out File_Zipstream; To : Zs_Index_Type);
 
    --  Returns the index of the stream
-   function Index (S : in File_Zipstream) return ZS_Index_Type;
+   overriding
+   function Index (S : in File_Zipstream) return Zs_Index_Type;
 
    --  Returns the Size of the stream
-   function Size (S : in File_Zipstream) return ZS_Size_Type;
+   overriding
+   function Size (S : in File_Zipstream) return Zs_Size_Type;
 
    --  Returns true if the index is at the end of the stream
+   overriding
    function End_Of_Stream (S : in File_Zipstream) return Boolean;
 
 end Zip_Streams;

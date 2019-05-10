@@ -1,4 +1,4 @@
--- Legal licensing note:
+--  Legal licensing note:
 
 --  Copyright (c) 2000 .. 2018 Gautier de Montmollin
 --  SWITZERLAND
@@ -21,349 +21,324 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
 package body Zip.Headers is
 
-  -----------------------------------------------------------
-  -- Byte array <-> various integers, with Intel endianess --
-  -----------------------------------------------------------
+   -----------------------------------------------------------
+   -- Byte array <-> various integers, with Intel endianess --
+   -----------------------------------------------------------
 
-  -- Get numbers with correct trucmuche endian, to ensure
-  -- correct header loading on some non-Intel machines
+   --  Get numbers with correct trucmuche endian, to ensure
+   --  correct header loading on some non-Intel machines
 
-  generic
-    type Number is mod <>; -- range <> in Ada83 version (fake Interfaces)
-  function Intel_x86_number( b: Byte_Buffer ) return Number;
+   generic
+      type Number is mod <>; -- range <> in Ada83 version (fake Interfaces)
+   function Intel_X86_Number (B : Byte_Buffer) return Number;
 
-  function Intel_x86_number( b: Byte_Buffer ) return Number is
-    n: Number:= 0;
-  begin
-    for i in reverse b'Range loop
-      n:= n * 256 + Number(b(i));
-    end loop;
-    return n;
-  end Intel_x86_number;
-
-  function Intel_nb is new Intel_x86_number( Unsigned_16 );
-  function Intel_nb is new Intel_x86_number( Unsigned_32 );
-
-  -- Put numbers with correct endianess as bytes
-
-  generic
-    type Number is mod <>; -- range <> in Ada83 version (fake Interfaces)
-    size: Positive;
-  function Intel_x86_buffer( n: Number ) return Byte_Buffer;
-
-  function Intel_x86_buffer( n: Number ) return Byte_Buffer is
-    b: Byte_Buffer(1..size);
-    m: Number:= n;
-  begin
-    for i in b'Range loop
-      b(i):= Unsigned_8(m and 255);
-      m:= m / 256;
-    end loop;
-    return b;
-  end Intel_x86_buffer;
-
-  function Intel_bf is new Intel_x86_buffer( Unsigned_16, 2 );
-  function Intel_bf is new Intel_x86_buffer( Unsigned_32, 4 );
-
-  -------------------
-  -- PK signatures --
-  -------------------
-
-  function PK_signature( buf: Byte_Buffer; code: Unsigned_8 ) return Boolean is
-  begin
-    return buf(buf'First .. buf'First+3) = (16#50#, 16#4B#, code, code+1);
-    -- PK12, PK34, ...
-  end PK_signature;
-
-  procedure PK_signature( buf: in out Byte_Buffer; code: Unsigned_8 ) is
-  begin
-    buf(1..4) := (16#50#, 16#4B#, code, code+1); -- PK12, PK34, ...
-  end PK_signature;
-
-  -------------------------------------------------------
-  -- PKZIP file header, as in central directory - PK12 --
-  -------------------------------------------------------
-  procedure Read_and_check(
-    stream : in out Root_Zipstream_Type'Class;
-    header :    out Central_File_Header
-  )
-  is
-    chb: Byte_Buffer( 1..46 );
-  begin
-    BlockRead(stream, chb);
-
-    if not PK_signature(chb, 1) then
-      raise bad_central_header;
-    end if;
-
-    header.made_by_version:=                   Intel_nb( chb( 5.. 6) );
-    header.short_info.needed_extract_version:= Intel_nb( chb( 7.. 8) );
-    header.short_info.bit_flag:=               Intel_nb( chb( 9..10) );
-    header.short_info.zip_type:=               Intel_nb( chb(11..12) );
-    header.short_info.file_timedate:=
-     Zip_Streams.Calendar.Convert(Unsigned_32'(Intel_nb( chb(13..16) )));
-    header.short_info.dd.crc_32:=              Intel_nb( chb(17..20) );
-    header.short_info.dd.compressed_size:=     Intel_nb( chb(21..24) );
-    header.short_info.dd.uncompressed_size:=   Intel_nb( chb(25..28) );
-    header.short_info.filename_length:=        Intel_nb( chb(29..30) );
-    header.short_info.extra_field_length:=     Intel_nb( chb(31..32) );
-    header.comment_length:=                    Intel_nb( chb(33..34) );
-    header.disk_number_start:=                 Intel_nb( chb(35..36) );
-    header.internal_attributes:=               Intel_nb( chb(37..38) );
-    header.external_attributes:=               Intel_nb( chb(39..42) );
-    header.local_header_offset:=               Intel_nb( chb(43..46) );
-
-  end Read_and_check;
-
-  procedure Write(
-    stream : in out Root_Zipstream_Type'Class;
-    header : in     Central_File_Header
-  )
-  is
-    chb: Byte_Buffer( 1..46 );
-  begin
-    PK_signature(chb, 1);
-
-    chb( 5.. 6):= Intel_bf( header.made_by_version );
-    chb( 7.. 8):= Intel_bf( header.short_info.needed_extract_version );
-    chb( 9..10):= Intel_bf( header.short_info.bit_flag );
-    chb(11..12):= Intel_bf( header.short_info.zip_type );
-    chb(13..16):= Intel_bf( Zip_Streams.Calendar.Convert(
-                            header.short_info.file_timedate)
-                          );
-    chb(17..20):= Intel_bf( header.short_info.dd.crc_32 );
-    chb(21..24):= Intel_bf( header.short_info.dd.compressed_size );
-    chb(25..28):= Intel_bf( header.short_info.dd.uncompressed_size );
-    chb(29..30):= Intel_bf( header.short_info.filename_length );
-    chb(31..32):= Intel_bf( header.short_info.extra_field_length );
-    chb(33..34):= Intel_bf( header.comment_length );
-    chb(35..36):= Intel_bf( header.disk_number_start );
-    chb(37..38):= Intel_bf( header.internal_attributes );
-    chb(39..42):= Intel_bf( header.external_attributes );
-    chb(43..46):= Intel_bf( header.local_header_offset );
-
-    BlockWrite(stream, chb);
-  end Write;
-
-  -----------------------------------------------------------------------
-  -- PKZIP local file header, in front of every file in archive - PK34 --
-  -----------------------------------------------------------------------
-  procedure Read_and_check(
-    stream : in out Root_Zipstream_Type'Class;
-    header :    out Local_File_Header
-  )
-  is
-    lhb: Byte_Buffer( 1..30 );
-  begin
-    BlockRead(stream, lhb);
-
-    if not PK_signature(lhb, 3) then
-      raise bad_local_header;
-    end if;
-
-    header.needed_extract_version:= Intel_nb( lhb( 5.. 6) );
-    header.bit_flag:=               Intel_nb( lhb( 7.. 8) );
-    header.zip_type:=               Intel_nb( lhb( 9..10) );
-    header.file_timedate:= Zip_Streams.Calendar.Convert(Unsigned_32'(
-                                    Intel_nb( lhb(11..14) )
-                                  ));
-    header.dd.crc_32:=              Intel_nb( lhb(15..18) );
-    header.dd.compressed_size:=     Intel_nb( lhb(19..22) );
-    header.dd.uncompressed_size:=   Intel_nb( lhb(23..26) );
-    header.filename_length:=        Intel_nb( lhb(27..28) );
-    header.extra_field_length:=     Intel_nb( lhb(29..30) );
-
-  end Read_and_check;
-
-  procedure Write(
-    stream : in out Root_Zipstream_Type'Class;
-    header : in     Local_File_Header
-  )
-  is
-    lhb: Byte_Buffer( 1..30 );
-  begin
-    PK_signature(lhb, 3);
-
-    lhb( 5.. 6):= Intel_bf( header.needed_extract_version );
-    lhb( 7.. 8):= Intel_bf( header.bit_flag );
-    lhb( 9..10):= Intel_bf( header.zip_type );
-    lhb(11..14):= Intel_bf( Zip_Streams.Calendar.Convert(header.file_timedate) );
-    lhb(15..18):= Intel_bf( header.dd.crc_32 );
-    lhb(19..22):= Intel_bf( header.dd.compressed_size );
-    lhb(23..26):= Intel_bf( header.dd.uncompressed_size );
-    lhb(27..28):= Intel_bf( header.filename_length );
-    lhb(29..30):= Intel_bf( header.extra_field_length );
-
-    BlockWrite(stream, lhb);
-  end Write;
-
-  -------------------------------------------
-  -- PKZIP end-of-central-directory - PK56 --
-  -------------------------------------------
-  procedure Copy_and_check(
-    buffer  : in     Byte_Buffer;
-    the_end :    out End_of_Central_Dir
-  )
-  is
-    o: constant Integer:= buffer'First - 1;
-  begin
-    if not PK_signature(buffer, 5) then
-      raise bad_end;
-    end if;
-
-    the_end.disknum:=              Intel_nb( buffer(o+ 5..o+ 6) );
-    the_end.disknum_with_start:=   Intel_nb( buffer(o+ 7..o+ 8) );
-    the_end.disk_total_entries:=   Intel_nb( buffer(o+ 9..o+10) );
-    the_end.total_entries:=        Intel_nb( buffer(o+11..o+12) );
-    the_end.central_dir_size:=     Intel_nb( buffer(o+13..o+16) );
-    the_end.central_dir_offset:=   Intel_nb( buffer(o+17..o+20) );
-    the_end.main_comment_length:=  Intel_nb( buffer(o+21..o+22) );
-
-  end Copy_and_check;
-
-  procedure Read_and_check(
-    stream  : in out Root_Zipstream_Type'Class;
-    the_end :    out End_of_Central_Dir
-  )
-  is
-    eb: Byte_Buffer( 1..22 );
-  begin
-    BlockRead(stream, eb);
-    Copy_and_check(eb, the_end);
-  end Read_and_check;
-
-  procedure Load(
-    stream  : in out Root_Zipstream_Type'Class;
-    the_end :    out End_of_Central_Dir
-  )
-  is
-    min_end_start: ZS_Index_Type;  --  min_end_start >= 1
-    max_comment: constant:= 65_535;
-    -- In appnote.txt :
-    -- .ZIP file comment length        2 bytes
-  begin
-    if Size (stream) < 22 then
-      raise bad_end;
-    end if;
-    -- 20-Jun-2001: abandon search below min_end_start.
-    if Size (stream) <= max_comment then
-      min_end_start:= 1;
-    else
-      min_end_start:= Size(stream) - max_comment;
-    end if;
-    Set_Index(stream, min_end_start);
-    declare
-      -- We copy a large chunk of the zip stream's tail into a buffer.
-      large_buffer: Byte_Buffer(0 .. Natural(Size(stream) - min_end_start));
-      ilb: Integer;
-      x : ZS_Size_Type;
-    begin
-      BlockRead(stream, large_buffer);
-      for i in reverse min_end_start .. Size(stream) - 21 loop
-        -- Yes, we must _search_ for the header...
-        -- because PKWARE put a variable-size comment _after_ it 8-(
-        ilb:= Integer(i - min_end_start);
-        if PK_signature(large_buffer(ilb .. ilb + 3), 5) then
-          Copy_and_check( large_buffer(ilb .. ilb + 21), the_end );
-          -- At this point, the buffer was successfully read, the_end is
-          -- is set with its standard contents.
-          --
-          --  This is the *real* position of the end-of-central-directory block, to begin with:
-          x:= i;
-          --  We subtract the *theoretical* (stored) position of the end-of-central-directory.
-          --  The theoretical position is equal to central_dir_offset + central_dir_size.
-          --  The theoretical position should be smaller or equal than the real position -
-          --  unless the archive is corrupted.
-          --  We do it step by step, because ZS_Size_Type was modular until rev. 644.
-          --  Now it's a signed 64 bits, but we don't want to change anything again...
-          --
-          x := x - 1;  --  i >= 1, so no dragons here. The "- 1" is for adapting from the 1-based Ada index.
-          exit when ZS_Size_Type(the_end.central_dir_offset) > x;  --  fuzzy value, will trigger bad_end
-          x := x - ZS_Size_Type(the_end.central_dir_offset);
-          exit when ZS_Size_Type(the_end.central_dir_size) > x;  --  fuzzy value, will trigger bad_end
-          x := x - ZS_Size_Type(the_end.central_dir_size);
-          --  Now, x is the difference : real - theoretical.
-          --    x > 0  if the archive was appended to another file (typically an executable
-          --           for self-extraction purposes).
-          --    x = 0  if this is a "pure" Zip archive.
-          the_end.offset_shifting:= x;
-          Set_Index(stream, i + 22);
-          return; -- the_end found and filled -> exit
-        end if;
+   function Intel_X86_Number (B : Byte_Buffer) return Number is
+      N : Number := 0;
+   begin
+      for I in reverse B'Range loop
+         N := N * 256 + Number (B (I));
       end loop;
-      raise bad_end; -- Definitely no "end-of-central-directory" in this stream
-    end;
-  end Load;
+      return N;
+   end Intel_X86_Number;
 
-  procedure Write(
-    stream  : in out Root_Zipstream_Type'Class;
-    the_end : in     End_of_Central_Dir
-  )
-  is
-    eb: Byte_Buffer( 1..22 );
-  begin
-    PK_signature(eb, 5);
+   function Intel_Nb is new Intel_X86_Number (Unsigned_16);
+   function Intel_Nb is new Intel_X86_Number (Unsigned_32);
 
-    eb( 5.. 6):= Intel_bf( the_end.disknum );
-    eb( 7.. 8):= Intel_bf( the_end.disknum_with_start );
-    eb( 9..10):= Intel_bf( the_end.disk_total_entries );
-    eb(11..12):= Intel_bf( the_end.total_entries );
-    eb(13..16):= Intel_bf( the_end.central_dir_size );
-    eb(17..20):= Intel_bf( the_end.central_dir_offset );
-    eb(21..22):= Intel_bf( the_end.main_comment_length );
+   --  Put numbers with correct endianess as bytes
 
-    BlockWrite(stream, eb);
-  end Write;
+   generic
+      type Number is mod <>; -- range <> in Ada83 version (fake Interfaces)
+      Size : Positive;
+   function Intel_X86_Buffer (N : Number) return Byte_Buffer;
 
-  ------------------------------------------------------------------
-  -- PKZIP data descriptor, after streamed compressed data - PK78 --
-  ------------------------------------------------------------------
-  procedure Copy_and_check(
-    buffer        : in     Byte_Buffer;
-    the_data_desc :    out Data_descriptor
-  )
-  is
-  begin
-    if not PK_signature(buffer, 7) then
-      raise bad_data_descriptor;
-    end if;
+   function Intel_X86_Buffer (N : Number) return Byte_Buffer is
+      B : Byte_Buffer (1 .. Size);
+      M : Number := N;
+   begin
+      for I in B'Range loop
+         B (I) := Unsigned_8 (M and 255);
+         M     := M / 256;
+      end loop;
+      return B;
+   end Intel_X86_Buffer;
 
-    the_data_desc.crc_32:=             Intel_nb( buffer(5..8) );
-    the_data_desc.compressed_size:=    Intel_nb( buffer(9..12) );
-    the_data_desc.uncompressed_size:=  Intel_nb( buffer(13..16) );
+   function Intel_Bf is new Intel_X86_Buffer (Unsigned_16, 2);
+   function Intel_Bf is new Intel_X86_Buffer (Unsigned_32, 4);
 
-  end Copy_and_check;
+   ---------------------
+   --  PK signatures  --
+   ---------------------
 
-  procedure Read_and_check(
-    stream        : in out Root_Zipstream_Type'Class;
-    the_data_desc :    out Data_descriptor
-  )
-  is
-    ddb: Byte_Buffer( 1..16 );
-  begin
-    BlockRead(stream, ddb);
-    Copy_and_check(ddb, the_data_desc);
-  end Read_and_check;
+   function Pk_Signature (Buf : Byte_Buffer; Code : Unsigned_8) return Boolean is
+   begin
+      return Buf (Buf'First .. Buf'First + 3) = (16#50#, 16#4B#, Code, Code + 1);
+      --  PK12, PK34, ...
+   end Pk_Signature;
 
-  procedure Write(
-    stream        : in out Root_Zipstream_Type'Class;
-    the_data_desc : in     Data_descriptor
-  )
-  is
-    ddb: Byte_Buffer( 1..16 );
-  begin
-    PK_signature(ddb, 7);
+   procedure Pk_Signature (Buf : in out Byte_Buffer; Code : Unsigned_8) is
+   begin
+      Buf (1 .. 4) := (16#50#, 16#4B#, Code, Code + 1); -- PK12, PK34, ...
+   end Pk_Signature;
 
-    ddb( 5.. 8):= Intel_bf( the_data_desc.crc_32 );
-    ddb( 9..12):= Intel_bf( the_data_desc.compressed_size );
-    ddb(13..16):= Intel_bf( the_data_desc.uncompressed_size );
+   ---------------------------------------------------------
+   --  PKZIP file header, as in central directory - PK12  --
+   ---------------------------------------------------------
+   procedure Read_And_Check
+     (Stream : in out Root_Zipstream_Type'Class;
+      Header :    out Central_File_Header)
+   is
+      Chb : Byte_Buffer (1 .. 46);
+   begin
+      Blockread (Stream, Chb);
 
-    BlockWrite(stream, ddb);
-  end Write;
+      if not Pk_Signature (Chb, 1) then
+         raise Bad_Central_Header;
+      end if;
+
+      Header.Made_By_Version                   := Intel_Nb (Chb (5 .. 6));
+      Header.Short_Info.Needed_Extract_Version := Intel_Nb (Chb (7 .. 8));
+      Header.Short_Info.Bit_Flag               := Intel_Nb (Chb (9 .. 10));
+      Header.Short_Info.Zip_Type               := Intel_Nb (Chb (11 .. 12));
+      Header.Short_Info.File_Timedate          :=
+        Zip_Streams.Calendar.Convert (Unsigned_32'(Intel_Nb (Chb (13 .. 16))));
+      Header.Short_Info.Dd.Crc_32            := Intel_Nb (Chb (17 .. 20));
+      Header.Short_Info.Dd.Compressed_Size   := Intel_Nb (Chb (21 .. 24));
+      Header.Short_Info.Dd.Uncompressed_Size := Intel_Nb (Chb (25 .. 28));
+      Header.Short_Info.Filename_Length      := Intel_Nb (Chb (29 .. 30));
+      Header.Short_Info.Extra_Field_Length   := Intel_Nb (Chb (31 .. 32));
+      Header.Comment_Length                  := Intel_Nb (Chb (33 .. 34));
+      Header.Disk_Number_Start               := Intel_Nb (Chb (35 .. 36));
+      Header.Internal_Attributes             := Intel_Nb (Chb (37 .. 38));
+      Header.External_Attributes             := Intel_Nb (Chb (39 .. 42));
+      Header.Local_Header_Offset             := Intel_Nb (Chb (43 .. 46));
+
+   end Read_And_Check;
+
+   procedure Write (Stream : in out Root_Zipstream_Type'Class; Header : in Central_File_Header) is
+      Chb : Byte_Buffer (1 .. 46);
+   begin
+      Pk_Signature (Chb, 1);
+
+      Chb (5 .. 6)   := Intel_Bf (Header.Made_By_Version);
+      Chb (7 .. 8)   := Intel_Bf (Header.Short_Info.Needed_Extract_Version);
+      Chb (9 .. 10)  := Intel_Bf (Header.Short_Info.Bit_Flag);
+      Chb (11 .. 12) := Intel_Bf (Header.Short_Info.Zip_Type);
+      Chb (13 .. 16) := Intel_Bf (Zip_Streams.Calendar.Convert (Header.Short_Info.File_Timedate));
+      Chb (17 .. 20) := Intel_Bf (Header.Short_Info.Dd.Crc_32);
+      Chb (21 .. 24) := Intel_Bf (Header.Short_Info.Dd.Compressed_Size);
+      Chb (25 .. 28) := Intel_Bf (Header.Short_Info.Dd.Uncompressed_Size);
+      Chb (29 .. 30) := Intel_Bf (Header.Short_Info.Filename_Length);
+      Chb (31 .. 32) := Intel_Bf (Header.Short_Info.Extra_Field_Length);
+      Chb (33 .. 34) := Intel_Bf (Header.Comment_Length);
+      Chb (35 .. 36) := Intel_Bf (Header.Disk_Number_Start);
+      Chb (37 .. 38) := Intel_Bf (Header.Internal_Attributes);
+      Chb (39 .. 42) := Intel_Bf (Header.External_Attributes);
+      Chb (43 .. 46) := Intel_Bf (Header.Local_Header_Offset);
+
+      Blockwrite (Stream, Chb);
+   end Write;
+
+   -------------------------------------------------------------------------
+   --  PKZIP local file header, in front of every file in archive - PK34  --
+   -------------------------------------------------------------------------
+   procedure Read_And_Check
+     (Stream : in out Root_Zipstream_Type'Class;
+      Header :    out Local_File_Header)
+   is
+      Lhb : Byte_Buffer (1 .. 30);
+   begin
+      Blockread (Stream, Lhb);
+
+      if not Pk_Signature (Lhb, 3) then
+         raise Bad_Local_Header;
+      end if;
+
+      Header.Needed_Extract_Version := Intel_Nb (Lhb (5 .. 6));
+      Header.Bit_Flag               := Intel_Nb (Lhb (7 .. 8));
+      Header.Zip_Type               := Intel_Nb (Lhb (9 .. 10));
+      Header.File_Timedate          :=
+        Zip_Streams.Calendar.Convert (Unsigned_32'(Intel_Nb (Lhb (11 .. 14))));
+      Header.Dd.Crc_32            := Intel_Nb (Lhb (15 .. 18));
+      Header.Dd.Compressed_Size   := Intel_Nb (Lhb (19 .. 22));
+      Header.Dd.Uncompressed_Size := Intel_Nb (Lhb (23 .. 26));
+      Header.Filename_Length      := Intel_Nb (Lhb (27 .. 28));
+      Header.Extra_Field_Length   := Intel_Nb (Lhb (29 .. 30));
+
+   end Read_And_Check;
+
+   procedure Write (Stream : in out Root_Zipstream_Type'Class; Header : in Local_File_Header) is
+      Lhb : Byte_Buffer (1 .. 30);
+   begin
+      Pk_Signature (Lhb, 3);
+
+      Lhb (5 .. 6)   := Intel_Bf (Header.Needed_Extract_Version);
+      Lhb (7 .. 8)   := Intel_Bf (Header.Bit_Flag);
+      Lhb (9 .. 10)  := Intel_Bf (Header.Zip_Type);
+      Lhb (11 .. 14) := Intel_Bf (Zip_Streams.Calendar.Convert (Header.File_Timedate));
+      Lhb (15 .. 18) := Intel_Bf (Header.Dd.Crc_32);
+      Lhb (19 .. 22) := Intel_Bf (Header.Dd.Compressed_Size);
+      Lhb (23 .. 26) := Intel_Bf (Header.Dd.Uncompressed_Size);
+      Lhb (27 .. 28) := Intel_Bf (Header.Filename_Length);
+      Lhb (29 .. 30) := Intel_Bf (Header.Extra_Field_Length);
+
+      Blockwrite (Stream, Lhb);
+   end Write;
+
+   ---------------------------------------------
+   --  PKZIP end-of-central-directory - PK56  --
+   ---------------------------------------------
+   procedure Copy_And_Check (Buffer : in Byte_Buffer; The_End : out End_Of_Central_Dir) is
+      O : constant Integer := Buffer'First - 1;
+   begin
+      if not Pk_Signature (Buffer, 5) then
+         raise Bad_End;
+      end if;
+
+      The_End.Disknum             := Intel_Nb (Buffer (O + 5 .. O + 6));
+      The_End.Disknum_With_Start  := Intel_Nb (Buffer (O + 7 .. O + 8));
+      The_End.Disk_Total_Entries  := Intel_Nb (Buffer (O + 9 .. O + 10));
+      The_End.Total_Entries       := Intel_Nb (Buffer (O + 11 .. O + 12));
+      The_End.Central_Dir_Size    := Intel_Nb (Buffer (O + 13 .. O + 16));
+      The_End.Central_Dir_Offset  := Intel_Nb (Buffer (O + 17 .. O + 20));
+      The_End.Main_Comment_Length := Intel_Nb (Buffer (O + 21 .. O + 22));
+
+   end Copy_And_Check;
+
+   procedure Read_And_Check
+     (Stream  : in out Root_Zipstream_Type'Class;
+      The_End :    out End_Of_Central_Dir)
+   is
+      Eb : Byte_Buffer (1 .. 22);
+   begin
+      Blockread (Stream, Eb);
+      Copy_And_Check (Eb, The_End);
+   end Read_And_Check;
+
+   procedure Load (Stream : in out Root_Zipstream_Type'Class; The_End : out End_Of_Central_Dir) is
+      Min_End_Start : Zs_Index_Type;  --  min_end_start >= 1
+      Max_Comment   : constant := 65_535;
+   --  In appnote.txt :
+   --  .ZIP file comment length        2 bytes
+   begin
+      if Size (Stream) < 22 then
+         raise Bad_End;
+      end if;
+      --  20-Jun-2001: abandon search below min_end_start.
+      if Size (Stream) <= Max_Comment then
+         Min_End_Start := 1;
+      else
+         Min_End_Start := Size (Stream) - Max_Comment;
+      end if;
+      Set_Index (Stream, Min_End_Start);
+      declare
+         --  We copy a large chunk of the zip stream's tail into a buffer.
+         Large_Buffer : Byte_Buffer (0 .. Natural (Size (Stream) - Min_End_Start));
+         Ilb          : Integer;
+         X            : Zs_Size_Type;
+      begin
+         Blockread (Stream, Large_Buffer);
+         for I in reverse Min_End_Start .. Size (Stream) - 21 loop
+            --  Yes, we must _search_ for the header...
+            --  because PKWARE put a variable-size comment _after_ it 8-(
+            Ilb := Integer (I - Min_End_Start);
+            if Pk_Signature (Large_Buffer (Ilb .. Ilb + 3), 5) then
+               Copy_And_Check (Large_Buffer (Ilb .. Ilb + 21), The_End);
+               --  At this point, the buffer was successfully read, the_end is
+               --  is set with its standard contents.
+               --
+            --  This is the *real* position of the end-of-central-directory block, to begin with:
+               X := I;
+               --  We subtract the *theoretical* (stored) position of the end-of-central-directory.
+               --  The theoretical position is equal to central_dir_offset + central_dir_size.
+               --  The theoretical position should be smaller or equal than the real position -
+               --  unless the archive is corrupted.
+               --  We do it step by step, because ZS_Size_Type was modular until rev. 644.
+               --  Now it's a signed 64 bits, but we don't want to change anything again...
+               --
+               X := X - 1;
+               --  i >= 1, so no dragons here. The "- 1" is for adapting
+               --  from the 1-based Ada index.
+
+               --  Fuzzy value, will trigger bad_end
+               exit when Zs_Size_Type (The_End.Central_Dir_Offset) > X;
+
+               --  Fuzzy value, will trigger bad_end
+               X := X - Zs_Size_Type (The_End.Central_Dir_Offset);
+               exit when Zs_Size_Type (The_End.Central_Dir_Size) > X;
+
+               X := X - Zs_Size_Type (The_End.Central_Dir_Size);
+               --  Now, x is the difference : real - theoretical.
+               --    x > 0  if the archive was appended to another file (typically an executable
+               --           for self-extraction purposes).
+               --    x = 0  if this is a "pure" Zip archive.
+               The_End.Offset_Shifting := X;
+               Set_Index (Stream, I + 22);
+               return;  -- The_End found and filled -> exit
+            end if;
+         end loop;
+         raise Bad_End;  --  Definitely no "end-of-central-directory" in this stream
+      end;
+   end Load;
+
+   procedure Write (Stream : in out Root_Zipstream_Type'Class; The_End : in End_Of_Central_Dir) is
+      Eb : Byte_Buffer (1 .. 22);
+   begin
+      Pk_Signature (Eb, 5);
+
+      Eb (5 .. 6)   := Intel_Bf (The_End.Disknum);
+      Eb (7 .. 8)   := Intel_Bf (The_End.Disknum_With_Start);
+      Eb (9 .. 10)  := Intel_Bf (The_End.Disk_Total_Entries);
+      Eb (11 .. 12) := Intel_Bf (The_End.Total_Entries);
+      Eb (13 .. 16) := Intel_Bf (The_End.Central_Dir_Size);
+      Eb (17 .. 20) := Intel_Bf (The_End.Central_Dir_Offset);
+      Eb (21 .. 22) := Intel_Bf (The_End.Main_Comment_Length);
+
+      Blockwrite (Stream, Eb);
+   end Write;
+
+   --------------------------------------------------------------------
+   --  PKZIP data descriptor, after streamed compressed data - PK78  --
+   --------------------------------------------------------------------
+   procedure Copy_And_Check (Buffer : in Byte_Buffer; The_Data_Desc : out Data_Descriptor) is
+   begin
+      if not Pk_Signature (Buffer, 7) then
+         raise Bad_Data_Descriptor;
+      end if;
+
+      The_Data_Desc.Crc_32            := Intel_Nb (Buffer (5 .. 8));
+      The_Data_Desc.Compressed_Size   := Intel_Nb (Buffer (9 .. 12));
+      The_Data_Desc.Uncompressed_Size := Intel_Nb (Buffer (13 .. 16));
+
+   end Copy_And_Check;
+
+   procedure Read_And_Check
+     (Stream        : in out Root_Zipstream_Type'Class;
+      The_Data_Desc :    out Data_Descriptor)
+   is
+      Ddb : Byte_Buffer (1 .. 16);
+   begin
+      Blockread (Stream, Ddb);
+      Copy_And_Check (Ddb, The_Data_Desc);
+   end Read_And_Check;
+
+   procedure Write
+     (Stream        : in out Root_Zipstream_Type'Class;
+      The_Data_Desc : in     Data_Descriptor)
+   is
+      Ddb : Byte_Buffer (1 .. 16);
+   begin
+      Pk_Signature (Ddb, 7);
+
+      Ddb (5 .. 8)   := Intel_Bf (The_Data_Desc.Crc_32);
+      Ddb (9 .. 12)  := Intel_Bf (The_Data_Desc.Compressed_Size);
+      Ddb (13 .. 16) := Intel_Bf (The_Data_Desc.Uncompressed_Size);
+
+      Blockwrite (Stream, Ddb);
+   end Write;
 
 end Zip.Headers;

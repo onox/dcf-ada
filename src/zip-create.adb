@@ -21,416 +21,398 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found 21-Aug-2016 on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found 21-Aug-2016 on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
 with Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Text_IO;
 
-with Interfaces;                        use Interfaces;
+with Interfaces;
+use Interfaces;
 
 package body Zip.Create is
 
-   procedure Create(Info          : out Zip_Create_info;
-                    Z_Stream      : in Zipstream_Class_Access;
-                    Name          : String;
-                    Compress      : Zip.Compress.Compression_Method:= Zip.Compress.Deflate_1;
-                    Duplicates    : Duplicate_name_policy:= admit_duplicates
-   )
-   is
+   procedure Create
+     (Info       :    out Zip_Create_Info;
+      Z_Stream   : in     Zipstream_Class_Access;
+      Name       :        String;
+      Compress   :        Zip.Compress.Compression_Method := Zip.Compress.Deflate_1;
+      Duplicates :        Duplicate_Name_Policy           := Admit_Duplicates) is
    begin
-      Info.Stream := Z_Stream;
+      Info.Stream   := Z_Stream;
       Info.Compress := Compress;
       if Name /= "" then
          Set_Name (Info.Stream.all, Name);
       end if;
-      --
-      -- If we have a real file (File_Zipstream or descendent), create the file too:
-      --
+
+      --  If we have a real file (File_Zipstream or descendent), create the file too
       if Z_Stream.all in File_Zipstream'Class then
-        Zip_Streams.Create (File_Zipstream(Z_Stream.all), Zip_Streams.Out_File);
+         Zip_Streams.Create (File_Zipstream (Z_Stream.all), Zip_Streams.Out_File);
       end if;
-      Info.Duplicates:= Duplicates;
+      Info.Duplicates := Duplicates;
    end Create;
 
-   function Is_Created(Info: Zip_Create_info) return Boolean is
+   function Is_Created (Info : Zip_Create_Info) return Boolean is
    begin
       return Info.Stream /= null;
    end Is_Created;
 
-   procedure Set(Info       : in out Zip_Create_info;
-                 New_Method : Zip.Compress.Compression_Method)
-   is
+   procedure Set (Info : in out Zip_Create_Info; New_Method : Zip.Compress.Compression_Method) is
    begin
-     Info.Compress:= New_Method;
+      Info.Compress := New_Method;
    end Set;
 
-   function Name(Info: Zip_Create_info) return String is
+   function Name (Info : Zip_Create_Info) return String is
    begin
-     return Get_Name(Info.Stream.all);
+      return Get_Name (Info.Stream.all);
    end Name;
 
-   procedure Dispose is new
-     Ada.Unchecked_Deallocation (Dir_entries, Pdir_entries);
+   procedure Dispose is new Ada.Unchecked_Deallocation (Dir_Entries, Pdir_Entries);
 
-   procedure Resize (A    : in out Pdir_entries;
-                     Size : Integer) is
-      Hlp : constant Pdir_entries := new Dir_entries (1 .. Size);
+   procedure Resize (A : in out Pdir_Entries; Size : Integer) is
+      Hlp : constant Pdir_Entries := new Dir_Entries (1 .. Size);
    begin
       if A = null then
          A := Hlp;
       else
-         Hlp (1 .. Integer'Min (Size, A'Length)) :=
-           A (1 .. Integer'Min (Size, A'Length));
+         Hlp (1 .. Integer'Min (Size, A'Length)) := A (1 .. Integer'Min (Size, A'Length));
          Dispose (A);
          A := Hlp;
       end if;
    end Resize;
 
-   -- Internal - add the catalogue entry corresponding to a
-   -- compressed file in the Zip archive.
-   -- The entire catalogue will be written at the end of the zip stream,
-   -- and the entry as a local header just before the compressed data.
-   -- The entry's is mostly incomplete in the end (name, size, ...); stream
-   -- operations on the archive being built are not performed here,
-   -- see Add_Stream for that.
-   --
-   procedure Add_catalogue_entry (Info: in out Zip_Create_info)
-   is
+   --  Internal - add the catalogue entry corresponding to a
+   --  compressed file in the Zip archive.
+   --  The entire catalogue will be written at the end of the zip stream,
+   --  and the entry as a local header just before the compressed data.
+   --  The entry's is mostly incomplete in the end (name, size, ...); stream
+   --  operations on the archive being built are not performed here,
+   --  see Add_Stream for that.
+   procedure Add_Catalogue_Entry (Info : in out Zip_Create_Info) is
    begin
-      if Info.Last_entry = 0 then
-        Info.Last_entry:= 1;
-        Resize (Info.Contains, 32);
+      if Info.Last_Entry = 0 then
+         Info.Last_Entry := 1;
+         Resize (Info.Contains, 32);
       else
-        Info.Last_entry:= Info.Last_entry + 1;
-        if Info.Last_entry > Info.Contains'Last then
-          -- Info.Contains is full, time to resize it!
-          -- We do nothing less than double the size - better than
-          -- whatever offer you'd get in your e-mails.
-          Resize (Info.Contains, Info.Contains'Last * 2);
-        end if;
+         Info.Last_Entry := Info.Last_Entry + 1;
+         if Info.Last_Entry > Info.Contains'Last then
+            --  Info.Contains is full, time to resize it!
+            --  We do nothing less than double the size - better than
+            --  whatever offer you'd get in your e-mails.
+            Resize (Info.Contains, Info.Contains'Last * 2);
+         end if;
       end if;
       declare
-        cfh: Central_File_Header renames Info.Contains(Info.Last_entry).head;
+         Cfh : Central_File_Header renames Info.Contains (Info.Last_Entry).Head;
       begin
-        --  Administration
-        cfh.made_by_version      := 23; -- version 2.30
-        cfh.comment_length       := 0;
-        cfh.disk_number_start    := 0;
-        cfh.internal_attributes  := 0; -- 0: binary; 1: text
-        cfh.external_attributes  := 0;
-        cfh.short_info.needed_extract_version := 10; -- Value put by Zip/PKZip
-        cfh.short_info.bit_flag  := 0;
+         --  Administration
+         Cfh.Made_By_Version                   := 23;  --  Version 2.30
+         Cfh.Comment_Length                    := 0;
+         Cfh.Disk_Number_Start                 := 0;
+         Cfh.Internal_Attributes               := 0;   --  0: binary; 1: text
+         Cfh.External_Attributes               := 0;
+         Cfh.Short_Info.Needed_Extract_Version := 10;  --  Value put by Zip/PKZip
+         Cfh.Short_Info.Bit_Flag               := 0;
       end;
-   end Add_catalogue_entry;
+   end Add_Catalogue_Entry;
 
    --  This is just for detecting duplicates
-   procedure Insert_to_name_dictionary(file_name: String; m: in out Name_mapping.Map) is
-     cm : Name_mapping.Cursor;
-     OK : Boolean;
+   procedure Insert_To_Name_Dictionary (File_Name : String; M : in out Name_Mapping.Map) is
+      Cm : Name_Mapping.Cursor;
+      Ok : Boolean;
    begin
-     m.Insert (To_Unbounded_String (file_name), cm, OK);
-     if not OK then  --  Name already registered
-       raise Duplicate_name with "Entry name = " & file_name;
-     end if;
-   end Insert_to_name_dictionary;
+      M.Insert (To_Unbounded_String (File_Name), Cm, Ok);
+      if not Ok then
+         --  Name already registered
+         raise Duplicate_Name with "Entry name = " & File_Name;
+      end if;
+   end Insert_To_Name_Dictionary;
 
-   procedure Add_Stream (Info     : in out Zip_Create_info;
-                         Stream   : in out Root_Zipstream_Type'Class)
+   procedure Add_Stream
+     (Info   : in out Zip_Create_Info;
+      Stream : in out Root_Zipstream_Type'Class)
    is
-     Compressed_Size: Zip.File_size_type; -- dummy
-     Final_Method   : Natural;            -- dummy
+      Compressed_Size : Zip.File_Size_Type;  --  Dummy
+      Final_Method    : Natural;             --  Dummy
    begin
-     Add_Stream(Info, Stream, null, Compressed_Size, Final_Method);
+      Add_Stream (Info, Stream, null, Compressed_Size, Final_Method);
    end Add_Stream;
 
-   four_gb : constant := 4 * (1024 ** 3);
+   Four_Gb : constant := 4 * (1024**3);
 
-   Zip_32_exceeded_message : constant String :=
+   Zip_32_Exceeded_Message : constant String :=
      "Zip file too large (for Zip_32 archive format): more than 4GB.";
 
-   procedure Add_Stream (Info           : in out Zip_Create_info;
-                         Stream         : in out Root_Zipstream_Type'Class;
-                         Feedback       : in     Feedback_proc;
-                         Compressed_Size:    out Zip.File_size_type;
-                         Final_Method   :    out Natural)
+   procedure Add_Stream
+     (Info            : in out Zip_Create_Info;
+      Stream          : in out Root_Zipstream_Type'Class;
+      Feedback        : in     Feedback_Proc;
+      Compressed_Size :    out Zip.File_Size_Type;
+      Final_Method    :    out Natural)
    is
-      mem1, mem2 : ZS_Index_Type := 1;
-      entry_name : String:= Get_Name (Stream);
-      Last: Positive;
+      Mem1, Mem2 : Zs_Index_Type := 1;
+      Entry_Name : String        := Get_Name (Stream);
+      Last       : Positive;
    begin
-      -- Appnote.txt, V. J. :
-      --   " All slashes should be forward slashes '/' as opposed to backwards slashes '\' "
-      for i in entry_name'Range loop
-        if entry_name(i) = '\' then
-          entry_name(i):= '/';
-        end if;
+      --  Appnote.txt, V. J. :
+      --    " All slashes should be forward slashes '/' as opposed to
+      --    backwards slashes '\' "
+      for I in Entry_Name'Range loop
+         if Entry_Name (I) = '\' then
+            Entry_Name (I) := '/';
+         end if;
       end loop;
-      if Info.Duplicates = error_on_duplicate then
-        --  Check for duplicates; raises Duplicate_name in this case.
-        Insert_to_name_dictionary (entry_name, Info.dir);
+      if Info.Duplicates = Error_On_Duplicate then
+         --  Check for duplicates; raises Duplicate_name in this case
+         Insert_To_Name_Dictionary (Entry_Name, Info.Dir);
       end if;
-      Add_catalogue_entry (Info);
-      Last:= Info.Last_entry;
+      Add_Catalogue_Entry (Info);
+      Last := Info.Last_Entry;
       declare
-        cfh: Central_File_Header renames Info.Contains(Last).head;
-        shi: Local_File_Header renames cfh.short_info;
+         Cfh : Central_File_Header renames Info.Contains (Last).Head;
+         Shi : Local_File_Header renames Cfh.Short_Info;
       begin
-        --  Administration - continued
-        if Zip_Streams.Is_Unicode_Name (Stream) then
-          shi.bit_flag := shi.bit_flag or Zip.Headers.Language_Encoding_Flag_Bit;
-        end if;
-        pragma Assert (Zip.Headers.Encryption_Flag_Bit not in shi.bit_flag);
-        if Is_Read_Only(Stream) then
-          cfh.external_attributes:= cfh.external_attributes or 1;
-        end if;
-        shi.file_timedate        := Get_Time (Stream);
-        shi.dd.uncompressed_size := Unsigned_32 (Size (Stream));
-        shi.filename_length      := entry_name'Length;
-        Info.Contains (Last).name           := new String'(entry_name);
-        shi.extra_field_length   := 0;
+         --  Administration - continued
+         if Zip_Streams.Is_Unicode_Name (Stream) then
+            Shi.Bit_Flag := Shi.Bit_Flag or Zip.Headers.Language_Encoding_Flag_Bit;
+         end if;
+         pragma Assert (Zip.Headers.Encryption_Flag_Bit not in Shi.Bit_Flag);
+         if Is_Read_Only (Stream) then
+            Cfh.External_Attributes := Cfh.External_Attributes or 1;
+         end if;
+         Shi.File_Timedate         := Get_Time (Stream);
+         Shi.Dd.Uncompressed_Size  := Unsigned_32 (Size (Stream));
+         Shi.Filename_Length       := Entry_Name'Length;
+         Info.Contains (Last).Name := new String'(Entry_Name);
+         Shi.Extra_Field_Length    := 0;
 
-        mem1 := Index (Info.Stream.all);
-        cfh.local_header_offset := Unsigned_32 (mem1) - 1;
-        --  Write the local header with incomplete informations
-        Zip.Headers.Write (Info.Stream.all, shi);
+         Mem1                    := Index (Info.Stream.all);
+         Cfh.Local_Header_Offset := Unsigned_32 (Mem1) - 1;
+         --  Write the local header with incomplete informations
+         Zip.Headers.Write (Info.Stream.all, Shi);
 
-        String'Write(Info.Stream, entry_name);
+         String'Write (Info.Stream, Entry_Name);
 
-        --  Write compressed file
-        Zip.Compress.Compress_data
-          (input            => Stream,
-           output           => Info.Stream.all,
-           input_size_known => True,
-           input_size       => shi.dd.uncompressed_size,
-           method           => Info.Compress,
-           feedback         => Feedback,
-           content_hint     => Guess_type_from_name(entry_name),
-           CRC              => shi.dd.crc_32,
-           output_size      => shi.dd.compressed_size,
-           zip_type         => shi.zip_type
-          );
-        if shi.zip_type = compression_format_code.lzma then
-          --
-          --  For LZMA, we always put an EOS marker. From PKWARE's Appnote:
-          --
-          --      5.8.9 Data compressed with method 14, LZMA, may include an end-of-stream
-          --      (EOS) marker ending the compressed data stream.  This marker is not
-          --      required, but its use is highly recommended to facilitate processing
-          --      and implementers should include the EOS marker whenever possible.
-          --      When the EOS marker is used, general purpose bit 1 must be set.  If
-          --      general purpose bit 1 is not set, the EOS marker is not present.
-          --
-          shi.bit_flag := shi.bit_flag or LZMA_EOS_Flag_Bit;
-        end if;
-        mem2 := Index (Info.Stream.all);
-        if Info.zip_archive_format = Zip_32
-          and then mem2 > four_gb
-        then
-          Ada.Exceptions.Raise_Exception
-            (Zip_Capacity_Exceeded'Identity,
-             Zip_32_exceeded_message);
-        end if;
-        --  Go back to the local header to rewrite it with complete informations
-        --  known after the compression: CRC value, compressed size, actual compression format.
-        Set_Index (Info.Stream.all, mem1);
-        Zip.Headers.Write (Info.Stream.all, shi);
-        --  Return to momentaneous end of file
-        Set_Index (Info.Stream.all, mem2);
-        --
-        Compressed_Size:= shi.dd.compressed_size;
-        Final_Method   := Natural(shi.zip_type);
+         --  Write compressed file
+         Zip.Compress.Compress_Data
+           (Input            => Stream,
+            Output           => Info.Stream.all,
+            Input_Size_Known => True,
+            Input_Size       => Shi.Dd.Uncompressed_Size,
+            Method           => Info.Compress,
+            Feedback         => Feedback,
+            Content_Hint     => Guess_Type_From_Name (Entry_Name),
+            Crc              => Shi.Dd.Crc_32,
+            Output_Size      => Shi.Dd.Compressed_Size,
+            Zip_Type         => Shi.Zip_Type);
+         if Shi.Zip_Type = Compression_Format_Code.Lzma then
+            --  For LZMA, we always put an EOS marker. From PKWARE's Appnote:
+            --
+            --      5.8.9 Data compressed with method 14, LZMA, may include an end-of-stream
+            --      (EOS) marker ending the compressed data stream.  This marker is not
+            --      required, but its use is highly recommended to facilitate processing
+            --      and implementers should include the EOS marker whenever possible.
+            --      When the EOS marker is used, general purpose bit 1 must be set.  If
+            --      general purpose bit 1 is not set, the EOS marker is not present.
+            Shi.Bit_Flag := Shi.Bit_Flag or Lzma_Eos_Flag_Bit;
+         end if;
+         Mem2 := Index (Info.Stream.all);
+         if Info.Zip_Archive_Format = Zip_32 and then Mem2 > Four_Gb then
+            Ada.Exceptions.Raise_Exception
+              (Zip_Capacity_Exceeded'Identity,
+               Zip_32_Exceeded_Message);
+         end if;
+         --  Go back to the local header to rewrite it with complete informations
+         --  known after the compression: CRC value, compressed size, actual compression format.
+         Set_Index (Info.Stream.all, Mem1);
+         Zip.Headers.Write (Info.Stream.all, Shi);
+         --  Return to momentaneous end of file
+         Set_Index (Info.Stream.all, Mem2);
+         --
+         Compressed_Size := Shi.Dd.Compressed_Size;
+         Final_Method    := Natural (Shi.Zip_Type);
       end;
    end Add_Stream;
 
-   procedure Add_File (Info              : in out Zip_Create_info;
-                       Name              : String;
-                       Name_in_archive   : String:= "";
-                       -- default: add the file in the archive
-                       -- under the same name
-                       Delete_file_after : Boolean:= False;
-                       -- practical to delete temporary file after adding
-                       Name_encoding     : Zip_name_encoding:= IBM_437;
-                       Modification_time : Time:= default_time;
-                       Is_read_only      : Boolean:= False;
-                       Feedback          : Feedback_proc:= null)
+   procedure Add_File
+     (Info            : in out Zip_Create_Info;
+      Name            :        String;
+      Name_In_Archive :        String := "";
+      --  Default: add the file in the archive under the same name
+      Delete_File_After : Boolean := False;
+      --  Practical to delete temporary file after adding
+      Name_Encoding     : Zip_Name_Encoding := IBM_437;
+      Modification_Time : Time              := Default_Time;
+      Is_Read_Only      : Boolean           := False;
+      Feedback          : Feedback_Proc     := null)
    is
-      temp_zip_stream     : aliased File_Zipstream;
+      Temp_Zip_Stream : aliased File_Zipstream;
       use Ada.Text_IO;
-      fd: File_Type;
-      Compressed_Size: Zip.File_size_type; -- unused
-      Final_Method   : Natural; -- unused
+      Fd              : File_Type;
+      Compressed_Size : Zip.File_Size_Type;  --  Unused
+      Final_Method    : Natural;             --  Unused
    begin
-     -- Read the file
-     Set_Name(temp_zip_stream, Name);
-     Open(temp_zip_stream, Zip_Streams.In_File);
-     -- Eventually we set a new name for archiving:
-     if Name_in_archive /= "" then
-        Set_Name(temp_zip_stream, Name_in_archive);
-     end if;
-     Set_Unicode_Name_Flag(temp_zip_stream, Name_encoding = UTF_8);
-     Set_Read_Only_Flag(temp_zip_stream, Is_read_only);
-     Set_Time(temp_zip_stream, Modification_time);
-     -- Stuff into the .zip archive:
-     Add_Stream (Info, temp_zip_stream, Feedback, Compressed_Size, Final_Method);
-     Close(temp_zip_stream);
-     if Delete_file_after then
-        Open(fd, In_File, Name);
-        Delete(fd);
-     end if;
+      --  Read the file
+      Set_Name (Temp_Zip_Stream, Name);
+      Open (Temp_Zip_Stream, Zip_Streams.In_File);
+      --  Eventually we set a new name for archiving:
+      if Name_In_Archive /= "" then
+         Set_Name (Temp_Zip_Stream, Name_In_Archive);
+      end if;
+      Set_Unicode_Name_Flag (Temp_Zip_Stream, Name_Encoding = UTF_8);
+      Set_Read_Only_Flag (Temp_Zip_Stream, Is_Read_Only);
+      Set_Time (Temp_Zip_Stream, Modification_Time);
+      --  Stuff into the .zip archive:
+      Add_Stream (Info, Temp_Zip_Stream, Feedback, Compressed_Size, Final_Method);
+      Close (Temp_Zip_Stream);
+      if Delete_File_After then
+         Open (Fd, In_File, Name);
+         Delete (Fd);
+      end if;
    exception
-     when User_abort =>
-       if Is_Open(temp_zip_stream) then
-         Close(temp_zip_stream);
-       end if;
-       raise;
+      when User_Abort =>
+         if Is_Open (Temp_Zip_Stream) then
+            Close (Temp_Zip_Stream);
+         end if;
+         raise;
    end Add_File;
 
-   procedure Add_String (Info              : in out Zip_Create_info;
-                         Contents          : String;
-                         Name_in_archive   : String;
-                         --   Name_UTF_8_encoded = True if Name is actually UTF-8 encoded (Unicode)
-                         Name_UTF_8_encoded: Boolean:= False;
-                         --  Time stamp for this entry, e.g. Zip.Convert(Ada.Calendar.Clock)
-                         Creation_time     : Zip.Time:= default_time
-   )
+   procedure Add_String
+     (Info            : in out Zip_Create_Info;
+      Contents        :        String;
+      Name_In_Archive :        String;
+      --  Name_UTF_8_encoded = True if Name is actually UTF-8 encoded (Unicode)
+      Name_Utf_8_Encoded : Boolean := False;
+      --  Time stamp for this entry, e.g. Zip.Convert (Ada.Calendar.Clock)
+      Creation_Time : Zip.Time := Default_Time)
    is
    begin
-     Add_String(
-       Info               => Info,
-       Contents           => To_Unbounded_String(Contents),
-       Name_in_archive    => Name_in_archive,
-       Name_UTF_8_encoded => Name_UTF_8_encoded,
-       Creation_time      => Creation_time
-     );
+      Add_String
+        (Info               => Info,
+         Contents           => To_Unbounded_String (Contents),
+         Name_In_Archive    => Name_In_Archive,
+         Name_Utf_8_Encoded => Name_Utf_8_Encoded,
+         Creation_Time      => Creation_Time);
    end Add_String;
 
-   procedure Add_String (Info              : in out Zip_Create_info;
-                         Contents          : Unbounded_String;
-                         Name_in_archive   : String;
-                         --   Name_UTF_8_encoded = True if Name is actually UTF-8 encoded (Unicode)
-                         Name_UTF_8_encoded: Boolean:= False;
-                         --  Time stamp for this entry, e.g. Zip.Convert(Ada.Calendar.Clock)
-                         Creation_time     : Zip.Time:= default_time
-   )
+   procedure Add_String
+     (Info            : in out Zip_Create_Info;
+      Contents        :        Unbounded_String;
+      Name_In_Archive :        String;
+      --  Name_UTF_8_encoded = True if Name is actually UTF-8 encoded (Unicode)
+      Name_Utf_8_Encoded : Boolean := False;
+      --  Time stamp for this entry, e.g. Zip.Convert (Ada.Calendar.Clock)
+      Creation_Time : Zip.Time := Default_Time)
    is
-     temp_zip_stream     : aliased Memory_Zipstream;
+      Temp_Zip_Stream : aliased Memory_Zipstream;
    begin
-     Set(temp_zip_stream, Contents);
-     Set_Name(temp_zip_stream, Name_in_archive);
-     Set_Time(temp_zip_stream, Creation_time);
-     Set_Unicode_Name_Flag(temp_zip_stream, Name_UTF_8_encoded);
-     Add_Stream (Info, temp_zip_stream);
+      Set (Temp_Zip_Stream, Contents);
+      Set_Name (Temp_Zip_Stream, Name_In_Archive);
+      Set_Time (Temp_Zip_Stream, Creation_Time);
+      Set_Unicode_Name_Flag (Temp_Zip_Stream, Name_Utf_8_Encoded);
+      Add_Stream (Info, Temp_Zip_Stream);
    end Add_String;
 
-   procedure Add_Compressed_Stream (
-     Info           : in out Zip_Create_info;            --  Destination
-     Stream         : in out Root_Zipstream_Type'Class;  --  Source
-     Feedback       : in     Feedback_proc
-   )
+   procedure Add_Compressed_Stream
+     (Info     : in out Zip_Create_Info;            --  Destination
+      Stream   : in out Root_Zipstream_Type'Class;  --  Source
+      Feedback : in     Feedback_Proc)
    is
-      lh : Zip.Headers.Local_File_Header;
-      data_descriptor_after_data : Boolean;
+      Lh                         : Zip.Headers.Local_File_Header;
+      Data_Descriptor_After_Data : Boolean;
    begin
-      Zip.Headers.Read_and_check(Stream, lh);
-      data_descriptor_after_data := (lh.bit_flag and 8) /= 0;
+      Zip.Headers.Read_And_Check (Stream, Lh);
+      Data_Descriptor_After_Data := (Lh.Bit_Flag and 8) /= 0;
       --  Copy name and ignore extra field
       declare
-        name  : String (1..Positive(lh.filename_length));
-        extra : String (1..Natural(lh.extra_field_length));
+         Name  : String (1 .. Positive (Lh.Filename_Length));
+         Extra : String (1 .. Natural (Lh.Extra_Field_Length));
       begin
-        String'Read (Stream'Access, name);
-        String'Read (Stream'Access, extra);
-        if Info.Duplicates = error_on_duplicate then
-          --  Check for duplicates; raises Duplicate_name in this case:
-          Insert_to_name_dictionary (name, Info.dir);
-        end if;
-        Add_catalogue_entry (Info);
-        Info.Contains (Info.Last_entry).head.local_header_offset :=
-          Unsigned_32 (Index (Info.Stream.all)) - 1;
-        Info.Contains (Info.Last_entry).name := new String'(name);
-        lh.extra_field_length := 0;  --  extra field is zeroed (causes problems if not)
-        Zip.Headers.Write(Info.Stream.all, lh);  --  Copy local header to new stream
-        String'Write(Info.Stream, name);         --  Copy entry name to new stream
+         String'Read (Stream'Access, Name);
+         String'Read (Stream'Access, Extra);
+         if Info.Duplicates = Error_On_Duplicate then
+            --  Check for duplicates; raises Duplicate_name in this case:
+            Insert_To_Name_Dictionary (Name, Info.Dir);
+         end if;
+         Add_Catalogue_Entry (Info);
+         Info.Contains (Info.Last_Entry).Head.Local_Header_Offset :=
+           Unsigned_32 (Index (Info.Stream.all)) - 1;
+         Info.Contains (Info.Last_Entry).Name := new String'(Name);
+         Lh.Extra_Field_Length := 0;  --  Extra field is zeroed (causes problems if not)
+         Zip.Headers.Write (Info.Stream.all, Lh);  --  Copy local header to new stream
+         String'Write (Info.Stream, Name);         --  Copy entry name to new stream
       end;
-      Zip.Copy_chunk(
-        Stream,
-        Info.Stream.all,
-        Integer(lh.dd.compressed_size),
-        Feedback => Feedback
-      );
+      Zip.Copy_Chunk
+        (Stream,
+         Info.Stream.all,
+         Integer (Lh.Dd.Compressed_Size),
+         Feedback => Feedback);
       --  Postfixed data descriptor contains the correct values for
       --  CRC and sizes. Example of Zip files using that descriptor: those
       --  created by Microsoft's OneDrive cloud storage (for downloading
       --  more than one file), in 2018.
-      if data_descriptor_after_data then
-        --  NB: some faulty JAR files may fail with Read_and_check.
-        --  See UnZip.Decompress, Process_descriptor.
-        Zip.Headers.Read_and_check (Stream, lh.dd);
-        --  lh's values have been corrected on the way.
-        Zip.Headers.Write (Info.Stream.all, lh.dd);  --  Copy descriptor to new stream.
+      if Data_Descriptor_After_Data then
+         --  NB: some faulty JAR files may fail with Read_and_check.
+         --  See UnZip.Decompress, Process_descriptor.
+         Zip.Headers.Read_And_Check (Stream, Lh.Dd);
+         --  lh's values have been corrected on the way.
+         Zip.Headers.Write (Info.Stream.all, Lh.Dd);  --  Copy descriptor to new stream.
       end if;
-      Info.Contains (Info.Last_entry).head.short_info := lh;
+      Info.Contains (Info.Last_Entry).Head.Short_Info := Lh;
    end Add_Compressed_Stream;
 
-   procedure Finish (Info : in out Zip_Create_info) is
-      ed : Zip.Headers.End_of_Central_Dir;
-      procedure Dispose is new Ada.Unchecked_Deallocation (String, p_String);
-      current_index : ZS_Index_Type;
-      procedure Get_index_and_check_Zip_32_limit is
+   procedure Finish (Info : in out Zip_Create_Info) is
+      Ed : Zip.Headers.End_Of_Central_Dir;
+      procedure Dispose is new Ada.Unchecked_Deallocation (String, P_String);
+      Current_Index : Zs_Index_Type;
+      procedure Get_Index_And_Check_Zip_32_Limit is
       begin
-        current_index := Index (Info.Stream.all);
-        if Info.zip_archive_format = Zip_32
-          and then current_index > four_gb
-        then
-          Ada.Exceptions.Raise_Exception
-            (Zip_Capacity_Exceeded'Identity,
-             Zip_32_exceeded_message);
-        end if;
-      end Get_index_and_check_Zip_32_limit;
+         Current_Index := Index (Info.Stream.all);
+         if Info.Zip_Archive_Format = Zip_32 and then Current_Index > Four_Gb then
+            Ada.Exceptions.Raise_Exception
+              (Zip_Capacity_Exceeded'Identity,
+               Zip_32_Exceeded_Message);
+         end if;
+      end Get_Index_And_Check_Zip_32_Limit;
    begin
-      --
-      --  2/ Almost done - write Central Directory:
-      --
-      Get_index_and_check_Zip_32_limit;
-      ed.central_dir_offset := Unsigned_32 (current_index) - 1;
-      ed.total_entries := 0;
-      ed.central_dir_size := 0;
-      ed.main_comment_length := 0;
-      if Info.zip_archive_format = Zip_32
-        and then Info.Last_entry > Integer (Unsigned_16'Last)
+      --  2/ Almost done - write Central Directory
+      Get_Index_And_Check_Zip_32_Limit;
+      Ed.Central_Dir_Offset  := Unsigned_32 (Current_Index) - 1;
+      Ed.Total_Entries       := 0;
+      Ed.Central_Dir_Size    := 0;
+      Ed.Main_Comment_Length := 0;
+      if Info.Zip_Archive_Format = Zip_32
+        and then Info.Last_Entry > Integer (Unsigned_16'Last)
       then
-        Ada.Exceptions.Raise_Exception
-          (Zip_Capacity_Exceeded'Identity,
-           "Too many entries (for Zip_32 archive format): more than 65535.");
+         Ada.Exceptions.Raise_Exception
+           (Zip_Capacity_Exceeded'Identity,
+            "Too many entries (for Zip_32 archive format): more than 65535.");
       end if;
       if Info.Contains /= null then
-        for e in 1 .. Info.Last_entry loop
-           ed.total_entries := ed.total_entries + 1;
-           Zip.Headers.Write (Info.Stream.all, Info.Contains (e).head);
-           String'Write(Info.Stream, Info.Contains (e).name.all);
-           -- The extra field here is assumed to be empty!
-           ed.central_dir_size :=
-             ed.central_dir_size +
-               Zip.Headers.central_header_length +
-                 Unsigned_32 (Info.Contains (e).head.short_info.filename_length);
-          Dispose(Info.Contains(e).name);
-          Get_index_and_check_Zip_32_limit;
-        end loop;
-        Dispose (Info.Contains);
+         for E in 1 .. Info.Last_Entry loop
+            Ed.Total_Entries := Ed.Total_Entries + 1;
+            Zip.Headers.Write (Info.Stream.all, Info.Contains (E).Head);
+            String'Write (Info.Stream, Info.Contains (E).Name.all);
+            --  The extra field here is assumed to be empty!
+            Ed.Central_Dir_Size :=
+              Ed.Central_Dir_Size +
+              Zip.Headers.Central_Header_Length +
+              Unsigned_32 (Info.Contains (E).Head.Short_Info.Filename_Length);
+            Dispose (Info.Contains (E).Name);
+            Get_Index_And_Check_Zip_32_Limit;
+         end loop;
+         Dispose (Info.Contains);
       end if;
-      Info.Last_entry:= 0;
-      ed.disknum := 0;
-      ed.disknum_with_start := 0;
-      ed.disk_total_entries := ed.total_entries;
-      Zip.Headers.Write (Info.Stream.all, ed);
-      Get_index_and_check_Zip_32_limit;
-      --
-      -- If we have a real file (File_Zipstream or descendent), close the file too:
-      --
+      Info.Last_Entry       := 0;
+      Ed.Disknum            := 0;
+      Ed.Disknum_With_Start := 0;
+      Ed.Disk_Total_Entries := Ed.Total_Entries;
+      Zip.Headers.Write (Info.Stream.all, Ed);
+      Get_Index_And_Check_Zip_32_Limit;
+      --  If we have a real file (File_Zipstream or descendent), close the file too
       if Info.Stream.all in File_Zipstream'Class then
-        Zip_Streams.Close (File_Zipstream(Info.Stream.all));
+         Zip_Streams.Close (File_Zipstream (Info.Stream.all));
       end if;
    end Finish;
 
