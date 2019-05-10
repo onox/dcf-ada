@@ -99,9 +99,6 @@ package body Unzip.Decompress is
             pragma Inline (Read);
             function Read_U32 (N : Natural) return Unsigned_32;
             pragma Inline (Read_U32);
-            --  Inverts (NOT operator) the result before masking by n bits
-            function Read_Inverted (N : Natural) return Integer;
-            pragma Inline (Read_Inverted);
             --  Dump n bits no longer needed from the bit buffer
             procedure Dump (N : Natural);
             pragma Inline (Dump);
@@ -114,20 +111,11 @@ package body Unzip.Decompress is
 
          procedure Flush (X : Natural); -- directly from slide to output stream
 
-         procedure Flush_If_Full (W : in out Integer; Unflushed : in out Boolean);
-         pragma Inline (Flush_If_Full);
-
          procedure Flush_If_Full (W : in out Integer);
          pragma Inline (Flush_If_Full);
 
          procedure Copy (Distance, Length : Natural; Index : in out Natural);
          pragma Inline (Copy);
-
-         procedure Copy_Or_Zero
-           (Distance, Length :        Natural;
-            Index            : in out Natural;
-            Unflushed        : in out Boolean);
-         pragma Inline (Copy_Or_Zero);
 
          procedure Delete_Output;  --  An error has occured (bad compressed data)
       end Unz_Io;
@@ -282,12 +270,6 @@ package body Unzip.Decompress is
                return B and (Shift_Left (1, N) - 1);
             end Read_U32;
 
-            function Read_Inverted (N : Natural) return Integer is
-            begin
-               Need (N);
-               return Integer ((not B) and (Shift_Left (1, N) - 1));
-            end Read_Inverted;
-
             function Read (N : Natural) return Integer is
             begin
                return Integer (Read_U32 (N));
@@ -349,15 +331,6 @@ package body Unzip.Decompress is
                Ada.Text_IO.Put_Line ("finished]");
             end if;
          end Flush;
-
-         procedure Flush_If_Full (W : in out Integer; Unflushed : in out Boolean) is
-         begin
-            if W = Wsize then
-               Flush (Wsize);
-               W         := 0;
-               Unflushed := False;
-            end if;
-         end Flush_If_Full;
 
          procedure Flush_If_Full (W : in out Integer) is
          begin
@@ -455,29 +428,6 @@ package body Unzip.Decompress is
                exit when Remain = 0;
             end loop;
          end Copy;
-
-         procedure Copy_Or_Zero
-           (Distance, Length :        Natural;
-            Index            : in out Natural;
-            Unflushed        : in out Boolean)
-         is
-            Source, Part, Remain : Integer;
-         begin
-            Source := Index - Distance;
-            Remain := Length;
-            loop
-               Adjust_To_Slide (Source, Remain, Part, Index);
-               if Unflushed and then Index <= Source then
-                  Unz_Glob.Slide (Index .. Index + Part - 1) := (others => 0);
-                  Index                                      := Index + Part;
-                  Source                                     := Source + Part;
-               else
-                  Copy_Range (Source, Index, Part);
-               end if;
-               Flush_If_Full (Index, Unflushed);
-               exit when Remain = 0;
-            end loop;
-         end Copy_Or_Zero;
 
          procedure Delete_Output is -- an error has occured (bad compressed data)
          begin

@@ -62,7 +62,6 @@ package body Zip.Compress is
       Encrypt_Pack : Crypto_Pack;
       package Byte_Soup is new Ada.Numerics.Discrete_Random (Byte);
       use Byte_Soup;
-      Cg : Byte_Soup.Generator;
       --  Store data as is, or, if do_write = False, just compute
       --  CRC (this is for encryption)
       procedure Store_Data (Do_Write : Boolean) is
