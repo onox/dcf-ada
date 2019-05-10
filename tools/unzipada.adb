@@ -109,10 +109,7 @@ procedure Unzipada is
 
    procedure Blurb is
    begin
-      Put_Line ("UnZipAda * minimal standalone unzipping tool");
-      Put_Line ("Demo for the Zip-Ada library, by G. de Montmollin");
-      Put_Line ("Library version " & Zip.Version & " dated " & Zip.Reference);
-      Put_Line ("URL: " & Zip.Web);
+      Put_Line ("UnZipAda " & Zip.Version & " - unzipping tool using dcf-ada");
       New_Line;
    end Blurb;
 

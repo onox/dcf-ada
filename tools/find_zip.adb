@@ -122,10 +122,7 @@ procedure Find_Zip is
    end Try_With_Zip;
 begin
    if Argument_Count < 2 then
-      Put_Line ("Find_Zip * Search a text string in files packed in a zip archive.");
-      Put_Line ("Demo for the Zip-Ada library, by G. de Montmollin");
-      Put_Line ("Library version " & Zip.Version & " dated " & Zip.Reference);
-      Put_Line ("URL: " & Zip.Web);
+      Put_Line ("FindZipAda " & Zip.Version & " - search a text string in an archive using dcf-ada");
       New_Line;
       Put_Line ("Usage: find_zip archive[.zip] [""]text[""]");
       return;

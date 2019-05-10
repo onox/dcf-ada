@@ -44,10 +44,7 @@ procedure Zipada is
 
    procedure Blurb is
    begin
-      Put_Line ("ZipAda * minimalistic standalone zipping tool.");
-      Put_Line ("Demo for Zip-Ada library, by G. de Montmollin");
-      Put_Line ("Library version " & Zip.Version & " dated " & Zip.Reference);
-      Put_Line ("URL: " & Zip.Web);
+      Put_Line ("ZipAda " & Zip.Version & " - zipping tool using dcf-ada");
       New_Line;
    end Blurb;
 

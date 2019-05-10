@@ -357,10 +357,7 @@ package Zip is
    --  Information about this package - e.g., for an "about" box  --
    -----------------------------------------------------------------
 
-   Version   : constant String := "56 preview 2";
-   Reference : constant String := ">= 30-Mar-2019";
-   Web       : constant String := "http://unzip-ada.sf.net/";
-   --  Hopefully the latest version is at that URL...  --^
+   Version   : constant String := "0.1.0";
 
 private
 

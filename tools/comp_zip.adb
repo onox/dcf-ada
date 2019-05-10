@@ -32,10 +32,7 @@ procedure Comp_Zip is
 
    procedure Blurb is
    begin
-      Put_Line ("Comp_Zip * compare two zip archive files, incl. contents");
-      Put_Line ("Demo for the Zip-Ada library, by G. de Montmollin");
-      Put_Line ("Library version " & Zip.Version & " dated " & Zip.Reference);
-      Put_Line ("URL: " & Zip.Web);
+      Put_Line ("CompZipAda " & Zip.Version & " - compare two archives using dcf-ada");
       New_Line;
    end Blurb;
 begin
