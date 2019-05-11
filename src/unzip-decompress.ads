@@ -1,22 +1,16 @@
---  UnZip.Decompress
---  ---------------
---  Private, internal to the UnZip package.
-
---  Legal licensing note:
-
---  Copyright (c) 2007 .. 2018 Gautier de Montmollin
+--  Copyright (c) 2007 - 2018 Gautier de Montmollin
 --  SWITZERLAND
-
+--
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
 --  in the Software without restriction, including without limitation the rights
 --  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 --  copies of the Software, and to permit persons to whom the Software is
 --  furnished to do so, subject to the following conditions:
-
+--
 --  The above copyright notice and this permission notice shall be included in
 --  all copies or substantial portions of the Software.
-
+--
 --  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 --  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 --  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,15 +19,13 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
---  NB: this is the MIT License, as found on the site
---  http://www.opensource.org/licenses/mit-license.php
-
----------------------
+--  UnZip.Decompress
+--  ---------------
 --
---  Created 9-Mar-2007
+--  Private, internal to the UnZip package.
 --
---  This package includes the decompression algorithms for methods
---  Store, Reduce, Shrink (LZW), Implode, Deflate, BZip2 and LZMA.
+--  This package includes the decompression algorithms for methods Store
+--  and Deflate.
 --
 --  The package body contains the packages UnZ_IO, UnZ_Glob, UnZ_Infl,
 --  UnZ_Olds and UnZ_Misc that were separate in previous versions of Zip-Ada.

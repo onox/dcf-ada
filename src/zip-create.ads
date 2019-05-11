@@ -1,24 +1,19 @@
---  Zip archive creation
---
 --  Contributed by ITEC - NXP Semiconductors
 --  June 2008
 --
-
---  Legal licensing note:
-
---  Copyright (c) 2008 .. 2018 Gautier de Montmollin (maintainer)
+--  Copyright (c) 2008 - 2018 Gautier de Montmollin (maintainer)
 --  SWITZERLAND
-
+--
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
 --  in the Software without restriction, including without limitation the rights
 --  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 --  copies of the Software, and to permit persons to whom the Software is
 --  furnished to do so, subject to the following conditions:
-
+--
 --  The above copyright notice and this permission notice shall be included in
 --  all copies or substantial portions of the Software.
-
+--
 --  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 --  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 --  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,31 +21,6 @@
 --  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
-
---  NB: this is the MIT License, as found 21-Aug-2016 on the site
---  http://www.opensource.org/licenses/mit-license.php
-
---
---  Change log:
---  ==========
---
---  23-Mar-2016: GdM: Create with Duplicate_name_policy
---  14-Feb-2015: GdM: Added "Is_Created" function
---  13-Feb-2015: GdM: Added "Password" parameter
---  30-Oct-2012: GdM: Removed all profiles using Zip_Streams' objects
---                       with accesses (cf 25-Oct's modifications)
---  26-Oct-2012: GdM: Added Add_Compressed_Stream
---  25-Oct-2012: GdM: Some procedures using Zip_Streams' objects also with
---                      pointer-free profiles (no more 'access' or access type)
---  14-Oct-2012: GdM: Added Set procedure for changing compression method
---  30-Mar-2010: GdM: Added Name function
---  25-Feb-2010: GdM: Fixed major bottlenecks around Dir_entries
---                      -> 5x faster overall for 1000 files, 356x for 100'000 !
---  17-Feb-2009: GdM: Added procedure Add_String
---  10-Feb-2009: GdM: Create / Finish: if Info.Stream is to a file,
---                      the underling file is also created / closed in time
---   4-Feb-2009: GdM: Added procedure Add_File
---
 
 with Zip.Compress;
 with Zip.Headers;

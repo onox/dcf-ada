@@ -1,18 +1,16 @@
---  Legal licensing note:
-
---  Copyright (c) 2008 .. 2018 Gautier de Montmollin (maintainer)
+--  Copyright (c) 2008 - 2018 Gautier de Montmollin (maintainer)
 --  SWITZERLAND
-
+--
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
 --  in the Software without restriction, including without limitation the rights
 --  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 --  copies of the Software, and to permit persons to whom the Software is
 --  furnished to do so, subject to the following conditions:
-
+--
 --  The above copyright notice and this permission notice shall be included in
 --  all copies or substantial portions of the Software.
-
+--
 --  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 --  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 --  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,16 +18,6 @@
 --  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
-
---  NB: this is the MIT License, as found 21-Aug-2016 on the site
---  http://www.opensource.org/licenses/mit-license.php
-
----------------
---  Some changes
---
---  11-Nov-2009 (GdM): Unbounded_Stream.Write and .Set_Index are buffered
---  18-Jan-2009 (GdM): Fixed Read(Stream, Item...) which read
---                      only 1st element of Item
 
 with Ada.Characters.Latin_1;
 
@@ -106,8 +94,7 @@ package body Zip_Streams is
    procedure Read
      (Stream : in out Memory_Zipstream;
       Item   :    out Stream_Element_Array;
-      Last   :    out Stream_Element_Offset)
-   is
+      Last   :    out Stream_Element_Offset) is
    begin
       --  Item is read from the stream. If (and only if) the stream is
       --  exhausted, Last will be < Item'Last. In that case, T'Read will
@@ -199,11 +186,7 @@ package body Zip_Streams is
    overriding
    function End_Of_Stream (S : in Memory_Zipstream) return Boolean is
    begin
-      if Size (S) < Index (S) then
-         return True;
-      else
-         return False;
-      end if;
+      return Size (S) < Index (S);
    end End_Of_Stream;
 
    ----------------------------------------------
@@ -316,7 +299,7 @@ package body Zip_Streams is
          end if;
          Seconds := Day_Duration (Hours * 3600 + Minutes * 60 + Seconds_Only);
       end Split;
-      --
+
       function Time_Of
         (Year    : Year_Number;
          Month   : Month_Number;

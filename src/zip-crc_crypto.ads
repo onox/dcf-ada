@@ -1,22 +1,16 @@
---  Zip.CRC_Crypto deals with hash-like functions
---  for data integrity check and encryption
---  ---------------------------------------------
-
---  Legal licensing note:
-
---  Copyright (c) 1999 .. 2018 Gautier de Montmollin
+--  Copyright (c) 1999 - 2018 Gautier de Montmollin
 --  SWITZERLAND
-
+--
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
 --  in the Software without restriction, including without limitation the rights
 --  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 --  copies of the Software, and to permit persons to whom the Software is
 --  furnished to do so, subject to the following conditions:
-
+--
 --  The above copyright notice and this permission notice shall be included in
 --  all copies or substantial portions of the Software.
-
+--
 --  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 --  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 --  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,8 +19,8 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
---  NB: this is the MIT License, as found on the site
---  http://www.opensource.org/licenses/mit-license.php
+--  Zip.CRC_Crypto deals with hash-like functions for data integrity check
+--  and encryption
 
 package Zip.Crc_Crypto is
 
@@ -49,7 +43,7 @@ package Zip.Crc_Crypto is
    ------------------
 
    type Crypto_Pack is private;
-   --
+
    type Crypto_Mode is (Clear, Encrypted);
    procedure Set_Mode (Obj : in out Crypto_Pack; New_Mode : Crypto_Mode);
    function Get_Mode (Obj : Crypto_Pack) return Crypto_Mode;
@@ -61,6 +55,7 @@ package Zip.Crc_Crypto is
    pragma Inline (Decode);
 
 private
+
    type Decrypt_Keys is array (0 .. 2) of Unsigned_32;
    type Crypto_Pack is record
       Keys         : Decrypt_Keys;

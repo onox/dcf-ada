@@ -1,18 +1,16 @@
---  Legal licensing note:
-
---  Copyright (c) 1999 .. 2018 Gautier de Montmollin
+--  Copyright (c) 1999 - 2018 Gautier de Montmollin
 --  SWITZERLAND
-
+--
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
 --  in the Software without restriction, including without limitation the rights
 --  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 --  copies of the Software, and to permit persons to whom the Software is
 --  furnished to do so, subject to the following conditions:
-
+--
 --  The above copyright notice and this permission notice shall be included in
 --  all copies or substantial portions of the Software.
-
+--
 --  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 --  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 --  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,9 +18,6 @@
 --  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
-
---  NB: this is the MIT License, as found on the site
---  http://www.opensource.org/licenses/mit-license.php
 
 package body Zip.Crc_Crypto is
 
@@ -92,7 +87,7 @@ package body Zip.Crc_Crypto is
       Update (Obj.Keys (2), (0 => Zip.Byte (Shift_Right (Obj.Keys (1), 24))));
    end Update_Keys;
 
-   --  Crypto_code: Pseudo-random byte to be XOR'ed with.
+   --  Crypto_code: Pseudo-random byte to be XOR'ed with
    function Crypto_Code (Obj : Crypto_Pack) return Zip.Byte is
       pragma Inline (Crypto_Code);
       Temp : Unsigned_16;

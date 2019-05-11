@@ -1,6 +1,27 @@
 --  Contributed by ITEC - NXP Semiconductors
 --  June 2008
 --
+--  Copyright (c) 2008 - 2018 Gautier de Montmollin (maintainer)
+--  SWITZERLAND
+--
+--  Permission is hereby granted, free of charge, to any person obtaining a copy
+--  of this software and associated documentation files (the "Software"), to deal
+--  in the Software without restriction, including without limitation the rights
+--  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+--  copies of the Software, and to permit persons to whom the Software is
+--  furnished to do so, subject to the following conditions:
+--
+--  The above copyright notice and this permission notice shall be included in
+--  all copies or substantial portions of the Software.
+--
+--  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+--  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+--  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+--  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+--  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+--  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+--  THE SOFTWARE.
+
 --  The Zip_Streams package defines an abstract stream
 --  type, Root_Zipstream_Type, with name, time and an index for random access.
 --
@@ -14,63 +35,15 @@
 --
 --  Pure Ada 95+ code, 100% portable: OS-, CPU- and compiler- independent.
 
---  Legal licensing note:
+with Interfaces;
 
---  Copyright (c) 2008 .. 2018 Gautier de Montmollin (maintainer)
---  SWITZERLAND
-
---  Permission is hereby granted, free of charge, to any person obtaining a copy
---  of this software and associated documentation files (the "Software"), to deal
---  in the Software without restriction, including without limitation the rights
---  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
---  copies of the Software, and to permit persons to whom the Software is
---  furnished to do so, subject to the following conditions:
-
---  The above copyright notice and this permission notice shall be included in
---  all copies or substantial portions of the Software.
-
---  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
---  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
---  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
---  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
---  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
---  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
---  THE SOFTWARE.
-
---  NB: this is the MIT License, as found 21-Aug-2016 on the site
---  http://www.opensource.org/licenses/mit-license.php
-
---  Change log:
---  ==========
---
---   8-Sep-2018: GdM: ZS_Size_Type is now 64-bit signed, enabling Zip.Create
---                    to capture archive size overflows.
---   5-Jul-2013: GdM: Added proper types for stream sizes and index
---  20-Nov-2012: GdM: Added Is_Open method for File_Zipstream
---  30-Oct-2012: GdM/NB: - Removed method profiles with 'access' as
---                           overriding some methods with 'access' and some without
---                           at different inheritance levels may be dangerous
---                       - renamed Zipstream_Class Zipstream_Class_Access
---                           (the right name for it)
---  25-Oct-2012: GdM: All methods also with pointer-free profiles
---                     (no more anonymous 'access', nor access types needed)
---  20-Jul-2011: GdM/JH: - Underscore in Get_Name, Set_Name, Get_Time, Set_Time
---                       - The 4 methods above are not anymore abstract
---                       - Name and Modification_Time fields moved to Root_Zipstream_Type
---                       - Unbounded_Stream becomes Memory_Zipstream
---                       - ZipFile_Stream becomes File_Zipstream
---  17-Jul-2011: JH : Added Set_Unicode_Name_Flag, Is_Unicode_Name
---  25-Nov-2009: GdM: Added an own time type -> it is possible to bypass Ada.Calendar
---  18-Jan-2009: GdM: Fixed Zip_Streams.Read which did read
---                      only Item's first element
-
-with Ada.Streams;
-use Ada.Streams;
-with Ada.Strings.Unbounded;
-use Ada.Strings.Unbounded;
+with Ada.Calendar;
 with Ada.Streams.Stream_IO;
+with Ada.Strings.Unbounded;
 
-with Ada.Calendar, Interfaces;
+use Ada.Streams;
+use Ada.Strings.Unbounded;
+
 use Interfaces;
 
 package Zip_Streams is
@@ -170,31 +143,31 @@ package Zip_Streams is
    ----------------------------
 
    package Calendar is
-      --
       function Convert (Date : in Ada.Calendar.Time) return Time;
       function Convert (Date : in Time) return Ada.Calendar.Time;
-      --
+
       subtype Dos_Time is Interfaces.Unsigned_32;
+
       function Convert (Date : in Dos_Time) return Time;
       function Convert (Date : in Time) return Dos_Time;
-      --
+
       use Ada.Calendar;
-      --
+
       procedure Split
         (Date    :     Time;
          Year    : out Year_Number;
          Month   : out Month_Number;
          Day     : out Day_Number;
          Seconds : out Day_Duration);
-      --
+
       function Time_Of
         (Year    : Year_Number;
          Month   : Month_Number;
          Day     : Day_Number;
          Seconds : Day_Duration := 0.0) return Time;
-      --
+
       function ">" (Left, Right : Time) return Boolean;
-      --
+
       Time_Error : exception;
    end Calendar;
 

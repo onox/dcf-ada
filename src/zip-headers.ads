@@ -1,34 +1,16 @@
---  ________  ___   ______       ______      ___
---  /___..._/  |.|   |.___.\     /. __ .\   __|.|   ____
---    /../    |.|   |.____/     |.|__|.|  /....|  __\..\
---  _/../___  |.|   |.|    ===  |..__..| |. = .| | = ..|
---  /_______/  |_|  /__|        /__|  |_|  \__\_|  \__\_|
-
---  Zip.Headers
---  -----------
---
---  This package provides:
---
---  * Definiton of PKZIP information structures (cf appnote.txt),
---  * Reading a header from a data stream (Read_and_check),
---  * Copying a header from a buffer (Copy_and_check)
---  * Writing a header to a data stream (Write)
-
---  Legal licensing note:
-
---  Copyright (c) 2000 .. 2018 Gautier de Montmollin
+--  Copyright (c) 2000 - 2018 Gautier de Montmollin
 --  SWITZERLAND
-
+--
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
 --  in the Software without restriction, including without limitation the rights
 --  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 --  copies of the Software, and to permit persons to whom the Software is
 --  furnished to do so, subject to the following conditions:
-
+--
 --  The above copyright notice and this permission notice shall be included in
 --  all copies or substantial portions of the Software.
-
+--
 --  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 --  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 --  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -37,9 +19,16 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
---  NB: this is the MIT License, as found on the site
---  http://www.opensource.org/licenses/mit-license.php
-
+--  Zip.Headers
+--  -----------
+--
+--  This package provides:
+--
+--   * Definition of PKZIP information structures (cf appnote.txt)
+--   * Reading a header from a data stream (Read_and_check)
+--   * Copying a header from a buffer (Copy_and_check)
+--   * Writing a header to a data stream (Write)
+--
 --  Some quick explanations about the Zip file structure - GdM 2001, 2012
 --
 --  The zip archive containing N entries can be roughly seen as
@@ -55,7 +44,7 @@
 --  it is why it appears on phase 2.
 --
 --  An advantage of that structure is that the .ZIP archive can be later
---  appended to an .EXE, for self-extracting purposes, or to other
+--  appended to an .exe, for self-extracting purposes, or to other
 --  kind of files.
 --
 --  So, the most general infos are at the end, and we crawl back
@@ -64,24 +53,6 @@
 --  1) end-of-central-directory
 --  2) central directory
 --  3) zipped data entries
-
---  Change log:
---  ==========
---
---  22-Nov-2012: GdM: End-of-central-directory loaded in a single stream Read
---                      operation instead of up to ~1.4 million Read
---                      operations (for a non Zip file with 65535 times
---                      the letter 'P'). Execution flow simplified, without
---                      use of exceptions. Massive speedup there, on files
---                      that are either invalid Zip files, or Zip files with
---                      a large comment.
---
---  30-Oct-2012: GdM: Removed all profiles using Zip_Streams' objects
---                      with accesses (cf 25-Oct's modifications)
---  25-Oct-2012: GdM: Some procedures using Zip_Streams' objects also with
---                    pointer-free profiles (no more 'access' or access type)
---  16-Nov-2009: GdM: Replaced Ada.Calendar.Time by Zip.Time in headers, due to
---                   perf. issues in some run-times' Ada.Calendar.Time_Of
 
 with Interfaces;
 
