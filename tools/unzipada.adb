@@ -10,12 +10,9 @@ with Interfaces;
 with Ada.Calendar;
 with Ada.Characters.Handling;
 with Ada.Command_Line;
+with Ada.Directories;
 with Ada.Float_Text_IO;
 with Ada.Text_IO;
-
-with Ada.Directories;  --  Ada 2005
---  Non-standard; Ada 20XX items absent in Ada 2012:
---  with Ada_Directories_Extensions;  --  This package's body is system-dependent
 
 with Zip;
 with Unzip;
@@ -36,15 +33,6 @@ with My_Tell_Data;
 with Summary;
 
 procedure Unzipada is
-
-   procedure Set_Modification_Time_B (Name : in String; To : in Ada.Calendar.Time) is
-   begin
-      null;  --  If you want the time stamps, uncomment the following and the "with" above.
-      --  Ada_Directories_Extensions.Set_Modification_Time(Name, To);
-   exception
-      when others =>
-         null; -- !! UTF-8 or ASCII names with characters > pos 127 fail
-   end Set_Modification_Time_B;
 
    Set_Time_Stamp : constant Unzip.Set_Time_Stamp_Proc := null;
    --  If you want the time stamps, uncomment the following
