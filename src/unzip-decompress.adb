@@ -145,9 +145,6 @@ package body Unzip.Decompress is
          end if;
       end Process_Feedback;
 
-      use Zip.Crc_Crypto;
-      Local_Crypto_Pack : Crypto_Pack;
-
       ------------------------------
       -- Bodies of UnZ_* packages --
       ------------------------------
@@ -225,7 +222,6 @@ package body Unzip.Decompress is
             Bt : Zip.Byte;
          begin
             Read_Byte_No_Decrypt (Bt);
-            Decode (Local_Crypto_Pack, Bt);
             return Bt;
          end Read_Byte_Decrypted;
 
@@ -449,9 +445,7 @@ package body Unzip.Decompress is
             Read_In, Absorbed : Unzip.File_Size_Type;
          begin
             Absorbed := 0;
-            if Get_Mode (Local_Crypto_Pack) = Encrypted then
-               Absorbed := 12;
-            end if;
+
             while Absorbed < Size loop
                Read_In := Size - Absorbed;
                if Read_In > Wsize then
@@ -1089,9 +1083,6 @@ package body Unzip.Decompress is
          Dd_Buffer : Zip.Byte_Buffer (1 .. 30);
       begin
          Unz_Io.Bit_Buffer.Dump_To_Byte_Boundary;
-         Set_Mode
-           (Local_Crypto_Pack,
-            Clear); -- We are after compressed data, switch off decryption.
          B := Unz_Io.Read_Byte_Decrypted;
          if B = 75 then -- 'K' ('P' is before, this is a Java/JAR bug!)
             Dd_Buffer (1) := 80;
@@ -1148,7 +1139,6 @@ package body Unzip.Decompress is
       end if;                                             -- From TT's version, 2008
       Unz_Glob.Uncompsize := Hint.Dd.Uncompressed_Size;
       Unz_Io.Init_Buffers;
-      Set_Mode (Local_Crypto_Pack, Clear);
 
       --  UnZip correct type
       begin

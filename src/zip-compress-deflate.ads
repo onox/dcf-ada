@@ -22,10 +22,6 @@
 --  The "Deflate" method combines the LZ77 compression
 --  method with some Huffman encoding gymnastics
 
-with Zip.Crc_Crypto;
-
-use Zip.Crc_Crypto;
-
 private procedure Zip.Compress.Deflate
   (Input, Output    : in out Zip_Streams.Root_Zipstream_Type'Class;
    Input_Size_Known :        Boolean;
@@ -33,6 +29,5 @@ private procedure Zip.Compress.Deflate
    Feedback         :        Feedback_Proc;
    Method           :        Deflation_Method;
    Crc              : in out Interfaces.Unsigned_32;  --  Only updated here
-   Crypto           : in out Crypto_Pack;
    Output_Size      :    out File_Size_Type;
    Compression_Ok   :    out Boolean);  --  Indicates when compressed <= uncompressed

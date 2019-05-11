@@ -50,16 +50,17 @@ package body Zip.Compress is
       Zip_Type         :    out Interfaces.Unsigned_16)
    is
       use Interfaces;
+
       Counted        : File_Size_Type;
       User_Aborting  : Boolean;
       Idx_In         : constant Zs_Index_Type := Index (Input);
       Idx_Out        : constant Zs_Index_Type := Index (Output);
       Compression_Ok : Boolean;
       First_Feedback : Boolean                := True;
-      --
-      Encrypt_Pack : Crypto_Pack;
+
       package Byte_Soup is new Ada.Numerics.Discrete_Random (Byte);
       use Byte_Soup;
+
       --  Store data as is, or, if do_write = False, just compute
       --  CRC (this is for encryption)
       procedure Store_Data (Do_Write : Boolean) is
@@ -77,7 +78,6 @@ package body Zip.Compress is
             Counted := Counted + File_Size_Type (Last_Read);
             Update (Crc, Buffer (1 .. Last_Read));
             if Do_Write then
-               Encode (Encrypt_Pack, Buffer (1 .. Last_Read));
                Blockwrite (Output, Buffer (1 .. Last_Read));
             end if;
             --  Feedback
@@ -107,11 +107,10 @@ package body Zip.Compress is
          Output_Size    := Counted;
          Compression_Ok := True;
       end Store_Data;
-      --
+
       procedure Compress_Data_Single_Method (Actual_Method : Compression_Method) is
       begin
          Init (Crc);
-         Set_Mode (Encrypt_Pack, Clear);
          --  Dispatch the work to child procedures doing the stream compression
          --  in different formats, depending on the actual compression method.
          --  For example, for methods LZMA_for_JPEG, LZMA_for_WAV, or LZMA_3, we
@@ -128,7 +127,6 @@ package body Zip.Compress is
                   Feedback,
                   Actual_Method,
                   Crc,
-                  Encrypt_Pack,
                   Output_Size,
                   Compression_Ok);
                Zip_Type := Compression_Format_Code.Deflate;

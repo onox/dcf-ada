@@ -43,18 +43,21 @@
 --    - Make this procedure standalone & generic like LZMA.Encoding;
 --        use it in the Zada project (Zlib replacement)
 
-with Lz77, Zip.Crc_Crypto;
-with Zip_Streams;
-
-with Length_Limited_Huffman_Code_Lengths;
+with Interfaces;
 
 with Ada.Integer_Text_IO;
-use Ada.Integer_Text_IO;
 with Ada.Text_IO;
-use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
-with Interfaces;
+with Zip.Crc_Crypto;
+with Zip_Streams;
+
+with Lz77;
+with Length_Limited_Huffman_Code_Lengths;
+
+use Ada.Integer_Text_IO;
+use Ada.Text_IO;
+
 use Interfaces;
 
 procedure Zip.Compress.Deflate
@@ -64,7 +67,6 @@ procedure Zip.Compress.Deflate
    Feedback         :        Feedback_Proc;
    Method           :        Deflation_Method;
    Crc              : in out Interfaces.Unsigned_32;  --  Only updated here
-   Crypto           : in out Crypto_Pack;
    Output_Size      :    out File_Size_Type;
    Compression_Ok   :    out Boolean)  --  Indicates compressed < uncompressed
 is
@@ -120,7 +122,6 @@ is
          --  uncompressed size.
          raise Compression_Inefficient;
       end if;
-      Encode (Crypto, Outbuf (1 .. Amount));
       Zip.Blockwrite (Output, Outbuf (1 .. Amount));
       Outbufidx := 1;
    end Write_Block;

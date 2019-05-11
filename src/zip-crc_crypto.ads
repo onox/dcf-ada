@@ -20,7 +20,6 @@
 --  THE SOFTWARE.
 
 --  Zip.CRC_Crypto deals with hash-like functions for data integrity check
---  and encryption
 
 package Zip.Crc_Crypto is
 
@@ -37,29 +36,5 @@ package Zip.Crc_Crypto is
 
    function Final (Crc : Unsigned_32) return Unsigned_32;
    pragma Inline (Final);
-
-   ------------------
-   --  Encryption  --
-   ------------------
-
-   type Crypto_Pack is private;
-
-   type Crypto_Mode is (Clear, Encrypted);
-   procedure Set_Mode (Obj : in out Crypto_Pack; New_Mode : Crypto_Mode);
-   function Get_Mode (Obj : Crypto_Pack) return Crypto_Mode;
-
-   procedure Encode (Obj : in out Crypto_Pack; Buf : in out Zip.Byte_Buffer);
-   pragma Inline (Encode);
-
-   procedure Decode (Obj : in out Crypto_Pack; B : in out Unsigned_8);
-   pragma Inline (Decode);
-
-private
-
-   type Decrypt_Keys is array (0 .. 2) of Unsigned_32;
-   type Crypto_Pack is record
-      Keys         : Decrypt_Keys;
-      Current_Mode : Crypto_Mode;
-   end record;
 
 end Zip.Crc_Crypto;
