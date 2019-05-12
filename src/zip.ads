@@ -66,7 +66,8 @@ package Zip is
      (Info            :    out Zip_Info;
       From            : in     String;  --  Zip file name
       Case_Sensitive  : in     Boolean               := False;
-      Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate);
+      Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
+   with Post => Info.Is_Loaded;
 
    --  Load from a stream
 
@@ -74,7 +75,8 @@ package Zip is
      (Info            :    out Zip_Info;
       From            : in out Zip_Streams.Root_Zipstream_Type'Class;
       Case_Sensitive  : in     Boolean               := False;
-      Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate);
+      Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
+   with Post => Info.Is_Loaded;
 
    Archive_Corrupted   : exception;
    Zip_File_Open_Error : exception;
@@ -87,11 +89,14 @@ package Zip is
 
    function Is_Loaded (Info : in Zip_Info) return Boolean;
 
-   function Name (Info : in Zip_Info) return String;
+   function Name (Info : in Zip_Info) return String
+     with Pre => Info.Is_Loaded;
 
-   function Comment (Info : in Zip_Info) return String;
+   function Comment (Info : in Zip_Info) return String
+     with Pre => Info.Is_Loaded;
 
-   function Stream (Info : in Zip_Info) return Zip_Streams.Zipstream_Class_Access;
+   function Stream (Info : in Zip_Info) return Zip_Streams.Zipstream_Class_Access
+     with Pre => Info.Is_Loaded;
 
    function Entries (Info : in Zip_Info) return Natural;
 
