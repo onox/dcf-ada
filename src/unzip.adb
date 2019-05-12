@@ -413,8 +413,7 @@ package body Unzip is
    procedure Extract
      (From                 : String;
       Options              : Option_Set       := No_Option;
-      File_System_Routines : Fs_Routines_Type := Null_Routines)
-   is
+      File_System_Routines : Fs_Routines_Type := Null_Routines) is
    begin
       Extract (From, null, null, null, Options, File_System_Routines);
    end Extract;
@@ -423,10 +422,9 @@ package body Unzip is
      (From                 : String;
       What                 : String;
       Options              : Option_Set       := No_Option;
-      File_System_Routines : Fs_Routines_Type := Null_Routines)
-   is
+      File_System_Routines : Fs_Routines_Type := Null_Routines) is
    begin
-      Extract (From, What, null, null, null, Options, File_System_Routines);
+      Extract (From, What, What, null, null, null, Options, File_System_Routines);
    end Extract;
 
    procedure Extract
@@ -434,17 +432,15 @@ package body Unzip is
       What                 : String;
       Rename               : String;
       Options              : Option_Set       := No_Option;
-      File_System_Routines : Fs_Routines_Type := Null_Routines)
-   is
+      File_System_Routines : Fs_Routines_Type := Null_Routines) is
    begin
-      Extract (From, What, Rename, null, null, Options, File_System_Routines);
+      Extract (From, What, Rename, null, null, null, Options, File_System_Routines);
    end Extract;
 
    procedure Extract
      (From                 : Zip.Zip_Info;
       Options              : Option_Set       := No_Option;
-      File_System_Routines : Fs_Routines_Type := Null_Routines)
-   is
+      File_System_Routines : Fs_Routines_Type := Null_Routines) is
    begin
       Extract (From, null, null, null, Options, File_System_Routines);
    end Extract;
@@ -453,10 +449,9 @@ package body Unzip is
      (From                 : Zip.Zip_Info;
       What                 : String;
       Options              : Option_Set       := No_Option;
-      File_System_Routines : Fs_Routines_Type := Null_Routines)
-   is
+      File_System_Routines : Fs_Routines_Type := Null_Routines) is
    begin
-      Extract (From, What, null, null, null, Options, File_System_Routines);
+      Extract (From, What, What, null, null, null, Options, File_System_Routines);
    end Extract;
 
    procedure Extract
@@ -464,10 +459,9 @@ package body Unzip is
       What                 : String;
       Rename               : String;
       Options              : Option_Set       := No_Option;
-      File_System_Routines : Fs_Routines_Type := Null_Routines)
-   is
+      File_System_Routines : Fs_Routines_Type := Null_Routines) is
    begin
-      Extract (From, What, Rename, null, null, Options, File_System_Routines);
+      Extract (From, What, Rename, null, null, null, Options, File_System_Routines);
    end Extract;
 
    --  All previous extract call the following ones, with bogus UI arguments
@@ -475,57 +469,6 @@ package body Unzip is
    --------------------------------------------------------------
    --  All previous extraction procedures, for user interface  --
    --------------------------------------------------------------
-
-   --  Extract one precise file (what) from an archive (from)
-
-   procedure Extract
-     (From                 : String;
-      What                 : String;
-      Feedback             : Zip.Feedback_Proc;
-      Help_The_File_Exists : Resolve_Conflict_Proc;
-      Tell_Data            : Tell_Data_Proc;
-      Options              : Option_Set       := No_Option;
-      File_System_Routines : Fs_Routines_Type := Null_Routines)
-   is
-      use Zip, Zip_Streams;
-      Zip_File : File_Zipstream;
-      --  Was Unbounded_Stream & file->buffer copy in v.26
-      Header_Index : Zs_Index_Type;
-      Comp_Size    : File_Size_Type;
-      Uncomp_Size  : File_Size_Type;
-      Crc_32       : Unsigned_32;
-   begin
-      if Feedback = null then
-         Current_User_Attitude := Yes_To_All;  --  Non-interactive
-      end if;
-      Set_Name (Zip_File, From);
-      Open (Zip_File, In_File);
-      Zip.Find_Offset
-        (File           => Zip_File,
-         Name           => What,
-         Case_Sensitive => Options (Case_Sensitive_Match),
-         File_Index     => Header_Index,
-         Comp_Size      => Comp_Size,
-         Uncomp_Size    => Uncomp_Size,
-         Crc_32         => Crc_32);
-      Unzipfile
-        (Zip_File             => Zip_File,
-         Out_Name             => What,
-         Out_Name_Encoding    => IBM_437,  --  Assumption...
-         Name_From_Header     => False,
-         Header_Index         => Header_Index,
-         Hint_Comp_Size       => Comp_Size,
-         Hint_Crc_32          => Crc_32,
-         Feedback             => Feedback,
-         Help_The_File_Exists => Help_The_File_Exists,
-         Tell_Data            => Tell_Data,
-         Options              => Options,
-         File_System_Routines => File_System_Routines);
-      Close (Zip_File);
-   exception
-      when Zip.Headers.Bad_Local_Header =>
-         Raise_Exception (Zip.Archive_Corrupted'Identity, "Bad local header");
-   end Extract;
 
    --  Extract one precise file (what) from an archive (from),
    --  but save under a new name (rename)
@@ -535,6 +478,7 @@ package body Unzip is
       What                 : String;
       Rename               : String;
       Feedback             : Zip.Feedback_Proc;
+      Help_The_File_Exists : Resolve_Conflict_Proc;
       Tell_Data            : Tell_Data_Proc;
       Options              : Option_Set       := No_Option;
       File_System_Routines : Fs_Routines_Type := Null_Routines)
@@ -569,14 +513,14 @@ package body Unzip is
          Hint_Comp_Size       => Comp_Size,
          Hint_Crc_32          => Crc_32,
          Feedback             => Feedback,
-         Help_The_File_Exists => null,
+         Help_The_File_Exists => Help_The_File_Exists,
          Tell_Data            => Tell_Data,
          Options              => Options,
          File_System_Routines => File_System_Routines);
       Close (Zip_File);
    exception
       when Zip.Headers.Bad_Local_Header =>
-         Raise_Exception (Zip.Archive_Corrupted'Identity, "Bad local header");
+         raise Zip.Archive_Corrupted with "Bad local header";
    end Extract;
 
    --  Extract all files from an archive (from)
@@ -644,6 +588,7 @@ package body Unzip is
          Extract
            (From                 => From,
             What                 => Name,
+            Rename               => Name,
             Feedback             => Feedback,
             Help_The_File_Exists => Help_The_File_Exists,
             Tell_Data            => Tell_Data,
@@ -661,19 +606,21 @@ package body Unzip is
 
    procedure Extract
      (From                 : Zip.Zip_Info;
-      What                 : String;
+      What, Rename         : String;
       Feedback             : Zip.Feedback_Proc;
       Help_The_File_Exists : Resolve_Conflict_Proc;
       Tell_Data            : Tell_Data_Proc;
       Options              : Option_Set       := No_Option;
       File_System_Routines : Fs_Routines_Type := Null_Routines)
    is
+      use Zip;
+      use Zip_Streams;
 
       Header_Index : Zip_Streams.Zs_Index_Type;
       Comp_Size    : File_Size_Type;
       Uncomp_Size  : File_Size_Type;
       Crc_32       : Unsigned_32;
-      use Zip, Zip_Streams;
+
       Zip_File      : aliased File_Zipstream;
       Input_Stream  : Zipstream_Class_Access;
       Use_A_File    : constant Boolean := From.Stream = null;
@@ -699,7 +646,7 @@ package body Unzip is
          Crc_32        => Crc_32);
       Unzipfile
         (Zip_File             => Input_Stream.all,
-         Out_Name             => What,
+         Out_Name             => Rename,
          Out_Name_Encoding    => Name_Encoding,
          Name_From_Header     => False,
          Header_Index         => Header_Index,
@@ -718,78 +665,7 @@ package body Unzip is
          if Use_A_File and then Is_Open (Zip_File) then
             Close (Zip_File);
          end if;
-         Raise_Exception (Zip.Archive_Corrupted'Identity, "Bad local header");
-      when others =>
-         if Use_A_File and then Is_Open (Zip_File) then
-            Close (Zip_File);
-         end if;
-         raise;
-   end Extract;
-
-   --  Extract one precise file (what) from an archive (from)
-   --  but save under a new name (rename)
-   --  Needs Zip.Load(from, ...) prior to the extraction
-
-   procedure Extract
-     (From                 : Zip.Zip_Info;
-      What                 : String;
-      Rename               : String;
-      Feedback             : Zip.Feedback_Proc;
-      Tell_Data            : Tell_Data_Proc;
-      Options              : Option_Set       := No_Option;
-      File_System_Routines : Fs_Routines_Type := Null_Routines)
-   is
-
-      Header_Index : Zip_Streams.Zs_Index_Type;
-      Comp_Size    : File_Size_Type;
-      Uncomp_Size  : File_Size_Type;
-      Crc_32       : Unsigned_32;
-      use Zip, Zip_Streams;
-      Zip_File      : aliased File_Zipstream;
-      Input_Stream  : Zipstream_Class_Access;
-      Use_A_File    : constant Boolean := From.Stream = null;
-      Name_Encoding : Zip.Zip_Name_Encoding;
-   begin
-      if Use_A_File then
-         Input_Stream := Zip_File'Unchecked_Access;
-         Set_Name (Zip_File, From.Name);
-         Open (Zip_File, In_File);
-      else  --  Use the given stream
-         Input_Stream := From.Stream;
-      end if;
-      if Feedback = null then
-         Current_User_Attitude := Yes_To_All;  --  Non-interactive
-      end if;
-      Zip.Find_Offset
-        (Info          => From,
-         Name          => What,
-         Name_Encoding => Name_Encoding,
-         File_Index    => Header_Index,
-         Comp_Size     => Comp_Size,
-         Uncomp_Size   => Uncomp_Size,
-         Crc_32        => Crc_32);
-      Unzipfile
-        (Zip_File             => Input_Stream.all,
-         Out_Name             => Rename,
-         Out_Name_Encoding    => Name_Encoding,  -- Assumption: encoding same as name
-         Name_From_Header     => False,
-         Header_Index         => Header_Index,
-         Hint_Comp_Size       => Comp_Size,
-         Hint_Crc_32          => Crc_32,
-         Feedback             => Feedback,
-         Help_The_File_Exists => null,
-         Tell_Data            => Tell_Data,
-         Options              => Options,
-         File_System_Routines => File_System_Routines);
-      if Use_A_File then
-         Close (Zip_File);
-      end if;
-   exception
-      when Zip.Headers.Bad_Local_Header =>
-         if Use_A_File and then Is_Open (Zip_File) then
-            Close (Zip_File);
-         end if;
-         Raise_Exception (Zip.Archive_Corrupted'Identity, "Bad local header");
+         raise Zip.Archive_Corrupted with "Bad local header";
       when others =>
          if Use_A_File and then Is_Open (Zip_File) then
             Close (Zip_File);

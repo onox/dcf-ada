@@ -181,17 +181,6 @@ package Unzip is
       Options              : Option_Set       := No_Option;
       File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-   --  Extract one precise file (what) from an archive (from)
-
-   procedure Extract
-     (From                 : String;
-      What                 : String;
-      Feedback             : Zip.Feedback_Proc;
-      Help_The_File_Exists : Resolve_Conflict_Proc;
-      Tell_Data            : Tell_Data_Proc;
-      Options              : Option_Set       := No_Option;
-      File_System_Routines : Fs_Routines_Type := Null_Routines);
-
    --  Extract one precise file (what) from an archive (from),
    --  but save under a new name (rename)
 
@@ -200,6 +189,7 @@ package Unzip is
       What                 : String;
       Rename               : String;
       Feedback             : Zip.Feedback_Proc;
+      Help_The_File_Exists : Resolve_Conflict_Proc;
       Tell_Data            : Tell_Data_Proc;
       Options              : Option_Set       := No_Option;
       File_System_Routines : Fs_Routines_Type := Null_Routines);
@@ -217,27 +207,15 @@ package Unzip is
       Options              : Option_Set       := No_Option;
       File_System_Routines : Fs_Routines_Type := Null_Routines);
 
-   --  Extract one precise file (what) from an archive (from)
-   --  Needs Zip.Load(from, ...) prior to the extraction
-
-   procedure Extract
-     (From                 : Zip.Zip_Info;
-      What                 : String;
-      Feedback             : Zip.Feedback_Proc;
-      Help_The_File_Exists : Resolve_Conflict_Proc;
-      Tell_Data            : Tell_Data_Proc;
-      Options              : Option_Set       := No_Option;
-      File_System_Routines : Fs_Routines_Type := Null_Routines);
-
    --  Extract one precise file (what) from an archive (from),
    --  but save under a new name (rename)
    --  Needs Zip.Load(from, ...) prior to the extraction
 
    procedure Extract
      (From                 : Zip.Zip_Info;
-      What                 : String;
-      Rename               : String;
+      What, Rename         : String;
       Feedback             : Zip.Feedback_Proc;
+      Help_The_File_Exists : Resolve_Conflict_Proc;
       Tell_Data            : Tell_Data_Proc;
       Options              : Option_Set       := No_Option;
       File_System_Routines : Fs_Routines_Type := Null_Routines);

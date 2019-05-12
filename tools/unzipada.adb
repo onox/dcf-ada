@@ -200,7 +200,7 @@ begin
       else
          Zip.Load (Zi, Archive);
          for I in Last_Option + 2 .. Argument_Count loop
-            Extract (Zi, Argument (I), Fda, Rca, Tda, Z_Options, My_Fs_Routines);
+            Extract (Zi, Argument (I), Argument (I), Fda, Rca, Tda, Z_Options, My_Fs_Routines);
          end loop;
       end if;
       T1 := Clock;
