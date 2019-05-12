@@ -86,8 +86,7 @@ procedure Unzipada is
    My_Fs_Routines : constant Fs_Routines_Type :=
      (Create_Path       => Ada.Directories.Create_Path'Access, -- Ada 2005
       Set_Time_Stamp    => Set_Time_Stamp,
-      Compose_File_Name => Compose_File_Name'Unrestricted_Access,
-      others            => null);
+      Compose_File_Name => Compose_File_Name'Unrestricted_Access);
 
    T0, T1          : Time;
    Seconds_Elapsed : Duration;

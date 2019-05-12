@@ -371,10 +371,6 @@ package body Unzip is
                   File_System_Routines.Set_Time_Stamp
                     (To_String (The_Output_Name),
                      Convert (Local_Header.File_Timedate));
-               elsif File_System_Routines.Set_Ztime_Stamp /= null then
-                  File_System_Routines.Set_Ztime_Stamp
-                    (To_String (The_Output_Name),
-                     Local_Header.File_Timedate);
                end if;
             exception
                when Zip_Streams.Calendar.Time_Error | Ada.Calendar.Time_Error =>
