@@ -87,11 +87,11 @@ package Zip is
 
    function Is_Loaded (Info : in Zip_Info) return Boolean;
 
-   function Zip_Name (Info : in Zip_Info) return String;
+   function Name (Info : in Zip_Info) return String;
 
-   function Zip_Comment (Info : in Zip_Info) return String;
+   function Comment (Info : in Zip_Info) return String;
 
-   function Zip_Stream (Info : in Zip_Info) return Zip_Streams.Zipstream_Class_Access;
+   function Stream (Info : in Zip_Info) return Zip_Streams.Zipstream_Class_Access;
 
    function Entries (Info : in Zip_Info) return Natural;
 

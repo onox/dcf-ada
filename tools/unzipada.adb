@@ -194,7 +194,7 @@ begin
       T0 := Clock;
       if Comment then -- Option: -z , diplay comment only
          Zip.Load (Zi, Archive);
-         Zip.Put_Multi_Line (Standard_Output, Zip.Zip_Comment (Zi));
+         Zip.Put_Multi_Line (Standard_Output, Zi.Comment);
       elsif Extract_All then
          Extract (Archive, Fda, Rca, Tda, Z_Options, My_Fs_Routines);
       else

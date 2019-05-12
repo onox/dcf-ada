@@ -676,15 +676,15 @@ package body Unzip is
       use Zip, Zip_Streams;
       Zip_File      : aliased File_Zipstream;
       Input_Stream  : Zipstream_Class_Access;
-      Use_A_File    : constant Boolean := Zip.Zip_Stream (From) = null;
+      Use_A_File    : constant Boolean := From.Stream = null;
       Name_Encoding : Zip.Zip_Name_Encoding;
    begin
       if Use_A_File then
          Input_Stream := Zip_File'Unchecked_Access;
-         Set_Name (Zip_File, Zip.Zip_Name (From));
+         Set_Name (Zip_File, From.Name);
          Open (Zip_File, In_File);
       else -- use the given stream
-         Input_Stream := Zip.Zip_Stream (From);
+         Input_Stream := From.Stream;
       end if;
       if Feedback = null then
          Current_User_Attitude := Yes_To_All;  --  Non-interactive
@@ -747,15 +747,15 @@ package body Unzip is
       use Zip, Zip_Streams;
       Zip_File      : aliased File_Zipstream;
       Input_Stream  : Zipstream_Class_Access;
-      Use_A_File    : constant Boolean := Zip.Zip_Stream (From) = null;
+      Use_A_File    : constant Boolean := From.Stream = null;
       Name_Encoding : Zip.Zip_Name_Encoding;
    begin
       if Use_A_File then
          Input_Stream := Zip_File'Unchecked_Access;
-         Set_Name (Zip_File, Zip.Zip_Name (From));
+         Set_Name (Zip_File, From.Name);
          Open (Zip_File, In_File);
       else  --  Use the given stream
-         Input_Stream := Zip.Zip_Stream (From);
+         Input_Stream := From.Stream;
       end if;
       if Feedback = null then
          Current_User_Attitude := Yes_To_All;  --  Non-interactive

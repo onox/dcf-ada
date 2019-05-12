@@ -229,7 +229,7 @@ package body Unzip.Streams is
       use Zip_Streams, Ada.Streams;
       Zip_Stream   : aliased File_Zipstream;
       Input_Stream : Zipstream_Class_Access;
-      Use_A_File   : constant Boolean := Zip.Zip_Stream (Archive_Info) = null;
+      Use_A_File   : constant Boolean := Archive_Info.Stream = null;
    begin
       if File = null then
          File := new Unzip_Stream_Type;
@@ -239,11 +239,11 @@ package body Unzip.Streams is
       end if;
       if Use_A_File then
          Input_Stream := Zip_Stream'Unchecked_Access;
-         Set_Name (Zip_Stream, Zip.Zip_Name (Archive_Info));
+         Set_Name (Zip_Stream, Archive_Info.Name);
          Open (Zip_Stream, In_File);
       else
          --  Use the given stream
-         Input_Stream := Zip.Zip_Stream (Archive_Info);
+         Input_Stream := Archive_Info.Stream;
       end if;
 
       File.Archive_Info := Archive_Info;  --  Full clone. Now a copy is safely with File
@@ -386,15 +386,15 @@ package body Unzip.Streams is
       use Zip_Streams;
       Zip_Stream   : aliased File_Zipstream;
       Input_Stream : Zipstream_Class_Access;
-      Use_A_File   : constant Boolean := Zip.Zip_Stream (Archive_Info) = null;
+      Use_A_File   : constant Boolean := Archive_Info.Stream = null;
    begin
       if Use_A_File then
          Input_Stream := Zip_Stream'Unchecked_Access;
-         Set_Name (Zip_Stream, Zip.Zip_Name (Archive_Info));
+         Set_Name (Zip_Stream, Archive_Info.Name);
          Open (Zip_Stream, In_File);
       else
          --  Use the given stream
-         Input_Stream := Zip.Zip_Stream (Archive_Info);
+         Input_Stream := Archive_Info.Stream;
       end if;
       declare
          Dummy_Mem_Ptr : P_Stream_Element_Array;

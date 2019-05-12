@@ -68,7 +68,7 @@ procedure Comp_Zip_Prc (Z1, Z2 : Zip.Zip_Info; Quiet : Natural) is
          exception
             when Zip.File_Name_Not_Found =>
                if Quiet = 0 then
-                  Put ("   # Not found in archive [" & Zip.Zip_Name (Z (I)) & ']');
+                  Put ("   # Not found in archive [" & Z (I).Name & ']');
                end if;
                if I = 1 then
                   Put_Line ("-- internal error!");
@@ -96,7 +96,7 @@ procedure Comp_Zip_Prc (Z1, Z2 : Zip.Zip_Info; Quiet : Natural) is
             if Quiet = 0 then
                Put_Line
                  ("   # Shorter in [" &
-                  Zip.Zip_Name (Z (2)) &
+                  Z (2).Name &
                   "] at position" &
                   Integer_64'Image (P));
             end if;
@@ -122,7 +122,7 @@ procedure Comp_Zip_Prc (Z1, Z2 : Zip.Zip_Info; Quiet : Natural) is
       end loop;
       if not End_Of_File (F (2)) then
          if Quiet = 0 then
-            Put_Line ("   # Longer in [" & Zip.Zip_Name (Z (2)) & "]");
+            Put_Line ("   # Longer in [" & Z (2).Name & "]");
          end if;
          Close (F (1));
          Close (F (2));
@@ -143,16 +143,16 @@ procedure Comp_Zip_Prc (Z1, Z2 : Zip.Zip_Info; Quiet : Natural) is
 begin
    Z (1) := Z1;
    Z (2) := Z2;
-   Put_Line ("* Comparing [" & Zip.Zip_Name (Z (1)) & "] and [" & Zip.Zip_Name (Z (2)) & "]");
+   Put_Line ("* Comparing [" & Z (1).Name & "] and [" & Z (2).Name & "]");
    Compare_All_Files (Z (1));
    Total_2 := Zip.Entries (Z (2));
    Common  := Total_1 - Missing_1_In_2;
    if Quiet < 2 then
       Put_Line ("* === Results ===");
       Put_Line
-        ("  1st archive: [" & Zip.Zip_Name (Z (1)) & "], total files:" & Natural'Image (Total_1));
+        ("  1st archive: [" & Z (1).Name & "], total files:" & Natural'Image (Total_1));
       Put_Line
-        ("  2nd archive: [" & Zip.Zip_Name (Z (2)) & "], total files:" & Natural'Image (Total_2));
+        ("  2nd archive: [" & Z (2).Name & "], total files:" & Natural'Image (Total_2));
       Put_Line ("  Total files compared: " & Natural'Image (Common));
       Put_Line ("  Total of correct bytes: " & Integer_64'Image (Total_Bytes));
    end if;

@@ -361,29 +361,29 @@ package body Zip is
       return Info.Loaded;
    end Is_Loaded;
 
-   function Zip_Name (Info : in Zip_Info) return String is
+   function Name (Info : in Zip_Info) return String is
    begin
       if not Info.Loaded then
          raise Forgot_To_Load_Zip_Info;
       end if;
       return Info.Zip_File_Name.all;
-   end Zip_Name;
+   end Name;
 
-   function Zip_Comment (Info : in Zip_Info) return String is
+   function Comment (Info : in Zip_Info) return String is
    begin
       if not Info.Loaded then
          raise Forgot_To_Load_Zip_Info;
       end if;
       return Info.Zip_File_Comment.all;
-   end Zip_Comment;
+   end Comment;
 
-   function Zip_Stream (Info : in Zip_Info) return Zip_Streams.Zipstream_Class_Access is
+   function Stream (Info : in Zip_Info) return Zip_Streams.Zipstream_Class_Access is
    begin
       if not Info.Loaded then
          raise Forgot_To_Load_Zip_Info;
       end if;
       return Info.Zip_Input_Stream;
-   end Zip_Stream;
+   end Stream;
 
    function Entries (Info : in Zip_Info) return Natural is
    begin
