@@ -27,6 +27,7 @@ use Interfaces;
 --  Pure Ada Text_IO-fashion feedback; should work on every
 --  computer having a screen [and some text console too] :
 
+with File_Operations;
 with My_Feedback;
 with My_Resolve_Conflict;
 with My_Tell_Data;
@@ -35,16 +36,11 @@ with Summary;
 procedure Unzipada is
 
    Set_Time_Stamp : constant Unzip.Set_Time_Stamp_Proc := null;
-   --  If you want the time stamps, uncomment the following
-   --  and look into Set_Modification_Time_B above.
-   --
-   --  Set_Modification_Time_B'Unrestricted_Access;
 
    use Unzip;
 
    Z_Options        : Unzip.Option_Set := Unzip.No_Option;
    Quiet            : Boolean          := False;
-   Lower_Case_Match : Boolean          := False;
    Comment          : Boolean          := False;
 
    Fda : Zip.Feedback_Proc     := My_Feedback'Access;
@@ -53,40 +49,10 @@ procedure Unzipada is
 
    Last_Option : Natural := 0;
 
-   Exdir     : String (1 .. 1024);
-   Exdir_Len : Natural := 0;
-
-   Directory_Separator : constant Character := '/';
-   --  '/' is also accepted by Windows
-
-   function Add_Extract_Directory (File_Name : String) return String is
-   --  OK for UNIX & Windows, but VMS has "[x.y.z]filename.ext"
-   begin
-      if Exdir_Len = 0 then
-         return File_Name;
-      elsif Exdir (Exdir_Len) = '\' or Exdir (Exdir_Len) = '/' then
-         return Exdir (1 .. Exdir_Len) & File_Name;
-      else
-         return Exdir (1 .. Exdir_Len) & Directory_Separator & File_Name;
-      end if;
-   end Add_Extract_Directory;
-
-   function Compose_File_Name
-     (File_Name     : String;
-      Name_Encoding : Zip.Zip_Name_Encoding) return String
-   is
-      Fn1 : String := File_Name;
-   begin
-      if Lower_Case_Match then
-         Fn1 := To_Lower (Fn1);
-      end if;
-      return Add_Extract_Directory (Fn1);
-   end Compose_File_Name;
-
    My_Fs_Routines : constant Fs_Routines_Type :=
      (Create_Path       => Ada.Directories.Create_Path'Access, -- Ada 2005
       Set_Time_Stamp    => Set_Time_Stamp,
-      Compose_File_Name => Compose_File_Name'Unrestricted_Access);
+      Compose_File_Name => File_Operations.Compose_File_Name'Access);
 
    T0, T1          : Time;
    Seconds_Elapsed : Duration;
@@ -116,7 +82,6 @@ procedure Unzipada is
    end Help;
 
    Zi : Zip.Zip_Info;
-
 begin
    if Argument_Count = 0 then
       Help;
@@ -145,14 +110,14 @@ begin
                   declare
                      Arg_Exdir : constant String := Argument (I + 1);
                   begin
-                     Exdir (1 .. Arg_Exdir'Length) := Arg_Exdir;
-                     Exdir_Len                     := Arg_Exdir'Length;
+                     File_Operations.Exdir (1 .. Arg_Exdir'Length) := Arg_Exdir;
+                     File_Operations.Exdir_Len                     := Arg_Exdir'Length;
                   end;
                   Last_Option := I + 1;
                when 'c' =>
                   Z_Options (Case_Sensitive_Match) := True;
                when 'l' =>
-                  Lower_Case_Match := True;
+                  File_Operations.Lower_Case_Match := True;
                when 'a' =>
                   Z_Options (Extract_As_Text) := True;
                when 'q' =>
@@ -185,7 +150,7 @@ begin
       Archive_Given : constant String := Argument (Last_Option + 1);
       Zip_Ext       : Boolean         := False;
       Extract_All   : Boolean;
-      --
+
       function Archive return String is
       begin
          if Zip_Ext then
