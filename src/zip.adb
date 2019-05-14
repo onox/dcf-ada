@@ -28,12 +28,10 @@ with Zip.Headers;
 
 with Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
-with Ada.Unchecked_Deallocation;
-with Ada.Exceptions;
-use Ada.Exceptions;
 with Ada.IO_Exceptions;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
 
 package body Zip is
 
@@ -218,23 +216,21 @@ package body Zip is
                --  Here we have a case where the entry name already exists in the dictionary.
                case Duplicate_Names is
                   when Error_On_Duplicate =>
-                     Ada.Exceptions.Raise_Exception
-                       (Duplicate_Name'Identity,
-                        "Same full entry name (in dictionary: " &
-                        Dico_Name &
-                        ") appears twice in archive directory; " &
-                        "procedure Load was called with strict name policy.");
+                     raise Duplicate_Name with
+                       "Same full entry name (in dictionary: " &
+                       Dico_Name &
+                       ") appears twice in archive directory; " &
+                       "procedure Load was called with strict name policy.";
                   when Admit_Duplicates =>
                      if File_Index > Node.File_Index then
                         Insert_Into_Tree (Node.Right);
                      elsif File_Index < Node.File_Index then
                         Insert_Into_Tree (Node.Left);
                      else
-                        Ada.Exceptions.Raise_Exception
-                          (Duplicate_Name'Identity,
-                           "Archive directory corrupt: same full entry name (in dictionary: " &
-                           Dico_Name &
-                           "), with same data position, appear twice.");
+                        raise Duplicate_Name with
+                          "Archive directory corrupt: same full entry name (in dictionary: " &
+                          Dico_Name &
+                          "), with same data position, appear twice.";
                      end if;
                end case;
             end if;
@@ -317,9 +313,9 @@ package body Zip is
       Info.Zip_Archive_Format := Zip_32;
    exception
       when Zip.Headers.Bad_End =>
-         Raise_Exception (Zip.Archive_Corrupted'Identity, "Bad (or no) end-of-central-directory");
+         raise Zip.Archive_Corrupted with "Bad (or no) end-of-central-directory";
       when Zip.Headers.Bad_Central_Header =>
-         Raise_Exception (Zip.Archive_Corrupted'Identity, "Bad central directory entry header");
+         raise Zip.Archive_Corrupted with "Bad central directory entry header";
    end Load;
 
    -----------------------------------------------------------
@@ -340,7 +336,7 @@ package body Zip is
          Open (Mystream, In_File);
       exception
          when others =>
-            Raise_Exception (Zip_File_Open_Error'Identity, "Archive: [" & From & ']');
+            raise Zip_File_Open_Error with "Archive: [" & From & ']';
       end;
       --  Call the stream version of Load(...)
       Load (Info, Mystream, Case_Sensitive, Duplicate_Names);
@@ -565,9 +561,9 @@ package body Zip is
 
    exception
       when Zip.Headers.Bad_End | Ada.IO_Exceptions.End_Error =>
-         Raise_Exception (Zip.Archive_Corrupted'Identity, "Bad (or no) end-of-central-directory");
+         raise Zip.Archive_Corrupted with "Bad (or no) end-of-central-directory";
       when Zip.Headers.Bad_Central_Header =>
-         Raise_Exception (Zip.Archive_Corrupted'Identity, "Bad central directory entry header");
+         raise Zip.Archive_Corrupted with "Bad central directory entry header";
    end Find_First_Offset;
 
    --  Internal: find offset of a zipped file by reading sequentially the
@@ -611,12 +607,12 @@ package body Zip is
             end if;
          end;
       end loop;
-      Raise_Exception (File_Name_Not_Found'Identity, "Entry: [" & Name & ']');
+      raise File_Name_Not_Found with "Entry: [" & Name & ']';
    exception
       when Zip.Headers.Bad_End =>
-         Raise_Exception (Zip.Archive_Corrupted'Identity, "Bad (or no) end-of-central-directory");
+         raise Zip.Archive_Corrupted with "Bad (or no) end-of-central-directory";
       when Zip.Headers.Bad_Central_Header =>
-         Raise_Exception (Zip.Archive_Corrupted'Identity, "Bad central directory entry header");
+         raise Zip.Archive_Corrupted with "Bad central directory entry header";
    end Find_Offset;
 
    --  Internal: find offset of a zipped file using the zip_info tree 8-)
@@ -650,9 +646,8 @@ package body Zip is
             return;
          end if;
       end loop;
-      Ada.Exceptions.Raise_Exception
-        (File_Name_Not_Found'Identity,
-         "Archive: [" & Info.Zip_File_Name.all & "], entry: [" & Name & ']');
+      raise File_Name_Not_Found with
+        "Archive: [" & Info.Zip_File_Name.all & "], entry: [" & Name & ']';
    end Find_Offset;
 
    procedure Find_Offset_Without_Directory
@@ -751,9 +746,8 @@ package body Zip is
             return;
          end if;
       end loop;
-      Ada.Exceptions.Raise_Exception
-        (File_Name_Not_Found'Identity,
-         "Archive: [" & Info.Zip_File_Name.all & "], entry: [" & Name & ']');
+      raise File_Name_Not_Found with
+        "Archive: [" & Info.Zip_File_Name.all & "], entry: [" & Name & ']';
    end Set_User_Code;
 
    function User_Code (Info : in Zip_Info; Name : in String) return Integer is
@@ -772,9 +766,8 @@ package body Zip is
             return Aux.User_Code;
          end if;
       end loop;
-      Ada.Exceptions.Raise_Exception
-        (File_Name_Not_Found'Identity,
-         "Archive: [" & Info.Zip_File_Name.all & "], entry: [" & Name & ']');
+      raise File_Name_Not_Found with
+        "Archive: [" & Info.Zip_File_Name.all & "], entry: [" & Name & ']';
       return 0;  --  Fake, since exception has been raised just before. Removes an OA warning.
    end User_Code;
 

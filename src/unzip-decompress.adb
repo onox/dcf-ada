@@ -21,10 +21,9 @@
 
 with Interfaces;
 
-with Ada.Exceptions;
 with Ada.Streams.Stream_IO;
-with Ada.Text_IO;
 with Ada.Strings.Unbounded;
+with Ada.Text_IO;
 
 with Unzip.Decompress.Huffman;
 with Zip.Crc_Crypto;
@@ -52,7 +51,7 @@ package body Unzip.Decompress is
       ----------------------------------------------------------------------------
       -- Specifications of UnZ_* packages (remain of Info Zip's code structure) --
       ----------------------------------------------------------------------------
-      use Ada.Exceptions, Interfaces;
+      use Interfaces;
 
       package Unz_Glob is -- Not global anymore, since local to Decompress_data :-)
          --  I/O Buffers: Sliding dictionary for unzipping, and output buffer as well
@@ -166,9 +165,8 @@ package body Unzip.Decompress is
          procedure Process_Compressed_End_Reached is
          begin
             if Zip_Eof then -- We came already here once
-               Raise_Exception
-                 (Zip.Archive_Corrupted'Identity,
-                  "Decoding went past compressed data size plus one buffer length");
+               raise Zip.Archive_Corrupted with
+                 "Decoding went past compressed data size plus one buffer length";
             --  Avoid infinite loop on data with exactly buffer's length and no end marker
             else
                Unz_Glob.Readpos := Unz_Glob.Inbuf'Length;
@@ -457,9 +455,8 @@ package body Unzip.Decompress is
                   end loop;
                exception
                   when others =>
-                     Raise_Exception
-                       (Zip.Archive_Corrupted'Identity,
-                        "End of stream reached (format: Store)");
+                     raise Zip.Archive_Corrupted with
+                       "End of stream reached (format: Store)";
                end;
                begin
                   Unz_Io.Flush (Natural (Read_In));  -- Takes care of CRC too
@@ -504,9 +501,8 @@ package body Unzip.Decompress is
             Main_Loop :
             while not Zip_Eof loop
                if Tl = null then
-                  Raise_Exception
-                    (Zip.Archive_Corrupted'Identity,
-                     "Null table list (on data decoding, Huffman tree for literals or LZ lengths)");
+                  raise Zip.Archive_Corrupted with
+                    "Null table list (on data decoding, Huffman tree for literals or LZ lengths)";
                end if;
                Ct     := Tl.Table;
                Ct_Idx := Unz_Io.Bit_Buffer.Read (Bl);
@@ -556,9 +552,8 @@ package body Unzip.Decompress is
 
                      --  Decode distance of block to copy:
                      if Td = null then
-                        Raise_Exception
-                          (Zip.Archive_Corrupted'Identity,
-                           "Null table list (on data decoding, Huffman tree for LZ distances)");
+                        raise Zip.Archive_Corrupted with
+                          "Null table list (on data decoding, Huffman tree for LZ distances)";
                      end if;
                      Ct     := Td.Table;
                      Ct_Idx := Unz_Io.Bit_Buffer.Read (Bd);
@@ -885,15 +880,13 @@ package body Unzip.Decompress is
                Huft_Build (Ll (0 .. 18), 19, Empty, Empty, Tl, Bl, Huft_Incomplete);
                if Huft_Incomplete then
                   Huft_Free (Tl);
-                  Raise_Exception
-                    (Zip.Archive_Corrupted'Identity,
-                     "Incomplete code set for compression structure");
+                  raise Zip.Archive_Corrupted with
+                    "Incomplete code set for compression structure";
                end if;
             exception
                when others =>
-                  Raise_Exception
-                    (Zip.Archive_Corrupted'Identity,
-                     "Error when building tables for compression structure");
+                  raise Zip.Archive_Corrupted with
+                    "Error when building tables for compression structure";
             end;
 
             --  Read in the compression structure: literal and distance code lengths
@@ -903,42 +896,43 @@ package body Unzip.Decompress is
 
             while Defined < Number_Of_Lengths loop
                if Tl = null then
-                  Raise_Exception
-                    (Zip.Archive_Corrupted'Identity,
-                     "Null table list (on compression structure)");
+                  raise Zip.Archive_Corrupted with
+                    "Null table list (on compression structure)";
                end if;
                Ct     := Tl.Table;
                Ct_Idx := Unz_Io.Bit_Buffer.Read (Bl);
                Unz_Io.Bit_Buffer.Dump (Ct (Ct_Idx).Bits);
 
                case Ct (Ct_Idx).N is
-                  when
-                      0 ..
-                        15 =>     --  Length of code for symbol of index 'defined', in bits (0..15)
+                  when 0 .. 15 =>
+                     --  Length of code for symbol of index 'defined', in bits (0..15)
                      Current_Length := Ct (Ct_Idx).N;
                      Ll (Defined)   := Current_Length;
                      Defined        := Defined + 1;
-                  when 16 =>          --  16 means: repeat last bit length 3 to 6 times
+                  when 16 =>
+                     --  16 means: repeat last bit length 3 to 6 times
                      if Defined = 0 then
-                     --  Nothing in the Ll array has been defined so far. Then, current_length is
-                     --  (theoretically) undefined and cannot be repeated.
-                     --  This unspecified case is treated as an error by zlib's inflate.c.
-                        Raise_Exception
-                          (Zip.Archive_Corrupted'Identity,
-                           "Illegal data for compression structure (repeat an undefined code length)");
+                        --  Nothing in the Ll array has been defined so far.
+                        --  Then, current_length is (theoretically) undefined
+                        --  and cannot be repeated. This unspecified case is
+                        --  treated as an error by zlib's inflate.c.
+                        raise Zip.Archive_Corrupted with
+                          "Illegal data for compression structure (repeat an undefined code length)";
                      end if;
                      Repeat_Length_Code (3 + Unz_Io.Bit_Buffer.Read_And_Dump (2));
-                  when 17 =>          --  17 means: the next 3 to 10 symbols' codes have zero bit lengths
+                  when 17 =>
+                     --  17 means: the next 3 to 10 symbols' codes have zero bit lengths
                      Current_Length := 0;
                      Repeat_Length_Code (3 + Unz_Io.Bit_Buffer.Read_And_Dump (3));
-                  when 18 =>          --  18 means: the next 11 to 138 symbols' codes have zero bit lengths
+                  when 18 =>
+                     --  18 means: the next 11 to 138 symbols' codes have zero bit lengths
                      Current_Length := 0;
                      Repeat_Length_Code (11 + Unz_Io.Bit_Buffer.Read_And_Dump (7));
-                  when others =>      --  Shouldn't occur if this tree is correct
-                     Raise_Exception
-                       (Zip.Archive_Corrupted'Identity,
-                        "Illegal data for compression structure (values should be in the range 0 .. 18): " &
-                        Integer'Image (Ct (Ct_Idx).N));
+                  when others =>
+                     --  Shouldn't occur if this tree is correct
+                     raise Zip.Archive_Corrupted with
+                       "Illegal data for compression structure (values should be in the range 0 .. 18): " &
+                       Integer'Image (Ct (Ct_Idx).N);
                end case;
             end loop;
             --  Free the Huffman tree that was used for decoding the compression
@@ -947,9 +941,8 @@ package body Unzip.Decompress is
             if Ll (256) = 0 then
                --  No code length for the End-Of-Block symbol, implies infinite stream!
                --  This case is unspecified but obviously we must stop here.
-               Raise_Exception
-                 (Zip.Archive_Corrupted'Identity,
-                  "No code for End-Of-Block symbol #256");
+               raise Zip.Archive_Corrupted with
+                 "No code for End-Of-Block symbol #256";
             end if;
             --  Build the decoding tables for literal/length codes
             Bl := Lbits;
@@ -964,15 +957,13 @@ package body Unzip.Decompress is
                   Huft_Incomplete);
                if Huft_Incomplete then
                   Huft_Free (Tl);
-                  Raise_Exception
-                    (Zip.Archive_Corrupted'Identity,
-                     "Incomplete code set for literals/lengths");
+                  raise Zip.Archive_Corrupted with
+                    "Incomplete code set for literals/lengths";
                end if;
             exception
                when others =>
-                  Raise_Exception
-                    (Zip.Archive_Corrupted'Identity,
-                     "Error when building tables for literals/lengths");
+                  raise Zip.Archive_Corrupted with
+                    "Error when building tables for literals/lengths";
             end;
             --  Build the decoding tables for distance codes
             Bd := Dbits;
@@ -987,19 +978,17 @@ package body Unzip.Decompress is
                   Huft_Incomplete);
                if Huft_Incomplete then
                   if Deflate_Strict then
-                     Raise_Exception
-                       (Zip.Archive_Corrupted'Identity,
-                        "Incomplete code set for distances");
-                  elsif Some_Trace then  --  not deflate_strict => don't stop
+                     raise Zip.Archive_Corrupted with
+                       "Incomplete code set for distances";
+                  elsif Some_Trace then  --  not Deflate_Strict => don't stop
                      Ada.Text_IO.Put_Line ("Huffman tree incomplete - PKZIP 1.93a bug workaround");
                   end if;
                end if;
             exception
                when Huft_Out_Of_Memory | Huft_Error =>
                   Huft_Free (Tl);
-                  Raise_Exception
-                    (Zip.Archive_Corrupted'Identity,
-                     "Error when building tables for distances");
+                  raise Zip.Archive_Corrupted with
+                    "Error when building tables for distances";
             end;
             --  Decompress the block's data, until an end-of-block code.
             Inflate_Codes (Tl, Td, Bl, Bd);
@@ -1149,11 +1138,10 @@ package body Unzip.Decompress is
                Unz_Meth.Deflate_E_Mode := Format = Deflate_E;
                Unz_Meth.Inflate;
             when others =>
-               Raise_Exception
-                 (Unsupported_Method'Identity,
-                  "Format/method " &
-                  Pkzip_Method'Image (Format) &
-                  " not supported for decompression");
+               raise Unsupported_Method with
+                 "Format/method " &
+                 Pkzip_Method'Image (Format) &
+                 " not supported for decompression";
          end case;
       exception
          when others =>
@@ -1180,12 +1168,11 @@ package body Unzip.Decompress is
 
       if Hint.Dd.Crc_32 /= Unz_Glob.Crc32val then
          Unz_Io.Delete_Output;
-         Raise_Exception
-           (Crc_Error'Identity,
-            "CRC stored in archive: " &
-            Hexadecimal (Hint.Dd.Crc_32) &
-            "; CRC computed now: " &
-            Hexadecimal (Unz_Glob.Crc32val));
+         raise Crc_Error with
+           "CRC stored in archive: " &
+           Hexadecimal (Hint.Dd.Crc_32) &
+           "; CRC computed now: " &
+           Hexadecimal (Unz_Glob.Crc32val);
       end if;
 
       case Mode is

@@ -21,7 +21,6 @@
 
 with Interfaces;
 
-with Ada.Exceptions;
 with Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;
 
@@ -29,7 +28,6 @@ with Unzip.Decompress;
 with Zip.Headers;
 with Zip_Streams;
 
-use Ada.Exceptions;
 use Interfaces;
 
 package body Unzip is
@@ -241,9 +239,8 @@ package body Unzip is
 
       Method := Zip.Method_From_Code (Local_Header.Zip_Type);
       if Method = Unknown then
-         Ada.Exceptions.Raise_Exception
-           (Unzip.Unsupported_Method'Identity,
-            "Format (method) #" & Unsigned_16'Image (Local_Header.Zip_Type) & " is unknown");
+         raise Unzip.Unsupported_Method with
+           "Format (method) #" & Unsigned_16'Image (Local_Header.Zip_Type) & " is unknown";
       end if;
 
       --  Calculate offset of data
@@ -347,9 +344,8 @@ package body Unzip is
             Set_Index (Zip_File, Work_Index);  --  Eventually skips the file name
          exception
             when others =>
-               Raise_Exception
-                 (Zip.Archive_Corrupted'Identity,
-                  "End of stream reached (location: between local header and archived data)");
+               raise Zip.Archive_Corrupted with
+                 "End of stream reached (location: between local header and archived data)";
          end;
          Unzip.Decompress.Decompress_Data
            (Zip_File                   => Zip_File,
@@ -401,7 +397,7 @@ package body Unzip is
       end if;
    exception
       when Ada.IO_Exceptions.End_Error =>
-         Raise_Exception (Zip.Archive_Corrupted'Identity, "End of stream reached");
+         raise Zip.Archive_Corrupted with "End of stream reached";
    end Unzipfile;
 
    ----------------------------------

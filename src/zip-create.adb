@@ -19,11 +19,11 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
-with Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
-with Ada.Text_IO;
-
 with Interfaces;
+
+with Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
+
 use Interfaces;
 
 package body Zip.Create is
@@ -214,9 +214,7 @@ package body Zip.Create is
          end if;
          Mem2 := Index (Info.Stream.all);
          if Info.Zip_Archive_Format = Zip_32 and then Mem2 > Four_Gb then
-            Ada.Exceptions.Raise_Exception
-              (Zip_Capacity_Exceeded'Identity,
-               Zip_32_Exceeded_Message);
+            raise Zip_Capacity_Exceeded with Zip_32_Exceeded_Message;
          end if;
          --  Go back to the local header to rewrite it with complete informations
          --  known after the compression: CRC value, compressed size, actual compression format.
@@ -365,9 +363,7 @@ package body Zip.Create is
       begin
          Current_Index := Index (Info.Stream.all);
          if Info.Zip_Archive_Format = Zip_32 and then Current_Index > Four_Gb then
-            Ada.Exceptions.Raise_Exception
-              (Zip_Capacity_Exceeded'Identity,
-               Zip_32_Exceeded_Message);
+            raise Zip_Capacity_Exceeded with Zip_32_Exceeded_Message;
          end if;
       end Get_Index_And_Check_Zip_32_Limit;
    begin
@@ -380,9 +376,8 @@ package body Zip.Create is
       if Info.Zip_Archive_Format = Zip_32
         and then Info.Last_Entry > Integer (Unsigned_16'Last)
       then
-         Ada.Exceptions.Raise_Exception
-           (Zip_Capacity_Exceeded'Identity,
-            "Too many entries (for Zip_32 archive format): more than 65535.");
+         raise Zip_Capacity_Exceeded with
+           "Too many entries (for Zip_32 archive format): more than 65535.";
       end if;
       if Info.Contains /= null then
          for E in 1 .. Info.Last_Entry loop

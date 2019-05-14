@@ -19,12 +19,13 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
-with Zip.Headers, Unzip.Decompress;
-
-with Ada.Exceptions;
-use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
 with Interfaces;
+
+with Ada.Unchecked_Deallocation;
+
+with Unzip.Decompress;
+with Zip.Headers;
+
 use Interfaces;
 
 package body Unzip.Streams is
@@ -65,7 +66,7 @@ package body Unzip.Streams is
          Zip.Headers.Read_And_Check (Zip_Stream, Local_Header);
       exception
          when Zip.Headers.Bad_Local_Header =>
-            Raise_Exception (Zip.Archive_Corrupted'Identity, "Bad local header");
+            raise Zip.Archive_Corrupted with "Bad local header";
          when others =>
             raise Zip.Archive_Corrupted;
       end;
@@ -104,9 +105,8 @@ package body Unzip.Streams is
          Zip_Streams.Set_Index (Zip_Stream, Work_Index); -- eventually skips the file name
       exception
          when others =>
-            Raise_Exception
-              (Zip.Archive_Corrupted'Identity,
-               "End of stream reached (location: between local header and archived data)");
+            raise Zip.Archive_Corrupted with
+              "End of stream reached (location: between local header and archived data)";
       end;
 
       if Out_Stream_Ptr = null then
