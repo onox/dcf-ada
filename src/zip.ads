@@ -34,6 +34,7 @@ with Interfaces;
 with System;
 
 with Ada.Calendar;
+with Ada.Directories;
 with Ada.Finalization;
 with Ada.Streams.Stream_IO;
 with Ada.Text_IO;
@@ -331,7 +332,7 @@ package Zip is
    --  This does the same as Ada 2005's Ada.Directories.Exists
    --  Just there as helper for Ada 95 only systems
 
-   function Exists (Name : String) return Boolean;
+   function Exists (Name : String) return Boolean renames Ada.Directories.Exists;
 
    --  Write a string containing line endings (possibly from another system)
    --   into a text file, with the "correct", native line endings.

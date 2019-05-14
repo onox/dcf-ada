@@ -30,7 +30,6 @@ with Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
 with Ada.IO_Exceptions;
 with Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 package body Zip is
@@ -1008,29 +1007,6 @@ package body Zip is
       end loop;
       Close (F);
    end Copy_File;
-
-   --  This does the same as Ada 2005's Ada.Directories.Exists
-   --  Just there as helper for Ada 95 only systems
-   function Exists (Name : String) return Boolean is
-      use Ada.Text_IO, Ada.Strings.Fixed;
-      F : File_Type;
-   begin
-      if Index (Name, "*") > 0 then
-         return False;
-      end if;
-      Open
-        (F,
-         In_File,
-         Name,
-         Form => Ada.Strings.Unbounded.To_String (Zip_Streams.Form_For_Io_Open_And_Create));
-      Close (F);
-      return True;
-   exception
-      when Name_Error =>
-         return False; --  The file cannot exist !
-      when Use_Error =>
-         return True;  --  The file exist and is already opened !
-   end Exists;
 
    procedure Put_Multi_Line (Out_File : Ada.Text_IO.File_Type; Text : String) is
       Last_Char : Character := ' ';
