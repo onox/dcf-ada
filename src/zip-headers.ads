@@ -108,13 +108,14 @@ package Zip.Headers is
    Language_Encoding_Flag_Bit : constant := 2**11;
 
    type Local_File_Header is record
-      --  PK34                                --  1.. 4
-      Needed_Extract_Version              : Unsigned_16;  --  5.. 6
-      Bit_Flag : Unsigned_16;  --  Appnote: 4.4.4 general purpose bit flag
-      Zip_Type                            : Unsigned_16;
-      File_Timedate                       : Time;
-      Dd                                  : Data_Descriptor;
-      Filename_Length, Extra_Field_Length : Unsigned_16;
+      --  PK34                               --  1.. 4
+      Needed_Extract_Version : Unsigned_16;  --  5.. 6
+      Bit_Flag               : Unsigned_16;  --  Appnote: 4.4.4 general purpose bit flag
+      Zip_Type               : Unsigned_16;
+      File_Timedate          : Time;
+      Dd                     : Data_Descriptor;
+      Filename_Length        : Unsigned_16;
+      Extra_Field_Length     : Unsigned_16;
    end record;
 
    Local_Header_Length : constant := 30;

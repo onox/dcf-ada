@@ -101,8 +101,6 @@ package Zip is
 
    function Entries (Info : in Zip_Info) return Natural;
 
-   Forgot_To_Load_Zip_Info : exception;
-
    --  Data sizes in archive
    subtype File_Size_Type is Interfaces.Unsigned_32;
 
@@ -227,7 +225,8 @@ package Zip is
       File_Index    :    out Zip_Streams.Zs_Index_Type;
       Comp_Size     :    out File_Size_Type;
       Uncomp_Size   :    out File_Size_Type;
-      Crc_32        :    out Interfaces.Unsigned_32);
+      Crc_32        :    out Interfaces.Unsigned_32)
+   with Pre => Info.Is_Loaded;
 
    --  Find offset of a certain compressed file in a pre-loaded Zip_info data.
    --  This version scans the whole catalogue and returns the index of the first
@@ -247,14 +246,17 @@ package Zip is
 
    File_Name_Not_Found : exception;
 
-   function Exists (Info : Zip_Info; Name : String) return Boolean;
+   function Exists (Info : Zip_Info; Name : String) return Boolean
+     with Pre => Info.Is_Loaded;
 
    --  User code: any information e.g. as a result of a string search,
    --  archive comparison, archive update, recompression, etc.
 
-   procedure Set_User_Code (Info : in Zip_Info; Name : in String; Code : in Integer);
+   procedure Set_User_Code (Info : in Zip_Info; Name : in String; Code : in Integer)
+     with Pre => Info.Is_Loaded;
 
-   function User_Code (Info : in Zip_Info; Name : in String) return Integer;
+   function User_Code (Info : in Zip_Info; Name : in String) return Integer
+     with Pre => Info.Is_Loaded;
 
    procedure Get_Sizes
      (Info        : in     Zip_Info;
@@ -417,7 +419,6 @@ private
    --  given the implementation's run-time model
 
    Min_Bits_32 : constant := Integer'Max (32, System.Word_Size);
-   Min_Bits_16 : constant := Integer'Max (16, System.Word_Size);
 
    --  We define an Integer type which is at least 32 bits, but n bits
    --  on a native n (> 32) bits architecture (no performance hit on 64+
@@ -427,9 +428,6 @@ private
    type Integer_M32 is range -2**(Min_Bits_32 - 1) .. 2**(Min_Bits_32 - 1) - 1;
    subtype Natural_M32 is Integer_M32 range 0 .. Integer_M32'Last;
    subtype Positive_M32 is Integer_M32 range 1 .. Integer_M32'Last;
-
-   type Unsigned_M16 is mod 2**Min_Bits_16;
-   type Unsigned_M32 is mod 2**Min_Bits_32;
 
    --  Codes for compression formats in Zip archives
    --  See PKWARE's Appnote, "4.4.5 compression method"

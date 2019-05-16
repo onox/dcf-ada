@@ -234,7 +234,6 @@ package body Zip is
                end case;
             end if;
          end Insert_Into_Tree;
-      --
       begin
          Insert_Into_Tree (Root_Node);
       end Insert;
@@ -358,25 +357,16 @@ package body Zip is
 
    function Name (Info : in Zip_Info) return String is
    begin
-      if not Info.Loaded then
-         raise Forgot_To_Load_Zip_Info;
-      end if;
       return Info.Zip_File_Name.all;
    end Name;
 
    function Comment (Info : in Zip_Info) return String is
    begin
-      if not Info.Loaded then
-         raise Forgot_To_Load_Zip_Info;
-      end if;
       return Info.Zip_File_Comment.all;
    end Comment;
 
    function Stream (Info : in Zip_Info) return Zip_Streams.Zipstream_Class_Access is
    begin
-      if not Info.Loaded then
-         raise Forgot_To_Load_Zip_Info;
-      end if;
       return Info.Zip_Input_Stream;
    end Stream;
 
@@ -390,7 +380,6 @@ package body Zip is
    ------------
 
    procedure Delete (Info : in out Zip_Info) is
-
       procedure Delete (P : in out P_Dir_Node) is
       begin
          if P /= null then
@@ -400,7 +389,6 @@ package body Zip is
             P := null;
          end if;
       end Delete;
-
    begin
       Delete (Info.Dir_Binary_Tree);
       Dispose (Info.Zip_File_Name);
@@ -417,7 +405,6 @@ package body Zip is
    procedure Traverse_Private (Z : Zip_Info);
 
    procedure Traverse_Private (Z : Zip_Info) is
-
       procedure Traverse_Tree (P : P_Dir_Node) is
       begin
          if P /= null then
@@ -426,7 +413,6 @@ package body Zip is
             Traverse_Tree (P.Right);
          end if;
       end Traverse_Tree;
-
    begin
       Traverse_Tree (Z.Dir_Binary_Tree);
    end Traverse_Private;
@@ -628,9 +614,6 @@ package body Zip is
       Aux     : P_Dir_Node      := Info.Dir_Binary_Tree;
       Up_Name : constant String := Normalize (Name, Info.Case_Sensitive);
    begin
-      if not Info.Loaded then
-         raise Forgot_To_Load_Zip_Info;
-      end if;
       while Aux /= null loop
          if Up_Name > Aux.Dico_Name then
             Aux := Aux.Right;
@@ -696,9 +679,8 @@ package body Zip is
             raise Found;
          end if;
       end Check_Entry;
-      --
+
       procedure Search is new Traverse_Verbose (Check_Entry);
-   --
    begin
       begin
          Search (Info);
@@ -713,9 +695,6 @@ package body Zip is
       Aux     : P_Dir_Node      := Info.Dir_Binary_Tree;
       Up_Name : constant String := Normalize (Name, Info.Case_Sensitive);
    begin
-      if not Info.Loaded then
-         raise Forgot_To_Load_Zip_Info;
-      end if;
       while Aux /= null loop
          if Up_Name > Aux.Dico_Name then
             Aux := Aux.Right;
@@ -732,9 +711,6 @@ package body Zip is
       Aux     : P_Dir_Node      := Info.Dir_Binary_Tree;
       Up_Name : constant String := Normalize (Name, Info.Case_Sensitive);
    begin
-      if not Info.Loaded then
-         raise Forgot_To_Load_Zip_Info;
-      end if;
       while Aux /= null loop
          if Up_Name > Aux.Dico_Name then
             Aux := Aux.Right;
@@ -753,9 +729,6 @@ package body Zip is
       Aux     : P_Dir_Node      := Info.Dir_Binary_Tree;
       Up_Name : constant String := Normalize (Name, Info.Case_Sensitive);
    begin
-      if not Info.Loaded then
-         raise Forgot_To_Load_Zip_Info;
-      end if;
       while Aux /= null loop
          if Up_Name > Aux.Dico_Name then
             Aux := Aux.Right;
@@ -794,7 +767,6 @@ package body Zip is
    --  problems in the GNAT and ObjectAda compilers (as in 2009)
    --  This is possible if and only if Byte = Stream_Element and
    --  arrays types are both packed and aligned the same way.
-   --
    subtype Size_Test_A is Byte_Buffer (1 .. 19);
    subtype Size_Test_B is Ada.Streams.Stream_Element_Array (1 .. 19);
    Workaround_Possible : constant Boolean :=
@@ -1066,7 +1038,6 @@ package body Zip is
 
    overriding
    procedure Adjust (Info : in out Zip_Info) is
-
       function Tree_Clone (P : in P_Dir_Node) return P_Dir_Node is
          Q : P_Dir_Node;
       begin
@@ -1079,7 +1050,6 @@ package body Zip is
             return Q;
          end if;
       end Tree_Clone;
-
    begin
       Info.Dir_Binary_Tree  := Tree_Clone (Info.Dir_Binary_Tree);
       Info.Zip_File_Name    := new String'(Info.Zip_File_Name.all);
