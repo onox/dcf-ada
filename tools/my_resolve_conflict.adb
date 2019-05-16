@@ -16,12 +16,14 @@ is
    C : Character;
 begin
    loop
-      New_Line;
-      Put_Line ("File " & Name & " already exists.");
-      Put (" Overwrite ?  (y)es / (n)o / (A)ll / (N)one / (r)ename / (q)uit ");
-      Get_Immediate (C);
-      Put_Line ("-> " & C);
-      exit when C = 'y' or C = 'n' or C = 'A' or C = 'N' or C = 'r' or C = 'q';
+      Put ("replace " & Name & "? [y]es, [n]o, [A]ll, [N]one, [r]ename: ");
+      declare
+         Input : constant String := Get_Line;
+      begin
+         C := Input (Input'First);
+         exit when C = 'y' or C = 'n' or C = 'A' or C = 'N' or C = 'r';
+         Put_Line ("error: invalid response [" & Input & "]");
+      end;
    end loop;
    case C is
       when 'y' =>
@@ -32,16 +34,11 @@ begin
          Action := Yes_To_All;
       when 'N' =>
          Action := None;
-      when 'q' =>
-         Action := Abort_Now;
       when 'r' =>
          Action := Rename_It;
-         Put ("New name: ");
+         Put ("new name: ");
          Get_Line (New_Name, New_Name_Length);
       when others =>
-         null;
+         raise Program_Error;
    end case;
-
-   --  Cosmetic : position for the [.....]
-   Put ("                                                                    ");
 end My_Resolve_Conflict;

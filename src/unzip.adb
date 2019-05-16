@@ -487,9 +487,6 @@ package body Unzip is
       Uncomp_Size  : File_Size_Type;
       Crc_32       : Unsigned_32;
    begin
-      if Feedback = null then
-         Current_User_Attitude := Yes_To_All;  --  Non-interactive
-      end if;
       Set_Name (Zip_File, From);
       Open (Zip_File, In_File);
       Zip.Find_Offset
@@ -534,9 +531,6 @@ package body Unzip is
       --   Was Unbounded_Stream & file->buffer copy in v.26
       Header_Index : Zip_Streams.Zs_Index_Type;
    begin
-      if Feedback = null then
-         Current_User_Attitude := Yes_To_All; -- non-interactive
-      end if;
       Set_Name (Zip_File, From);
       Open (Zip_File, In_File);
       Zip.Find_First_Offset (Zip_File, Header_Index); -- >= 13-May-2001
@@ -628,9 +622,6 @@ package body Unzip is
          Open (Zip_File, In_File);
       else -- use the given stream
          Input_Stream := From.Stream;
-      end if;
-      if Feedback = null then
-         Current_User_Attitude := Yes_To_All;  --  Non-interactive
       end if;
       Zip.Find_Offset
         (Info          => From,

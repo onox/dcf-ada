@@ -24,8 +24,6 @@ with Zip_Streams;
 with Zip.Compress;
 with Zip.Create;
 
-with My_Feedback;
-
 use Ada.Calendar;
 use Ada.Command_Line;
 use Ada.Directories;
@@ -74,9 +72,9 @@ procedure Zipada is
       begin
          Put (Cut & (1 + Maxlen - Cut'Length) * ' ');
       end;
-      --
-      Add_Stream (Info, Stream, My_Feedback'Access, Compressed_Size, Final_Method);
-      --
+
+      Add_Stream (Info, Stream, null, Compressed_Size, Final_Method);
+
       if Size (Stream) = 0 then
          Put ("          ");
       end if;

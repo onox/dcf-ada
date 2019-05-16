@@ -5,13 +5,9 @@
 --  Author:          Gautier de Montmollin
 ------------------------------------------------------------------------------
 
-with Interfaces;
-
-with Ada.Calendar;
 with Ada.Characters.Handling;
 with Ada.Command_Line;
 with Ada.Directories;
-with Ada.Float_Text_IO;
 with Ada.Text_IO;
 
 with Zip;
@@ -19,16 +15,9 @@ with Unzip;
 
 use Ada.Characters.Handling;
 use Ada.Command_Line;
-use Ada.Calendar;
 use Ada.Text_IO;
-use Ada.Float_Text_IO;
-use Interfaces;
-
---  Pure Ada Text_IO-fashion feedback; should work on every
---  computer having a screen [and some text console too] :
 
 with File_Operations;
-with My_Feedback;
 with My_Resolve_Conflict;
 with My_Tell_Data;
 with Summary;
@@ -39,11 +28,12 @@ procedure Unzipada is
 
    use Unzip;
 
-   Z_Options        : Unzip.Option_Set := Unzip.No_Option;
-   Quiet            : Boolean          := False;
-   Comment          : Boolean          := False;
+   Z_Options : Unzip.Option_Set := Unzip.No_Option;
+   Quiet     : Boolean          := False;
+   Verbose   : Boolean          := True;
+   Comment   : Boolean          := False;
 
-   Fda : Zip.Feedback_Proc     := My_Feedback'Access;
+   Fda : Zip.Feedback_Proc     := null;
    Rca : Resolve_Conflict_Proc := My_Resolve_Conflict'Access;
    Tda : Tell_Data_Proc        := My_Tell_Data'Access;
 
@@ -54,22 +44,14 @@ procedure Unzipada is
       Set_Time_Stamp    => Set_Time_Stamp,
       Compose_File_Name => File_Operations.Compose_File_Name'Access);
 
-   T0, T1          : Time;
-   Seconds_Elapsed : Duration;
-
    package Iio is new Integer_IO (Integer);
    package Mio is new Modular_IO (Unzip.File_Size_Type);
 
-   procedure Blurb is
+   procedure Help is
    begin
       Put_Line ("UnZipAda " & Zip.Version & " - unzipping tool using dcf-ada");
       New_Line;
-   end Blurb;
-
-   procedure Help is
-   begin
-      Blurb;
-      Put_Line ("Usage: unzipada [options] zipfile[.zip] [files...]");
+      Put_Line ("Usage: unzipada [options] file[.zip] [list]");
       New_Line;
       Put_Line ("options:  -t     : test .zip file integrity, no write");
       Put_Line ("          -j     : junk archived directory structure");
@@ -146,6 +128,7 @@ begin
       Help;
       return;
    end if;
+
    declare
       Archive_Given : constant String := Argument (Last_Option + 1);
       Zip_Ext       : Boolean         := False;
@@ -170,28 +153,10 @@ begin
       Extract_All := Argument_Count = Last_Option + 1;
       --  Options and zipfile only
 
-      if not Quiet then
-         Blurb;
-      end if;
       if not (Quiet or Comment) then
-         if Z_Options (Test_Only) then
-            Put ("Testing");
-         else
-            if Set_Time_Stamp = null then
-               Put_Line
-                 (" Warning: time stamps and attributes of files" &
-                  " in archive are not reproduced !");
-               New_Line;
-            end if;
-            Put ("Extracting");
-         end if;
-         if not Extract_All then
-            Put (" some file(s) from");
-         end if;
-         Put_Line (" archive " & Archive);
+         Put_Line ("Archive:  " & Archive);
       end if;
 
-      T0 := Clock;
       if Comment then -- Option: -z , diplay comment only
          Zip.Load (Zi, Archive);
          Zip.Put_Multi_Line (Standard_Output, Zi.Comment);
@@ -203,65 +168,31 @@ begin
             Extract (Zi, Argument (I), Argument (I), Fda, Rca, Tda, Z_Options, My_Fs_Routines);
          end loop;
       end if;
-      T1 := Clock;
    end;
 
-   Seconds_Elapsed := T1 - T0;
-
    if not (Quiet or Comment) then
-      New_Line (2);
-      Iio.Put (Summary.Total_Entries, 7);
-      Put (" entries  ------ Total ------ ");
-      Mio.Put (Summary.Total_Compressed, 10);
-      if Summary.Total_Uncompressed = 0 then
-         Put (" :         ");
+      if Verbose then
+         Put_Line ("--------          ------- ----                              -------");
       else
-         Put (" :");
+         Put_Line ("--------                    -------");
+      end if;
+
+      Mio.Put (Summary.Total_Uncompressed, 8);
+      if Verbose then
+         Mio.Put (Summary.Total_Compressed, 17);
          Iio.Put
            (Natural
-              ((100.0 * Long_Float (Summary.Total_Compressed)) /
+              (100.0 - (100.0 * Long_Float (Summary.Total_Compressed)) /
                Long_Float (Summary.Total_Uncompressed)),
             4);
-         Put ("% of ");
-      end if;
-      Mio.Put (Summary.Total_Uncompressed, 10);
-      New_Line (2);
-
-      if Z_Options (Test_Only) then
-         Put_Line ("Test: no error found");
-         New_Line;
-         Put_Line ("Statistics per Zip sub-format (""method""):");
-         for M in Summary.Files_Per_Method'Range loop
-            if Summary.Files_Per_Method (M) > 0 then
-               Put ("  " & Summary.Nice_Image (M) & "... ");
-               Iio.Put (Summary.Files_Per_Method (M), 5);
-               Put (" files");
-               if Summary.Uncompressed_Per_Method (M) > 0 then
-                  Put (",");
-                  Iio.Put
-                    (Natural
-                       ((100.0 * Long_Float (Summary.Uncompressed_Per_Method (M))) /
-                        Long_Float (Summary.Total_Uncompressed)),
-                     4);
-                  Put ("% of all data; compr.-to-decompr. ratio: ");
-                  Iio.Put
-                    (Natural
-                       ((100.0 * Long_Float (Summary.Compressed_Per_Method (M))) /
-                        Long_Float (Summary.Uncompressed_Per_Method (M))),
-                     4);
-                  Put ('%');
-               end if;
-               New_Line;
-            end if;
-         end loop;
-         New_Line;
+         Put ("%");
+         Put ("                    ");
+      else
+         Put ("          ");
       end if;
 
-      Put ("Time elapsed : ");
-      Put (Float (Seconds_Elapsed), 4, 2, 0);
-      Put_Line (" sec");
-
-      Put_Line ("Archive successfully processed (or empty archive, or no archive!)");
+      Iio.Put (Summary.Total_Entries);
+      Put_Line (if Summary.Total_Entries > 1 then " files" else " file");
    end if;
 
 end Unzipada;
