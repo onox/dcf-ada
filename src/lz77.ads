@@ -33,17 +33,13 @@ with Interfaces;
 package Lz77 is
 
    type Method_Type is
-      --  Use the LZHuf algorithm (see body for details and credits)
-     (Lzhuf,
-      --  Use the Info-Zip algorithm, levels 4-10 (see body for details and credits)
-      Iz_4, Iz_5, Iz_6, Iz_7, Iz_8, Iz_9, Iz_10,
-      --  Use LZMA SDK's BT4 algorithm (see body for details and credits)
-      Bt4);
+     (Iz_4, Iz_5, Iz_6, Iz_7, Iz_8, Iz_9, Iz_10);
+   --  Use the Info-Zip algorithm, levels 4-10 (see body for details and credits)
 
    subtype Byte is Interfaces.Unsigned_8;
 
    generic
-      ----- LZSS Parameters -----
+      --  LZSS Parameters
       String_Buffer_Size : Integer := 2**12;
       Look_Ahead         : Integer := 65;
       Threshold          : Integer := 2;
@@ -57,8 +53,6 @@ package Lz77 is
       --  Output of LZ-compressed data
       with procedure Write_Literal (B : Byte);
       with procedure Write_Dl_Code (Distance, Length : Integer);
-
-      Lzma_Friendly : Boolean := True;  --  Up to 4 recent distances may be preferred
    procedure Encode;
 
 end Lz77;

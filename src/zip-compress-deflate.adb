@@ -45,7 +45,6 @@
 
 with Interfaces;
 
-with Ada.Integer_Text_IO;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
@@ -55,7 +54,6 @@ with Zip_Streams;
 with Lz77;
 with Length_Limited_Huffman_Code_Lengths;
 
-use Ada.Integer_Text_IO;
 use Ada.Text_IO;
 
 use Interfaces;
@@ -73,7 +71,6 @@ is
    --  Options for testing.
    --  All should be on False for normal use of this procedure.
 
-   Bypass_Lz77         : constant Boolean := False;  --  Use LZ data encoded by another program
    Deactivate_Scanning : constant Boolean := False;  --  Impact analysis of the scanning method
    Trace               : constant Boolean := False;  --  Log file with details
    Trace_Descriptors   : constant Boolean := False;  --  Additional logging of Huffman descriptors
@@ -1710,41 +1707,7 @@ is
          More_Bytes         => More_Bytes,
          Write_Literal      => Lz77_Emits_Literal_Byte,
          Write_Dl_Code      => Lz77_Emits_Dl_Code);
-
-      --  The following is for research purposes: compare different LZ77 variants and see
-      --  how well they combine with the rest of our Deflate algorithm above
-
-      procedure Read_Lz77_Codes is
-         Lz77_Dump : File_Type;
-         Tag       : String (1 .. 3);
-         Wrong_Lz77_Tag : exception;
-         A, B  : Integer;
-         Dummy : Byte;
-      begin
-         --  Pretend we compress given file (compute CRC, consume entire stream).
-         while More_Bytes loop
-            Dummy := Read_Byte;
-         end loop;
-         --  Now deflate using dumped LZ77 data.
-         Open (Lz77_Dump, In_File, "dump.lz77");  --  File from UnZip.Decompress, some_trace mode
-         while not End_Of_File (Lz77_Dump) loop
-            Get (Lz77_Dump, Tag);
-            if Tag = "Lit" then
-               Get (Lz77_Dump, A);
-               Lz77_Emits_Literal_Byte (Byte (A));
-            elsif Tag = "DLE" then
-               Get (Lz77_Dump, A);
-               Get (Lz77_Dump, B);
-               Lz77_Emits_Dl_Code (A, B);
-            else
-               raise Wrong_Lz77_Tag;
-            end if;
-            Skip_Line (Lz77_Dump);
-         end loop;
-         Close (Lz77_Dump);
-      end Read_Lz77_Codes;
-
-   begin  --  Encode
+   begin
       Read_Block;
       R        := Text_Buffer_Index (String_Buffer_Size - Look_Ahead);
       Bytes_In := 0;
@@ -1761,14 +1724,10 @@ is
          when Taillaule_Deflation_Method =>
             null;  --  No start data sent, all is delayed
       end case;
-      if Bypass_Lz77 then
-         Read_Lz77_Codes;  --  Apply our scanning algo on a LZ77 stream made by a third-party tool
-      else
-         -----------------------------------------------------------------
-         --  The whole compression is happening in the following line:  --
-         -----------------------------------------------------------------
-         My_Lz77;
-      end if;
+
+      --  The whole compression is happening in the following line:
+      My_Lz77;
+
       --  Done. Send the code signaling the end of compressed data block:
       case Method is
          when Deflate_Fixed =>

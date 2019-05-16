@@ -22,12 +22,7 @@
 with Zip.Compress.Deflate;
 with Zip.Crc_Crypto;
 
-with Ada.Characters.Handling;
 with Ada.Numerics.Discrete_Random;
-with Ada.Strings.Fixed;
-
-use Ada.Characters.Handling;
-use Ada.Strings.Fixed;
 
 package body Zip.Compress is
 
@@ -44,7 +39,6 @@ package body Zip.Compress is
       Input_Size       :        File_Size_Type;
       Method           :        Compression_Method;
       Feedback         :        Feedback_Proc;
-      Content_Hint     :        Data_Content_Type;
       Crc              :    out Interfaces.Unsigned_32;
       Output_Size      :    out File_Size_Type;
       Zip_Type         :    out Interfaces.Unsigned_16)
@@ -147,105 +141,5 @@ package body Zip.Compress is
    begin
       Compress_Data_Single_Method (Method);
    end Compress_Data;
-
-   function Guess_Type_From_Name (Name : String) return Data_Content_Type is
-      Up    : constant String := To_Upper (Name);
-      Ext_1 : constant String := Tail (Up, 2);
-      Ext_2 : constant String := Tail (Up, 3);
-      Ext_3 : constant String := Tail (Up, 4);
-      Ext_4 : constant String := Tail (Up, 5);
-   begin
-      if Ext_3 = ".JPG" or else Ext_4 = ".JPEG" then
-         return Jpeg;
-      end if;
-      if Ext_3 = ".ADA"
-        or else Ext_3 = ".ADS"
-        or else Ext_3 = ".ADB"
-        or else Ext_1 = ".C"
-        or else Ext_1 = ".H"
-        or else Ext_3 = ".CPP"
-        or else Ext_3 = ".HPP"
-        or else Ext_3 = ".DEF"
-        or else Ext_3 = ".ASM"
-        or else Ext_4 = ".JAVA"
-        or else Ext_2 = ".CS"
-        or else Ext_3 = ".PAS"
-        or else Ext_3 = ".INC"
-        or else Ext_2 = ".PP"
-        or else Ext_3 = ".LPR"
-        or else Ext_3 = ".MAK"
-        or else Ext_2 = ".IN"
-        or else Ext_2 = ".SH"
-        or else Ext_3 = ".BAT"
-        or else Ext_3 = ".CMD"
-        or else Ext_3 = ".XML"
-        or else Ext_3 = ".XSL"
-        or else Ext_4 = ".SGML"
-        or else Ext_3 = ".HTM"
-        or else Ext_4 = ".HTML"
-        or else Ext_2 = ".JS"
-        or else Ext_3 = ".LSP"
-        or else Ext_3 = ".CSV"
-        or else Ext_3 = ".SQL"
-      then
-         return Source_Code;
-      end if;
-      --  Zip archives happen to be zipped...
-      if Ext_4 = ".EPUB"  --  EPUB: e-book reader format
-        or else Ext_3 = ".JAR"
-        or else Ext_3 = ".ZIP"
-        or else Ext_3 = ".ODB"
-        or else Ext_3 = ".ODS"
-        or else Ext_3 = ".ODT"
-        or else Ext_3 = ".OTR"
-        or else Ext_3 = ".OTS"
-        or else Ext_3 = ".OTT"
-        or else Ext_3 = ".CRX"
-        or else Ext_3 = ".NTH"
-        or else Ext_4 = ".DOCX"
-        or else Ext_4 = ".PPTX"
-        or else Ext_4 = ".XLSX"
-      then
-         return Zip_In_Zip;
-      end if;
-      --  Some raw camera picture data
-      if Ext_3 = ".ORF"          --  Raw Olympus
-        or else Ext_3 = ".CR2"   --  Raw Canon
-        or else Ext_3 = ".RAF"   --  Raw Fujifilm
-        or else Ext_3 = ".SRW"   --  Raw Samsung
-      then
-         return Orf_Cr2;
-      end if;
-      if Ext_3 = ".ARW"          --  Raw Sony
-        or else Ext_3 = ".RW2"   --  Raw Panasonic
-        or else Ext_3 = ".NEF"   --  Raw Nikon
-        or else Ext_3 = ".DNG"   --  Raw Leica, Pentax
-        or else Ext_3 = ".X3F"   --  Raw Sigma
-      then
-         return Arw_Rw2;
-      end if;
-      if Ext_3 = ".PGM" then
-         return Pgm;
-      end if;
-      if Ext_3 = ".PPM" then
-         return Ppm;
-      end if;
-      if Ext_3 = ".MP3" then
-         return Mp3;
-      end if;
-      if Ext_3 = ".MTS" or else Ext_3 = ".MP4" or else Ext_3 = ".M4A" or else Ext_3 = ".M4P" then
-         return Mp4;
-      end if;
-      if Ext_3 = ".PNG" then
-         return Png;
-      end if;
-      if Ext_3 = ".GIF" then
-         return Gif;
-      end if;
-      if Ext_3 = ".WAV" or else Ext_3 = ".UAX" then
-         return Wav;
-      end if;
-      return Neutral;
-   end Guess_Type_From_Name;
 
 end Zip.Compress;

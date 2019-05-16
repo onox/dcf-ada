@@ -76,14 +76,11 @@ package Zip.Compress is
       Input_Size       :        File_Size_Type;  --  Ignored if input_size_known = False
       Method           :        Compression_Method;
       Feedback         :        Feedback_Proc;
-      Content_Hint     :        Data_Content_Type;
       Crc              :    out Interfaces.Unsigned_32;
       Output_Size      :    out File_Size_Type;
       Zip_Type         :    out Interfaces.Unsigned_16
       --  ^ code corresponding to the compression method actually used
    );
-
-   function Guess_Type_From_Name (Name : String) return Data_Content_Type;
 
 private
 

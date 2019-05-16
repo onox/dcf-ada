@@ -197,7 +197,6 @@ package body Zip.Create is
             Input_Size       => Shi.Dd.Uncompressed_Size,
             Method           => Info.Compress,
             Feedback         => Feedback,
-            Content_Hint     => Guess_Type_From_Name (Entry_Name),
             Crc              => Shi.Dd.Crc_32,
             Output_Size      => Shi.Dd.Compressed_Size,
             Zip_Type         => Shi.Zip_Type);
