@@ -23,10 +23,38 @@ with Ada.Characters.Latin_1;
 
 package body Zip_Streams is
 
-   procedure Set_Name (S : in out Root_Zipstream_Type; Name : String) is
+   function Open (File_Name : String) return Open_File is
    begin
-      S.Name := To_Unbounded_String (Name);
-   end Set_Name;
+      return Result : Open_File
+        := (Ada.Finalization.Limited_Controlled with File => <>, Finalized => False)
+      do
+         Stream_IO.Open (Result.File, Stream_IO.File_Mode (In_File), File_Name,
+           Form => To_String (Form_For_Io_Open_And_Create));
+      end return;
+   end Open;
+
+   function Create (File_Name : String) return Open_File is
+   begin
+      return Result : Open_File
+        := (Ada.Finalization.Limited_Controlled with File => <>, Finalized => False)
+      do
+         Stream_IO.Create (Result.File, Stream_IO.File_Mode (Out_File), File_Name,
+           Form => To_String (Form_For_Io_Open_And_Create));
+      end return;
+   end Create;
+
+   overriding
+   procedure Finalize (Object : in out Open_File) is
+   begin
+      if not Object.Finalized then
+         if Stream_IO.Is_Open (Object.File) then
+            Stream_IO.Close (Object.File);
+         end if;
+         Object.Finalized := True;
+      end if;
+   end Finalize;
+
+   -----------------------------------------------------------------------------
 
    function Get_Name (S : in Root_Zipstream_Type) return String is
    begin
@@ -192,32 +220,26 @@ package body Zip_Streams is
    ----------------------------------------------
    --  File_Zipstream: stream based on a file  --
    ----------------------------------------------
-   procedure Open (Str : in out File_Zipstream; Mode : File_Mode) is
+
+   function Open (File_Name : String) return File_Zipstream is
    begin
-      Ada.Streams.Stream_IO.Open
-        (Str.File,
-         Ada.Streams.Stream_IO.File_Mode (Mode),
-         To_String (Str.Name),
-         Form => To_String (Form_For_Io_Open_And_Create));
+      return (Root_Stream_Type with
+        File   => Open (File_Name),
+        Name   => To_Unbounded_String (File_Name),
+        others => <>);
    end Open;
 
-   procedure Create (Str : in out File_Zipstream; Mode : File_Mode) is
+   function Create (File_Name : String) return File_Zipstream is
    begin
-      Ada.Streams.Stream_IO.Create
-        (Str.File,
-         Ada.Streams.Stream_IO.File_Mode (Mode),
-         To_String (Str.Name),
-         Form => To_String (Form_For_Io_Open_And_Create));
+      return (Root_Stream_Type with
+        File   => Create (File_Name),
+        Name   => To_Unbounded_String (File_Name),
+        others => <>);
    end Create;
-
-   procedure Close (Str : in out File_Zipstream) is
-   begin
-      Ada.Streams.Stream_IO.Close (Str.File);
-   end Close;
 
    function Is_Open (Str : in File_Zipstream) return Boolean is
    begin
-      return Ada.Streams.Stream_IO.Is_Open (Str.File);
+      return Ada.Streams.Stream_IO.Is_Open (Str.File.File);
    end Is_Open;
 
    overriding
@@ -227,37 +249,37 @@ package body Zip_Streams is
       Last   :    out Stream_Element_Offset)
    is
    begin
-      Ada.Streams.Stream_IO.Read (Stream.File, Item, Last);
+      Ada.Streams.Stream_IO.Read (Stream.File.File, Item, Last);
    end Read;
 
    overriding
    procedure Write (Stream : in out File_Zipstream; Item : Stream_Element_Array) is
    begin
-      Ada.Streams.Stream_IO.Write (Stream.File, Item);
+      Ada.Streams.Stream_IO.Write (Stream.File.File, Item);
    end Write;
 
    overriding
    procedure Set_Index (S : in out File_Zipstream; To : Zs_Index_Type) is
    begin
-      Ada.Streams.Stream_IO.Set_Index (S.File, Ada.Streams.Stream_IO.Positive_Count (To));
+      Ada.Streams.Stream_IO.Set_Index (S.File.File, Ada.Streams.Stream_IO.Positive_Count (To));
    end Set_Index;
 
    overriding
    function Size (S : in File_Zipstream) return Zs_Size_Type is
    begin
-      return Zs_Size_Type (Ada.Streams.Stream_IO.Size (S.File));
+      return Zs_Size_Type (Ada.Streams.Stream_IO.Size (S.File.File));
    end Size;
 
    overriding
    function Index (S : in File_Zipstream) return Zs_Index_Type is
    begin
-      return Zs_Index_Type (Ada.Streams.Stream_IO.Index (S.File));
+      return Zs_Index_Type (Ada.Streams.Stream_IO.Index (S.File.File));
    end Index;
 
    overriding
    function End_Of_Stream (S : in File_Zipstream) return Boolean is
    begin
-      return Ada.Streams.Stream_IO.End_Of_File (S.File);
+      return Ada.Streams.Stream_IO.End_Of_File (S.File.File);
    end End_Of_Stream;
 
    package body Calendar is

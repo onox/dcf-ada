@@ -37,15 +37,18 @@ package body Zip.Create is
    begin
       Info.Stream   := Z_Stream;
       Info.Compress := Compress;
-      if Name /= "" then
-         Set_Name (Info.Stream.all, Name);
-      end if;
+      Info.Duplicates := Duplicates;
+      pragma Assert (Info.Stream.Get_Name /= "");
+--      if Name /= "" then
+--         Set_Name (Info.Stream.all, Name);
+--      end if;
 
       --  If we have a real file (File_Zipstream or descendent), create the file too
-      if Z_Stream.all in File_Zipstream'Class then
-         Zip_Streams.Create (File_Zipstream (Z_Stream.all), Zip_Streams.Out_File);
-      end if;
-      Info.Duplicates := Duplicates;
+      --  FIXME User has to create file themselves
+      raise Program_Error with "Create file yourself";
+--      if Z_Stream.all in File_Zipstream'Class then
+--         Zip_Streams.Create (File_Zipstream (Z_Stream.all), Zip_Streams.Out_File);
+--      end if;
    end Create;
 
    function Is_Created (Info : Zip_Create_Info) return Boolean is
@@ -239,35 +242,27 @@ package body Zip.Create is
       Is_Read_Only      : Boolean           := False;
       Feedback          : Feedback_Proc     := null)
    is
-      Temp_Zip_Stream : aliased File_Zipstream;
+      Temp_Zip_Stream : aliased File_Zipstream := Open (Name);
       use Ada.Text_IO;
       Fd              : File_Type;
       Compressed_Size : Zip.File_Size_Type;  --  Unused
       Final_Method    : Natural;             --  Unused
    begin
       --  Read the file
-      Set_Name (Temp_Zip_Stream, Name);
-      Open (Temp_Zip_Stream, Zip_Streams.In_File);
       --  Eventually we set a new name for archiving:
       if Name_In_Archive /= "" then
-         Set_Name (Temp_Zip_Stream, Name_In_Archive);
+         raise Program_Error with "Why change name to " & Name_In_Archive & "?";
+--         Set_Name (Temp_Zip_Stream, Name_In_Archive);
       end if;
       Set_Unicode_Name_Flag (Temp_Zip_Stream, Name_Encoding = UTF_8);
       Set_Read_Only_Flag (Temp_Zip_Stream, Is_Read_Only);
       Set_Time (Temp_Zip_Stream, Modification_Time);
       --  Stuff into the .zip archive:
       Add_Stream (Info, Temp_Zip_Stream, Feedback, Compressed_Size, Final_Method);
-      Close (Temp_Zip_Stream);
       if Delete_File_After then
          Open (Fd, In_File, Name);
          Delete (Fd);
       end if;
-   exception
-      when User_Abort =>
-         if Is_Open (Temp_Zip_Stream) then
-            Close (Temp_Zip_Stream);
-         end if;
-         raise;
    end Add_File;
 
    procedure Add_String
@@ -300,10 +295,11 @@ package body Zip.Create is
       Temp_Zip_Stream : aliased Memory_Zipstream;
    begin
       Set (Temp_Zip_Stream, Contents);
-      Set_Name (Temp_Zip_Stream, Name_In_Archive);
+--      Set_Name (Temp_Zip_Stream, Name_In_Archive);
       Set_Time (Temp_Zip_Stream, Creation_Time);
       Set_Unicode_Name_Flag (Temp_Zip_Stream, Name_Utf_8_Encoded);
       Add_Stream (Info, Temp_Zip_Stream);
+      raise Program_Error with "Why change name to " & Name_In_Archive & "?";
    end Add_String;
 
    procedure Add_Compressed_Stream
@@ -399,10 +395,9 @@ package body Zip.Create is
       Ed.Disk_Total_Entries := Ed.Total_Entries;
       Zip.Headers.Write (Info.Stream.all, Ed);
       Get_Index_And_Check_Zip_32_Limit;
-      --  If we have a real file (File_Zipstream or descendent), close the file too
-      if Info.Stream.all in File_Zipstream'Class then
-         Zip_Streams.Close (File_Zipstream (Info.Stream.all));
-      end if;
+      --  If we have a real file (File_Zipstream or descendent),
+      --  close the file stream too. File will be closed automatically
+      --  when stream goes out of scope
    end Finish;
 
 end Zip.Create;

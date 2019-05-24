@@ -43,6 +43,8 @@ package body Unzip.Streams is
    --  Input must be _open_ and won't be _closed_ !  --
    ----------------------------------------------------
 
+   Fallback_Compressed_Size : constant File_Size_Type := File_Size_Type'Last;
+
    procedure Unzipfile
      (Zip_Stream     : in out Zip_Streams.Root_Zipstream_Type'Class;
       Header_Index   : in out Zip_Streams.Zs_Index_Type;
@@ -72,7 +74,7 @@ package body Unzip.Streams is
       end;
 
       Method := Method_From_Code (Local_Header.Zip_Type);
-      if Method = Unknown then
+      if Method not in Store | Deflate | Deflate_E then
          raise Unsupported_Method;
       end if;
 
@@ -87,12 +89,24 @@ package body Unzip.Streams is
       Data_Descriptor_After_Data := (Local_Header.Bit_Flag and 8) /= 0;
 
       if Data_Descriptor_After_Data then
-         --  Sizes and crc are after the data
+         --  Sizes and CRC are stored after the data
+         --  We set size to avoid getting a sudden Zip_EOF !
+         if Local_Header.Zip_Type = 0 and then Hint_Comp_Size = Fallback_Compressed_Size then
+            --  For Stored (Method 0) data we need a correct "compressed" size.
+            --  If the hint is the bogus fallback value, it is better to trust
+            --  the local header, since this size is known in advance. Case found
+            --  in Microsoft's OneDrive cloud storage (in 2018). Zip files,
+            --  created by the server for downloading more than one file, are
+            --  using the "Store" format and a postfixed Data Descriptor for
+            --  writing the CRC value.
+            null;  --  Do not overwrite the compressed size in that case
+         else
+            Local_Header.Dd.Compressed_Size := Hint_Comp_Size;
+         end if;
          Local_Header.Dd.Crc_32            := Hint_Crc_32;
          Local_Header.Dd.Uncompressed_Size := Cat_Uncomp_Size;
-         Local_Header.Dd.Compressed_Size   := Hint_Comp_Size;
       else
-         --  Sizes and crc are before the data
+         --  Sizes and CRC are before the data
          if Cat_Uncomp_Size /= Local_Header.Dd.Uncompressed_Size then
             raise Uncompressed_Size_Error;
          end if;
@@ -114,6 +128,7 @@ package body Unzip.Streams is
       else
          Mode := Write_To_Stream;
       end if;
+
       --  Unzip correct type
       Unzip.Decompress.Decompress_Data
         (Zip_File                   => Zip_Stream,
@@ -142,7 +157,9 @@ package body Unzip.Streams is
          Header_Index :=
            Header_Index + Zip_Streams.Zs_Size_Type (Zip.Headers.Data_Descriptor_Length);
       end if;
-
+   exception
+      when Ada.IO_Exceptions.End_Error =>
+         raise Zip.Archive_Corrupted with "End of stream reached";
    end Unzipfile;
 
    procedure S_Extract
@@ -150,42 +167,29 @@ package body Unzip.Streams is
       Zip_Stream       : in out Zip_Streams.Root_Zipstream_Type'Class;
       What             :        String;
       Mem_Ptr          :    out P_Stream_Element_Array;
-      Out_Stream_Ptr   :        P_Stream;
-      Ignore_Directory : in     Boolean)
+      Out_Stream_Ptr   :        P_Stream)
    is
       Header_Index        : Zip_Streams.Zs_Index_Type;
       Comp_Size           : File_Size_Type;
       Uncomp_Size         : File_Size_Type;
-      Crc_32              : Interfaces.Unsigned_32;
+      CRC_32              : Interfaces.Unsigned_32;
       Dummy_Name_Encoding : Zip.Zip_Name_Encoding;
-
    begin
-      if Ignore_Directory then
-         Zip.Find_Offset_Without_Directory
-           (Info          => From,
-            Name          => What,
-            Name_Encoding => Dummy_Name_Encoding,
-            File_Index    => Header_Index,
-            Comp_Size     => Comp_Size,
-            Uncomp_Size   => Uncomp_Size,
-            Crc_32        => Crc_32);
-      else
-         Zip.Find_Offset
-           (Info          => From,
-            Name          => What,
-            Name_Encoding => Dummy_Name_Encoding,
-            File_Index    => Header_Index,
-            Comp_Size     => Comp_Size,
-            Uncomp_Size   => Uncomp_Size,
-            Crc_32        => Crc_32);
-      end if;
+      Zip.Find_Offset
+        (Info          => From,
+         Name          => What,
+         Name_Encoding => Dummy_Name_Encoding,
+         File_Index    => Header_Index,
+         Comp_Size     => Comp_Size,
+         Uncomp_Size   => Uncomp_Size,
+         Crc_32        => CRC_32);
       Unzipfile
         (Zip_Stream      => Zip_Stream,
          Header_Index    => Header_Index,
          Mem_Ptr         => Mem_Ptr,
          Out_Stream_Ptr  => Out_Stream_Ptr,
          Hint_Comp_Size  => Comp_Size,
-         Hint_Crc_32     => Crc_32,
+         Hint_Crc_32     => CRC_32,
          Cat_Uncomp_Size => Uncomp_Size);
    end S_Extract;
 
@@ -223,49 +227,25 @@ package body Unzip.Streams is
    procedure Open
      (File             : in out Zipped_File_Type;  --  File-in-archive handle
       Archive_Info     : in     Zip.Zip_Info;      --  Archive's Zip_info
-      Name             : in     String;            --  Name of zipped entry
-      Ignore_Directory : in Boolean := False)      --  Open Name in first directory found
+      Name             : in     String)            --  Name of zipped entry
    is
-      use Zip_Streams, Ada.Streams;
-      Zip_Stream   : aliased File_Zipstream;
-      Input_Stream : Zipstream_Class_Access;
-      Use_A_File   : constant Boolean := Archive_Info.Stream = null;
+      use Ada.Streams;
    begin
       if File = null then
-         File := new Unzip_Stream_Type;
+         File := new Unzip_Stream_Type;  --  TODO Remove heap alloc and do Pre => File /= null?
       elsif File.State /= Uninitialized then
          --  Forgot to close last time!
          raise Use_Error;
       end if;
-      if Use_A_File then
-         Input_Stream := Zip_Stream'Unchecked_Access;
-         Set_Name (Zip_Stream, Archive_Info.Name);
-         Open (Zip_Stream, In_File);
-      else
-         --  Use the given stream
-         Input_Stream := Archive_Info.Stream;
-      end if;
 
       File.Archive_Info := Archive_Info;  --  Full clone. Now a copy is safely with File
       File.File_Name    := new String'(Name);
-      begin
-         S_Extract
-           (File.Archive_Info,
-            Input_Stream.all,
-            Name,
-            File.Uncompressed,
-            null,
-            Ignore_Directory);
-         if Use_A_File then
-            Close (Zip_Stream);
-         end if;
-      exception
-         when others =>
-            if Use_A_File then
-               Close (Zip_Stream);
-            end if;
-            raise;
-      end;
+      S_Extract
+        (File.Archive_Info,
+         Archive_Info.Stream.all,  --  Use the given stream
+         Name,
+         File.Uncompressed,
+         null);
       File.Index := File.Uncompressed'First;
       File.State := Data_Uncompressed;
 
@@ -273,34 +253,6 @@ package body Unzip.Streams is
       if File.Uncompressed'Last < File.Index then  --  (1..0) array
          File.State := End_Of_Zip;
       end if;
-   end Open;
-
-   procedure Open
-     (File             : in out Zipped_File_Type;  --  File-in-archive handle
-      Archive_Name     : in     String;            --  Name of archive file
-      Name             : in     String;            --  Name of zipped entry
-      Case_Sensitive   : in     Boolean := False;
-      Ignore_Directory : in Boolean := False)      --  Open Name in first directory found
-   is
-      Temp_Info : Zip.Zip_Info;
-      --  This local record (but not the full tree) is copied by Open (..)
-   begin
-      Zip.Load (Temp_Info, Archive_Name, Case_Sensitive);
-      Open (File, Temp_Info, Name);
-   end Open;
-
-   procedure Open
-     (File             : in out Zipped_File_Type;                       --  File-in-archive handle
-      Archive_Stream   : in out Zip_Streams.Root_Zipstream_Type'Class;  --  Archive's stream
-      Name             : in     String;            --  Name of zipped entry
-      Case_Sensitive   : in     Boolean := False;
-      Ignore_Directory : in Boolean := False)      --  Open Name in first directory found
-   is
-      Temp_Info : Zip.Zip_Info;
-      --  This local record (but not the full tree) is copied by Open (..)
-   begin
-      Zip.Load (Temp_Info, Archive_Stream, Case_Sensitive);
-      Open (File, Temp_Info, Name);
    end Open;
 
    --------------------------------------------
@@ -380,42 +332,16 @@ package body Unzip.Streams is
    procedure Extract
      (Destination      : in out Ada.Streams.Root_Stream_Type'Class;
       Archive_Info     : in     Zip.Zip_Info;  --  Archive's Zip_info
-      Name             : in     String;        --  Name of zipped entry
-      Ignore_Directory : in Boolean := False)  --  Open Name in first directory found
+      Name             : in     String)        --  Name of zipped entry
    is
-      use Zip_Streams;
-      Zip_Stream   : aliased File_Zipstream;
-      Input_Stream : Zipstream_Class_Access;
-      Use_A_File   : constant Boolean := Archive_Info.Stream = null;
+      Dummy_Mem_Ptr : P_Stream_Element_Array;
    begin
-      if Use_A_File then
-         Input_Stream := Zip_Stream'Unchecked_Access;
-         Set_Name (Zip_Stream, Archive_Info.Name);
-         Open (Zip_Stream, In_File);
-      else
-         --  Use the given stream
-         Input_Stream := Archive_Info.Stream;
-      end if;
-      declare
-         Dummy_Mem_Ptr : P_Stream_Element_Array;
-      begin
-         S_Extract
-           (Archive_Info,
-            Input_Stream.all,
-            Name,
-            Dummy_Mem_Ptr,
-            Destination'Unchecked_Access,
-            Ignore_Directory);
-         if Use_A_File then
-            Close (Zip_Stream);
-         end if;
-      exception
-         when others =>
-            if Use_A_File then
-               Close (Zip_Stream);
-            end if;
-            raise;
-      end;
+      S_Extract
+        (Archive_Info,
+         Archive_Info.Stream.all,  --  Use the given stream
+         Name,
+         Dummy_Mem_Ptr,
+         Destination'Unchecked_Access);  -- /= null then ignore Dummy_Mem_Ptr
    end Extract;
 
 end Unzip.Streams;

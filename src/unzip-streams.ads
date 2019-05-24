@@ -53,39 +53,25 @@ package Unzip.Streams is
 
    type Count is new Zip_Streams.Zs_Size_Type;
 
-   --  Opens an input stream for the compressed file named Name stored
-   --  in the archive file named Archive_Name. The function Stream(..)
-   --  then gives access to the opened stream.
-
-   --  Version: Zip as a file
-   procedure Open
-     (File             : in out Zipped_File_Type;  --  File-in-archive handle
-      Archive_Name     : in     String;            --  Name of archive file
-      Name             : in     String;            --  Name of zipped entry
-      Case_Sensitive   : in     Boolean := False;
-      Ignore_Directory : in Boolean := False);     --  Open Name in first directory found
-
-   --  Version: Zip as a stream
-   procedure Open
-     (File             : in out Zipped_File_Type;  --  File-in-archive handle
-      Archive_Stream   : in out Zip_Streams.Root_Zipstream_Type'Class; -- Archive's stream
-      Name             : in     String;            --  Name of zipped entry
-      Case_Sensitive   : in     Boolean := False;
-      Ignore_Directory : in Boolean := False);     --  Open Name in first directory found
-
-   --  Same as above, but uses a the pre-loaded contents of the archive's
-   --  Central Directory; hence Archive_Info is passed instead of
-   --  Archive_Name or Archive_Stream.
-   --  You need to call Zip.Load( Archive_Info... ) prior to opening the
-   --  compressed file.
-
+   use type Zip_Streams.Zipstream_Class_Access;
    procedure Open
      (File             : in out Zipped_File_Type;  --  File-in-archive handle
       Archive_Info     : in     Zip.Zip_Info;      --  Archive's Zip_info
-      Name             : in     String;            --  Name of zipped entry
-      Ignore_Directory : in Boolean := False);     --  Open Name in first directory found
+      Name             : in     String)            --  Name of zipped entry
+   with Pre  => Archive_Info.Is_Loaded and Archive_Info.Stream /= null,
+        Post => Is_Open (File);
+   --  Opens an input stream for the compressed entry named Name stored
+   --  in the archive file Archive_Info
+   --
+   --  Uses the pre-loaded contents of the Central Directory of the archive.
+   --  Requires calling Zip.Load (Archive_Info, ...) prior to opening a
+   --  compressed file in the archive.
+   --
+   --  Use the function Stream to get access to the opened stream.
 
-   procedure Close (File : in out Zipped_File_Type);
+   procedure Close (File : in out Zipped_File_Type)
+     with Pre  => Is_Open (File),
+          Post => not Is_Open (File);
 
    function Name (File : in Zipped_File_Type) return String;
 
@@ -94,10 +80,9 @@ package Unzip.Streams is
 
    type Stream_Access is access all Ada.Streams.Root_Stream_Type'Class;
 
-   --------------------------------------------------------------------------
-   --  The function Stream gives access to the uncompressed data as input  --
-   --------------------------------------------------------------------------
-   function Stream (File : Zipped_File_Type) return Stream_Access;
+   function Stream (File : Zipped_File_Type) return Stream_Access
+     with Pre => Is_Open (File);
+   --  Return access to the uncompressed data as input
 
    function Size (File : in Zipped_File_Type) return Count;
 
@@ -105,21 +90,17 @@ package Unzip.Streams is
    End_Error : exception renames Ada.IO_Exceptions.End_Error;
 
    ------------------------------------------------------------------
-   --                    ** Output Stream **                       --
-   --                                                              --
-   --  Extract a Zip archive entry to an available output stream.  --
-   --                                                              --
-   --  NB: the memory footprint is limited to the decompression    --
-   --      structures and buffering, so the outward stream can be  --
-   --      an interesting alternative to the inward, albeit less   --
-   --      comfortable.                                            --
-   ------------------------------------------------------------------
 
    procedure Extract
      (Destination      : in out Ada.Streams.Root_Stream_Type'Class;
       Archive_Info     : in     Zip.Zip_Info;   --  Archive's Zip_info
-      Name             : in     String;         --  Name of zipped entry
-      Ignore_Directory : in Boolean := False);  --  Open Name in first directory found
+      Name             : in     String)         --  Name of zipped entry
+   with Pre  => Archive_Info.Is_Loaded and Archive_Info.Stream /= null;
+   --  Extract a Zip archive entry to the given output stream
+   --
+   --  The memory footprint is limited to the decompression structures and
+   --  buffering, so the outward stream can be an interesting alternative
+   --  to the inward, albeit less comfortable.
 
 private
 

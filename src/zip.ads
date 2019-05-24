@@ -34,7 +34,6 @@ with Interfaces;
 with System;
 
 with Ada.Calendar;
-with Ada.Directories;
 with Ada.Finalization;
 with Ada.Streams.Stream_IO;
 with Ada.Text_IO;
@@ -42,6 +41,36 @@ with Ada.Text_IO;
 with Zip_Streams;
 
 package Zip is
+
+   --  Data sizes in archive
+   subtype File_Size_Type is Interfaces.Unsigned_32;
+
+   subtype Time is Zip_Streams.Time;
+
+   type Zip_Name_Encoding is (IBM_437, UTF_8);
+   --  Entry names within Zip archives are encoded either with
+   --    * the IBM PC (the one with a monochrome screen, only text mode)'s
+   --        character set: IBM 437
+   --  or
+   --    * Unicode UTF-8
+   --
+   --  Documentation: PKWARE's Appnote.txt, APPENDIX D - Language Encoding (EFS)
+
+   type Archived_File is tagged private;
+
+   function Name (Object : Archived_File) return String;
+
+   function Name_Encoding (Object : Archived_File) return Zip_Name_Encoding;
+
+   function Compressed_Size (Object : Archived_File) return File_Size_Type;
+
+   function Uncompressed_Size (Object : Archived_File) return File_Size_Type;
+
+   function Date_Time (Object : Archived_File) return Time;
+
+   function Compressed (Object : Archived_File) return Boolean;
+
+   function Encrypted (Object : Archived_File) return Boolean;
 
    -----------------------------------------------------------------
    --  Zip_info                                                   --
@@ -61,23 +90,14 @@ package Zip is
      (Admit_Duplicates,     --  Two entries in the Zip archive may have the same full name
       Error_On_Duplicate);  --  Raise exception on attempt to add twice the same entry name
 
-   --  Load from a file
-
-   procedure Load
-     (Info            :    out Zip_Info;
-      From            : in     String;  --  Zip file name
-      Case_Sensitive  : in     Boolean               := False;
-      Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
-   with Post => Info.Is_Loaded;
-
-   --  Load from a stream
-
    procedure Load
      (Info            :    out Zip_Info;
       From            : in out Zip_Streams.Root_Zipstream_Type'Class;
+      From_Name       : in     String; -- Zip file name
       Case_Sensitive  : in     Boolean               := False;
       Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
    with Post => Info.Is_Loaded;
+   --  Load from a stream
 
    Archive_Corrupted   : exception;
    Zip_File_Open_Error : exception;
@@ -101,9 +121,6 @@ package Zip is
 
    function Entries (Info : in Zip_Info) return Natural;
 
-   --  Data sizes in archive
-   subtype File_Size_Type is Interfaces.Unsigned_32;
-
    --  Compression "methods" - actually, formats - in the "official" PKWARE Zip format
    --  Details in appnote.txt, part V.J
    --   C: supported by Zip-Ada for compressing
@@ -125,8 +142,6 @@ package Zip is
       Ppmd,
       Unknown);
 
-   subtype Reduce is Pkzip_Method range Reduce_1 .. Reduce_4;
-
    --  Return a String image, nicer than the 'Image attribute
    function Image (M : Pkzip_Method) return String;
 
@@ -135,53 +150,18 @@ package Zip is
    function Method_From_Code (X : Natural) return Pkzip_Method;
 
    --  Internal time definition
-   subtype Time is Zip_Streams.Time;
    function Convert (Date : in Ada.Calendar.Time) return Time renames Zip_Streams.Calendar.Convert;
    function Convert (Date : in Time) return Ada.Calendar.Time renames Zip_Streams.Calendar.Convert;
 
-   --  Entry names within Zip archives are encoded either with
-   --    * the IBM PC (the one with a monochrome screen, only text mode)'s
-   --        character set: IBM 437
-   --  or
-   --    * Unicode UTF-8
-   --
-   --  Documentation: PKWARE's Appnote.txt, APPENDIX D - Language Encoding (EFS)
-
-   type Zip_Name_Encoding is (IBM_437, UTF_8);
-
+   generic
+      with procedure Action (File : Archived_File);
+   procedure Traverse (Z : Zip_Info);
    --  Traverse a whole Zip_info directory in sorted order, giving the
-   --  name for each entry to an user-defined "Action" procedure.
+   --  name and other technical information for each archived file to an
+   --  user-defined "Action" procedure.
+   --
    --  Concretely, you can process a whole Zip file that way, by extracting data
    --  with Extract, or open a reader stream with UnZip.Streams.
-   --  See the Comp_Zip or Find_Zip tools as application examples.
-   generic
-      with procedure Action (Name : String);  --  'name' is compressed entry's name
-   procedure Traverse (Z : Zip_Info);
-
-   --  Same as Traverse, but Action gives also full name information.
-   --  The pair (name, name_encoding) allows for an unambiguous Unicode
-   --  name decoding. See the AZip project for an implementation.
-   generic
-      with procedure Action (Name : String;  --  'name' is compressed entry's name
-      Name_Encoding               : Zip_Name_Encoding);
-   procedure Traverse_Unicode (Z : Zip_Info);
-
-   --  Same as Traverse, but Action gives also full technical informations
-   --  about the compressed entry
-   generic
-      with procedure Action
-        (Name          :        String;  --  'name' is compressed entry's name
-         File_Index    :        Zip_Streams.Zs_Index_Type;
-         Comp_Size     :        File_Size_Type;
-         Uncomp_Size   :        File_Size_Type;
-         Crc_32        :        Interfaces.Unsigned_32;
-         Date_Time     :        Time;
-         Method        :        Pkzip_Method;
-         Name_Encoding :        Zip_Name_Encoding;
-         Read_Only     :        Boolean;
-         Encrypted_2_X :        Boolean;  --  PKZip 2.x encryption
-         User_Code     : in out Integer);
-   procedure Traverse_Verbose (Z : Zip_Info);
 
    --  Academic: see how well the name tree is balanced
    procedure Tree_Stat
@@ -204,20 +184,6 @@ package Zip is
    --  entry or offset
    Archive_Is_Empty : exception;
 
-   --  Find offset of a certain compressed file
-   --  in a Zip file (file opened and kept open)
-
-   procedure Find_Offset
-     (File           : in out Zip_Streams.Root_Zipstream_Type'Class;
-      Name           : in     String;
-      Case_Sensitive : in     Boolean;
-      File_Index     :    out Zip_Streams.Zs_Index_Type;
-      Comp_Size      :    out File_Size_Type;
-      Uncomp_Size    :    out File_Size_Type;
-      Crc_32         :    out Interfaces.Unsigned_32);
-
-   --  Find offset of a certain compressed file in a pre-loaded Zip_info data
-
    procedure Find_Offset
      (Info          : in     Zip_Info;
       Name          : in     String;
@@ -227,35 +193,11 @@ package Zip is
       Uncomp_Size   :    out File_Size_Type;
       Crc_32        :    out Interfaces.Unsigned_32)
    with Pre => Info.Is_Loaded;
-
-   --  Find offset of a certain compressed file in a pre-loaded Zip_info data.
-   --  This version scans the whole catalogue and returns the index of the first
-   --  entry with a matching name, ignoring directory information.
-   --  For instance, if the Zip archive contains "zip-ada/zip_lib/zip.ads",
-   --  "zip.ads" will match - or even "ZIP.ads" if info has been loaded in case-insensitive mode.
-   --  Caution: this may be much slower than the exact search with Find_offset.
-
-   procedure Find_Offset_Without_Directory
-     (Info          : in     Zip.Zip_Info;
-      Name          : in     String;
-      Name_Encoding :    out Zip.Zip_Name_Encoding;
-      File_Index    :    out Zip_Streams.Zs_Index_Type;
-      Comp_Size     :    out File_Size_Type;
-      Uncomp_Size   :    out File_Size_Type;
-      Crc_32        :    out Interfaces.Unsigned_32);
+   --  Find offset of a certain compressed file in a pre-loaded Zip_Info data
 
    File_Name_Not_Found : exception;
 
    function Exists (Info : Zip_Info; Name : String) return Boolean
-     with Pre => Info.Is_Loaded;
-
-   --  User code: any information e.g. as a result of a string search,
-   --  archive comparison, archive update, recompression, etc.
-
-   procedure Set_User_Code (Info : in Zip_Info; Name : in String; Code : in Integer)
-     with Pre => Info.Is_Loaded;
-
-   function User_Code (Info : in Zip_Info; Name : in String) return Integer
      with Pre => Info.Is_Loaded;
 
    procedure Get_Sizes
@@ -334,8 +276,6 @@ package Zip is
    --  This does the same as Ada 2005's Ada.Directories.Exists
    --  Just there as helper for Ada 95 only systems
 
-   function Exists (Name : String) return Boolean renames Ada.Directories.Exists;
-
    --  Write a string containing line endings (possibly from another system)
    --   into a text file, with the "correct", native line endings.
    --   Works for displaying/saving correctly
@@ -390,7 +330,6 @@ private
       Name_Encoding : Zip_Name_Encoding;
       Read_Only     : Boolean;  --  TBD: attributes of most supported systems
       Encrypted_2_X : Boolean;
-      User_Code     : Integer;
    end record;
 
    type Zip_Archive_Format_Type is (Zip_32, Zip_64);  --  Supported so far: Zip_32
@@ -444,5 +383,9 @@ private
       Lzma      : constant := 14;
       Ppmd      : constant := 98;
    end Compression_Format_Code;
+
+   type Archived_File is tagged record
+      Node : P_Dir_Node;
+   end record;
 
 end Zip;

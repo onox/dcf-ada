@@ -36,6 +36,31 @@ package body Zip is
 
    use Interfaces;
 
+   function Name (Object : Archived_File) return String is
+     (Object.Node.File_Name);
+
+   function Name_Encoding (Object : Archived_File) return Zip_Name_Encoding is
+     (Object.Node.Name_Encoding);
+
+   function Compressed_Size (Object : Archived_File) return File_Size_Type is
+     (Object.Node.Comp_Size);
+
+   function Uncompressed_Size (Object : Archived_File) return File_Size_Type is
+     (Object.Node.Uncomp_Size);
+
+   function Date_Time (Object : Archived_File) return Time is
+     (Object.Node.Date_Time);
+
+   function Compressed (Object : Archived_File) return Boolean is
+     (Object.Node.Method in Deflate | Deflate_E);
+
+   function Encrypted (Object : Archived_File) return Boolean is
+     (Object.Node.Encrypted_2_X);
+
+--  Dn.File_Index, Dn.Crc_32, Dn.Read_Only,
+--  Zip_Streams.Zs_Index_Type, Interfaces.Unsigned_32, Boolean;
+   --  TODO Implement File_Index, CRC, and Read_Only
+
    procedure Dispose is new Ada.Unchecked_Deallocation (Dir_Node, P_Dir_Node);
    procedure Dispose is new Ada.Unchecked_Deallocation (String, P_String);
 
@@ -171,6 +196,7 @@ package body Zip is
    procedure Load
      (Info            :    out Zip_Info;
       From            : in out Zip_Streams.Root_Zipstream_Type'Class;
+      From_Name       : in     String; -- Zip file name
       Case_Sensitive  : in     Boolean               := False;
       Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
    is
@@ -205,8 +231,7 @@ package body Zip is
                     Method        => Method,
                     Name_Encoding => Name_Encoding,
                     Read_Only     => Read_Only,
-                    Encrypted_2_X => Encrypted_2_X,
-                    User_Code     => 0));
+                    Encrypted_2_X => Encrypted_2_X));
             elsif Dico_Name > Node.Dico_Name then
                Insert_Into_Tree (Node.Right);
             elsif Dico_Name < Node.Dico_Name then
@@ -241,17 +266,19 @@ package body Zip is
       The_End : Zip.Headers.End_Of_Central_Dir;
       Header  : Zip.Headers.Central_File_Header;
       P       : P_Dir_Node := null;
-      Zip_Info_Already_Loaded : exception;
       Main_Comment : P_String;
-   begin -- Load Zip_info
+   begin
       if Info.Loaded then
-         raise Zip_Info_Already_Loaded;
-      end if; -- 15-Apr-2002
+         raise Program_Error;
+      end if;
+
       Zip.Headers.Load (From, The_End);
+
       --  We take the opportunity to read the main comment, which is right
       --  after the end-of-central-directory block.
       Main_Comment := new String (1 .. Integer (The_End.Main_Comment_Length));
       String'Read (From'Access, Main_Comment.all);
+
       --  Process central directory:
       Zip_Streams.Set_Index
         (From,
@@ -303,7 +330,7 @@ package body Zip is
       Binary_Tree_Rebalancing.Rebalance (P);
       Info.Loaded             := True;
       Info.Case_Sensitive     := Case_Sensitive;
-      Info.Zip_File_Name      := new String'("This is a stream, no direct file!");
+      Info.Zip_File_Name      := new String'(From_Name);
       Info.Zip_Input_Stream   := From'Unchecked_Access;
       Info.Dir_Binary_Tree    := P;
       Info.Total_Entries      := Integer (The_End.Total_Entries);
@@ -314,40 +341,6 @@ package body Zip is
          raise Zip.Archive_Corrupted with "Bad (or no) end-of-central-directory";
       when Zip.Headers.Bad_Central_Header =>
          raise Zip.Archive_Corrupted with "Bad central directory entry header";
-   end Load;
-
-   -----------------------------------------------------------
-   -- Load Zip_info from a file containing the .zip archive --
-   -----------------------------------------------------------
-
-   procedure Load
-     (Info            :    out Zip_Info;
-      From            : in     String; -- Zip file name
-      Case_Sensitive  : in     Boolean               := False;
-      Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
-   is
-      use Zip_Streams;
-      Mystream : aliased File_Zipstream;
-   begin
-      Set_Name (Mystream, From);
-      begin
-         Open (Mystream, In_File);
-      exception
-         when others =>
-            raise Zip_File_Open_Error with "Archive: [" & From & ']';
-      end;
-      --  Call the stream version of Load(...)
-      Load (Info, Mystream, Case_Sensitive, Duplicate_Names);
-      Close (Mystream);
-      Dispose (Info.Zip_File_Name);
-      Info.Zip_File_Name    := new String'(From);
-      Info.Zip_Input_Stream := null; --  Forget about the stream!
-   exception
-      when others =>
-         if Is_Open (Mystream) then
-            Close (Mystream);
-         end if;
-         raise;
    end Load;
 
    function Is_Loaded (Info : in Zip_Info) return Boolean is
@@ -400,7 +393,7 @@ package body Zip is
    --  name for each entry to an user-defined "Action" procedure.
 
    generic
-      with procedure Action_Private (Dn : in out Dir_Node);
+      with procedure Action_Private (Dn : P_Dir_Node);
       --  Dir_node is private: only known to us, contents subject to change
    procedure Traverse_Private (Z : Zip_Info);
 
@@ -409,7 +402,7 @@ package body Zip is
       begin
          if P /= null then
             Traverse_Tree (P.Left);
-            Action_Private (P.all);
+            Action_Private (P);
             Traverse_Tree (P.Right);
          end if;
       end Traverse_Tree;
@@ -422,48 +415,16 @@ package body Zip is
    -----------------------
 
    procedure Traverse (Z : Zip_Info) is
-      procedure My_Action_Private (Dn : in out Dir_Node) is
+      procedure My_Action_Private (Dn : P_Dir_Node) is
          pragma Inline (My_Action_Private);
       begin
-         Action (Dn.File_Name);
+         Action ((Node => Dn));
       end My_Action_Private;
+
       procedure My_Traverse_Private is new Traverse_Private (My_Action_Private);
    begin
       My_Traverse_Private (Z);
    end Traverse;
-
-   procedure Traverse_Unicode (Z : Zip_Info) is
-      procedure My_Action_Private (Dn : in out Dir_Node) is
-         pragma Inline (My_Action_Private);
-      begin
-         Action (Dn.File_Name, Dn.Name_Encoding);
-      end My_Action_Private;
-      procedure My_Traverse_Private is new Traverse_Private (My_Action_Private);
-   begin
-      My_Traverse_Private (Z);
-   end Traverse_Unicode;
-
-   procedure Traverse_Verbose (Z : Zip_Info) is
-      procedure My_Action_Private (Dn : in out Dir_Node) is
-         pragma Inline (My_Action_Private);
-      begin
-         Action
-           (Dn.File_Name,
-            Dn.File_Index,
-            Dn.Comp_Size,
-            Dn.Uncomp_Size,
-            Dn.Crc_32,
-            Dn.Date_Time,
-            Dn.Method,
-            Dn.Name_Encoding,
-            Dn.Read_Only,
-            Dn.Encrypted_2_X,
-            Dn.User_Code);
-      end My_Action_Private;
-      procedure My_Traverse_Private is new Traverse_Private (My_Action_Private);
-   begin
-      My_Traverse_Private (Z);
-   end Traverse_Verbose;
 
    procedure Tree_Stat
      (Z         : in     Zip_Info;
@@ -485,7 +446,6 @@ package body Zip is
             Traverse_Tree (P.Right, Depth + 1);
          end if;
       end Traverse_Tree;
-
    begin
       Total     := 0;
       Max_Depth := 0;
@@ -551,55 +511,6 @@ package body Zip is
          raise Zip.Archive_Corrupted with "Bad central directory entry header";
    end Find_First_Offset;
 
-   --  Internal: find offset of a zipped file by reading sequentially the
-   --  central directory :-(
-
-   procedure Find_Offset
-     (File           : in out Zip_Streams.Root_Zipstream_Type'Class;
-      Name           : in     String;
-      Case_Sensitive : in     Boolean;
-      File_Index     :    out Zip_Streams.Zs_Index_Type;
-      Comp_Size      :    out File_Size_Type;
-      Uncomp_Size    :    out File_Size_Type;
-      Crc_32         :    out Interfaces.Unsigned_32)
-   is
-      The_End : Zip.Headers.End_Of_Central_Dir;
-      Header  : Zip.Headers.Central_File_Header;
-      use Zip_Streams;
-   begin
-      Zip.Headers.Load (File, The_End);
-      Set_Index (File, Zs_Index_Type (1 + The_End.Central_Dir_Offset) + The_End.Offset_Shifting);
-      for I in 1 .. The_End.Total_Entries loop
-         Zip.Headers.Read_And_Check (File, Header);
-         declare
-            This_Name : String (1 .. Natural (Header.Short_Info.Filename_Length));
-         begin
-            String'Read (File'Access, This_Name);
-            Set_Index
-              (File,
-               Index (File) +
-               Zs_Size_Type (Header.Short_Info.Extra_Field_Length + Header.Comment_Length));
-            --  Now the whole i_th central directory entry is behind
-            if Normalize (This_Name, Case_Sensitive) = Normalize (Name, Case_Sensitive) then
-               --  Name found in central directory !
-               File_Index :=
-                 Zip_Streams.Zs_Index_Type (1 + Header.Local_Header_Offset) +
-                 The_End.Offset_Shifting;
-               Comp_Size   := File_Size_Type (Header.Short_Info.Dd.Compressed_Size);
-               Uncomp_Size := File_Size_Type (Header.Short_Info.Dd.Uncompressed_Size);
-               Crc_32      := Header.Short_Info.Dd.Crc_32;
-               return;
-            end if;
-         end;
-      end loop;
-      raise File_Name_Not_Found with "Entry: [" & Name & ']';
-   exception
-      when Zip.Headers.Bad_End =>
-         raise Zip.Archive_Corrupted with "Bad (or no) end-of-central-directory";
-      when Zip.Headers.Bad_Central_Header =>
-         raise Zip.Archive_Corrupted with "Bad central directory entry header";
-   end Find_Offset;
-
    --  Internal: find offset of a zipped file using the zip_info tree 8-)
 
    procedure Find_Offset
@@ -632,65 +543,6 @@ package body Zip is
         "Archive: [" & Info.Zip_File_Name.all & "], entry: [" & Name & ']';
    end Find_Offset;
 
-   procedure Find_Offset_Without_Directory
-     (Info          : in     Zip_Info;
-      Name          : in     String;
-      Name_Encoding :    out Zip_Name_Encoding;
-      File_Index    :    out Zip_Streams.Zs_Index_Type;
-      Comp_Size     :    out File_Size_Type;
-      Uncomp_Size   :    out File_Size_Type;
-      Crc_32        :    out Interfaces.Unsigned_32)
-   is
-      function Trash_Dir (N : String) return String is
-         Idx : Integer := N'First - 1;
-      begin
-         for I in N'Range loop
-            if N (I) = '/' or N (I) = '\' then
-               Idx := I;
-            end if;
-         end loop;
-         --  idx points on the index just before the interesting part
-         return Normalize (N (Idx + 1 .. N'Last), Info.Case_Sensitive);
-      end Trash_Dir;
-
-      Simple_Name : constant String := Trash_Dir (Name);
-
-      Found : exception;
-
-      procedure Check_Entry
-        (Entry_Name          :        String; -- 'name' is compressed entry's name
-         Entry_Index         :        Zip_Streams.Zs_Index_Type;
-         Entry_Comp_Size     :        File_Size_Type;
-         Entry_Uncomp_Size   :        File_Size_Type;
-         Entry_Crc_32        :        Interfaces.Unsigned_32;
-         Date_Time           :        Time;
-         Method              :        Pkzip_Method;
-         Entry_Name_Encoding :        Zip_Name_Encoding;
-         Read_Only           :        Boolean;
-         Encrypted_2_X       :        Boolean; -- PKZip 2.x encryption
-         User_Code           : in out Integer) is
-      begin
-         if Trash_Dir (Entry_Name) = Simple_Name then
-            Name_Encoding := Entry_Name_Encoding;
-            File_Index    := Entry_Index;
-            Comp_Size     := Entry_Comp_Size;
-            Uncomp_Size   := Entry_Uncomp_Size;
-            Crc_32        := Entry_Crc_32;
-            raise Found;
-         end if;
-      end Check_Entry;
-
-      procedure Search is new Traverse_Verbose (Check_Entry);
-   begin
-      begin
-         Search (Info);
-      exception
-         when Found =>
-            return;
-      end;
-      raise File_Name_Not_Found;
-   end Find_Offset_Without_Directory;
-
    function Exists (Info : in Zip_Info; Name : in String) return Boolean is
       Aux     : P_Dir_Node      := Info.Dir_Binary_Tree;
       Up_Name : constant String := Normalize (Name, Info.Case_Sensitive);
@@ -706,42 +558,6 @@ package body Zip is
       end loop;
       return False;
    end Exists;
-
-   procedure Set_User_Code (Info : in Zip_Info; Name : in String; Code : in Integer) is
-      Aux     : P_Dir_Node      := Info.Dir_Binary_Tree;
-      Up_Name : constant String := Normalize (Name, Info.Case_Sensitive);
-   begin
-      while Aux /= null loop
-         if Up_Name > Aux.Dico_Name then
-            Aux := Aux.Right;
-         elsif Up_Name < Aux.Dico_Name then
-            Aux := Aux.Left;
-         else  -- entry found !
-            Aux.User_Code := Code;
-            return;
-         end if;
-      end loop;
-      raise File_Name_Not_Found with
-        "Archive: [" & Info.Zip_File_Name.all & "], entry: [" & Name & ']';
-   end Set_User_Code;
-
-   function User_Code (Info : in Zip_Info; Name : in String) return Integer is
-      Aux     : P_Dir_Node      := Info.Dir_Binary_Tree;
-      Up_Name : constant String := Normalize (Name, Info.Case_Sensitive);
-   begin
-      while Aux /= null loop
-         if Up_Name > Aux.Dico_Name then
-            Aux := Aux.Right;
-         elsif Up_Name < Aux.Dico_Name then
-            Aux := Aux.Left;
-         else  -- entry found !
-            return Aux.User_Code;
-         end if;
-      end loop;
-      raise File_Name_Not_Found with
-        "Archive: [" & Info.Zip_File_Name.all & "], entry: [" & Name & ']';
-      return 0;  --  Fake, since exception has been raised just before. Removes an OA warning.
-   end User_Code;
 
    procedure Get_Sizes
      (Info        : in     Zip_Info;
@@ -1000,6 +816,9 @@ package body Zip is
          end case;
          Last_Char := C;
       end loop;
+      if Text'Length > 0 then
+         Ada.Text_IO.New_Line;
+      end if;
    end Put_Multi_Line;
 
    procedure Write_As_Text

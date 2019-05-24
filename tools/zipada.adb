@@ -107,13 +107,10 @@ procedure Zipada is
    Zip_Name_Set : Boolean            := False;
 
    procedure Zip_A_File (Arg : String) is
-      Instream : File_Zipstream;
+      Instream : File_Zipstream := Open (Arg);
    begin
-      Set_Name (Instream, Arg);
       Set_Time (Instream, Ada.Directories.Modification_Time (Arg));
-      Open (Instream, In_File);
       Add_1_Stream (Instream);
-      Close (Instream);
    exception
       when Ada.Text_IO.Use_Error =>
          Put_Line ("  ** Warning: skipping invalid entry: " & Arg);
@@ -161,7 +158,7 @@ procedure Zipada is
    exception
       when Ada.Directories.Name_Error => -- "unknown directory" -> probably a file.
          if Level = 0 then
-            if Zip.Exists (Name) then
+            if Ada.Directories.Exists (Name) then
                Zip_A_File (Name);
             else
                Put_Line ("  ** Warning [a]: name not matched: " & Name);
@@ -210,7 +207,7 @@ procedure Zipada is
          end;
       elsif not Zip_Name_Set then
          Zip_Name_Set := True;
-         if Zip.Exists (Arg_Zip) then
+         if Ada.Directories.Exists (Arg_Zip) then
             Put ("Archive " & Arg_Zip & " already exists! Overwrite (y/n) ?");
             Get_Immediate (Answer);
             Answer := To_Upper (Answer);
@@ -233,7 +230,7 @@ procedure Zipada is
          else
             case Scan is
                when Files_Only =>
-                  if Zip.Exists (Arg) then
+                  if Ada.Directories.Exists (Arg) then
                      Zip_A_File (Arg);
                   else
                      Put_Line ("  ** Warning [b]: name not matched: " & Arg);

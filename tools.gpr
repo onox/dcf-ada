@@ -34,9 +34,7 @@ project Tools is
 
    Executables := (
       "zipada",
-      "unzipada",
-      "comp_zip",
-      "find_zip"
+      "unzipdcf"
    );
 
    for Main use Executables;

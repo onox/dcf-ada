@@ -38,6 +38,7 @@
 with Interfaces;
 
 with Ada.Calendar;
+with Ada.Finalization;
 with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded;
 
@@ -73,9 +74,6 @@ package Zip_Streams is
 
    --  Returns the Size of the stream
    function Size (S : in Root_Zipstream_Type) return Zs_Size_Type is abstract;
-
-   --  This procedure sets the name of the stream
-   procedure Set_Name (S : in out Root_Zipstream_Type; Name : String);
 
    --  This procedure returns the name of the stream
    function Get_Name (S : in Root_Zipstream_Type) return String;
@@ -124,19 +122,15 @@ package Zip_Streams is
 
    type File_Mode is new Ada.Streams.Stream_IO.File_Mode;
 
-   --  Open the File_Zipstream
-   --  PRE: Str.Name must be set
-   procedure Open (Str : in out File_Zipstream; Mode : File_Mode);
+   function Open (File_Name : String) return File_Zipstream;
+   --  Open a file for reading
 
-   --  Creates a file on the disk
-   --  PRE: Str.Name must be set
-   procedure Create (Str : in out File_Zipstream; Mode : File_Mode);
-
-   --  Close the File_Zipstream
-   procedure Close (Str : in out File_Zipstream);
+   function Create (File_Name : String) return File_Zipstream;
+   --  Create a file on the disk
 
    --  Is the File_Zipstream open ?
-   function Is_Open (Str : in File_Zipstream) return Boolean;
+   function Is_Open (Str : in File_Zipstream) return Boolean
+     with Post => Is_Open'Result;
 
    ----------------------------
    --  Routines around Time  --
@@ -226,9 +220,21 @@ private
    overriding
    function End_Of_Stream (S : in Memory_Zipstream) return Boolean;
 
+   -----------------------------------------------------------------------------
+
+   type Open_File is limited new Ada.Finalization.Limited_Controlled with record
+      File      : Ada.Streams.Stream_IO.File_Type;
+      Finalized : Boolean;
+   end record;
+
+   overriding
+   procedure Finalize (Object : in out Open_File);
+
+   -----------------------------------------------------------------------------
+
    --  File_Zipstream spec
    type File_Zipstream is new Root_Zipstream_Type with record
-      File : Ada.Streams.Stream_IO.File_Type;
+      File : Open_File;
    end record;
 
    --  Read data from the stream
