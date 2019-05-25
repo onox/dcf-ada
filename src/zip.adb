@@ -485,92 +485,6 @@ package body Zip is
       end if;
    end Tree_Stat;
 
-   --  13-May-2001: Find_first_offset
-
-   --  For an all-files unzipping of an appended (e.g. self-extracting) archive
-   --  (not beginning with ZIP contents), we cannot start with
-   --  index 1 in file.
-   --  But the offset of first entry in ZIP directory is not valid either,
-   --  as this excerpt of appnote.txt states:
-
-   --  "   4)  The entries in the central directory may not necessarily
-   --         be in the same order that files appear in the zipfile.    "
-
-   procedure Find_First_Offset
-     (File       : in out Zip_Streams.Root_Zipstream_Type'Class;
-      File_Index :    out Zip_Streams.Zs_Index_Type)
-   is
-      The_End    : Zip.Headers.End_Of_Central_Dir;
-      Header     : Zip.Headers.Central_File_Header;
-      Min_Offset : File_Size_Type;
-      use Zip_Streams;
-   begin
-      Zip.Headers.Load (File, The_End);
-      Set_Index (File, Zs_Index_Type (1 + The_End.Central_Dir_Offset) + The_End.Offset_Shifting);
-
-      Min_Offset := The_End.Central_Dir_Offset; -- will be lowered if the archive is not empty.
-
-      if The_End.Total_Entries = 0 then
-         raise Archive_Is_Empty;
-      end if;
-
-      for I in 1 .. The_End.Total_Entries loop
-         Zip.Headers.Read_And_Check (File, Header);
-         Set_Index
-           (File,
-            Index (File) +
-            Zs_Size_Type
-              (Header.Short_Info.Filename_Length +
-               Header.Short_Info.Extra_Field_Length +
-               Header.Comment_Length));
-         --  Now the whole i_th central directory entry is behind
-
-         if Header.Local_Header_Offset < Min_Offset then
-            Min_Offset := Header.Local_Header_Offset;
-         end if;
-      end loop;
-
-      File_Index := Zip_Streams.Zs_Index_Type (1 + Min_Offset) + The_End.Offset_Shifting;
-
-   exception
-      when Zip.Headers.Bad_End | Ada.IO_Exceptions.End_Error =>
-         raise Zip.Archive_Corrupted with "Bad (or no) end-of-central-directory";
-      when Zip.Headers.Bad_Central_Header =>
-         raise Zip.Archive_Corrupted with "Bad central directory entry header";
-   end Find_First_Offset;
-
-   --  Internal: find offset of a zipped file using the zip_info tree 8-)
-
-   procedure Find_Offset
-     (Info          : in     Zip_Info;
-      Name          : in     String;
-      Name_Encoding :    out Zip_Name_Encoding;
-      File_Index    :    out Zip_Streams.Zs_Index_Type;
-      Comp_Size     :    out File_Size_Type;
-      Uncomp_Size   :    out File_Size_Type;
-      Crc_32        :    out Interfaces.Unsigned_32)
-   is
-      Aux     : P_Dir_Node      := Info.Dir_Binary_Tree;
-      Up_Name : constant String := Normalize (Name, Info.Case_Sensitive);
-   begin
-      while Aux /= null loop
-         if Up_Name > Aux.Dico_Name then
-            Aux := Aux.Right;
-         elsif Up_Name < Aux.Dico_Name then
-            Aux := Aux.Left;
-         else  -- entry found !
-            Name_Encoding := Aux.Name_Encoding;
-            File_Index    := Aux.File_Index;
-            Comp_Size     := Aux.Comp_Size;
-            Uncomp_Size   := Aux.Uncomp_Size;
-            Crc_32        := Aux.Crc_32;
-            return;
-         end if;
-      end loop;
-      raise File_Name_Not_Found with
-        "Archive: [" & Info.Zip_File_Name.all & "], entry: [" & Name & ']';
-   end Find_Offset;
-
    function Exists (Info : in Zip_Info; Name : in String) return Boolean is
      (Get_Node (Info, Name) /= null);
 
@@ -580,18 +494,14 @@ package body Zip is
       Comp_Size   :    out File_Size_Type;
       Uncomp_Size :    out File_Size_Type)
    is
-      Dummy_File_Index    : Zip_Streams.Zs_Index_Type;
-      Dummy_Name_Encoding : Zip_Name_Encoding;
-      Dummy_Crc_32        : Interfaces.Unsigned_32;
+      Node : constant P_Dir_Node := Get_Node (Info, Name);
    begin
-      Find_Offset
-        (Info,
-         Name,
-         Dummy_Name_Encoding,
-         Dummy_File_Index,
-         Comp_Size,
-         Uncomp_Size,
-         Dummy_Crc_32);
+      if Node = null then
+         raise File_Name_Not_Found with
+           "Entry " & Name & " not found in " & Info.Zip_File_Name.all;
+      end if;
+      Comp_Size := Node.Comp_Size;
+      Uncomp_Size := Node.Uncomp_Size;
    end Get_Sizes;
 
    --  Workaround for the severe xxx'Read xxx'Write performance

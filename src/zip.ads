@@ -163,31 +163,6 @@ package Zip is
       Max_Depth :    out Natural;
       Avg_Depth :    out Float);
 
-   ----------------------------------------------------------------------------
-   --  Offsets - various procedures giving 1-based indexes to local headers  --
-   ----------------------------------------------------------------------------
-
-   --  Find first offset in a Zip stream (i.e. the first's archived entry's offset)
-
-   procedure Find_First_Offset
-     (File       : in out Zip_Streams.Root_Zipstream_Type'Class;
-      File_Index :    out Zip_Streams.Zs_Index_Type);
-
-   --  If the archive is empty (the 22 byte .zip file), there is no first
-   --  entry or offset
-   Archive_Is_Empty : exception;
-
-   procedure Find_Offset
-     (Info          : in     Zip_Info;
-      Name          : in     String;
-      Name_Encoding :    out Zip_Name_Encoding;
-      File_Index    :    out Zip_Streams.Zs_Index_Type;
-      Comp_Size     :    out File_Size_Type;
-      Uncomp_Size   :    out File_Size_Type;
-      Crc_32        :    out Interfaces.Unsigned_32)
-   with Pre => Info.Is_Loaded;
-   --  Find offset of a certain compressed file in a pre-loaded Zip_Info data
-
    File_Name_Not_Found : exception;
 
    function Exists (Info : Zip_Info; Name : String) return Boolean
