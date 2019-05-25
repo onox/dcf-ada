@@ -46,8 +46,6 @@ private package Unzip.Decompress is
       Mode                       :        Write_Mode;
       Output_Memory_Access       :    out P_Stream_Element_Array;  --  \ = write_to_memory
       Output_Stream_Access       :        P_Stream;                --  \ = write_to_stream
-      Explode_Literal_Tree       :        Boolean;  --  Relevant for the "explode" format
-      Explode_Slide_8kb_Lzma_Eos :        Boolean;  --  Relevant for the "explode" and "LZMA" formats
       Data_Descriptor_After_Data :        Boolean;
       Hint                       : in out Zip.Headers.Local_File_Header);
       --  Values are known, or smart fakes, and are later corrected if a closing

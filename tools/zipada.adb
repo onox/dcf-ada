@@ -61,9 +61,10 @@ procedure Zipada is
    Info     : Zip_Create_Info;
 
    procedure Add_1_Stream (Stream : in out Root_Zipstream_Type'Class) is
-      Compressed_Size : Zip.File_Size_Type;
-      Final_Method    : Natural;
       use Interfaces;
+
+      Compressed_Size : Zip.File_Size_Type;
+      Final_Method    : Unsigned_16;
    begin
       Put ("  Adding ");
       declare
@@ -73,7 +74,7 @@ procedure Zipada is
          Put (Cut & (1 + Maxlen - Cut'Length) * ' ');
       end;
 
-      Add_Stream (Info, Stream, null, Compressed_Size, Final_Method);
+      Add_Stream (Info, Stream, null, Compressed_Size, Natural (Final_Method));
 
       if Size (Stream) = 0 then
          Put ("          ");

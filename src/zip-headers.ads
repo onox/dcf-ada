@@ -101,8 +101,11 @@ package Zip.Headers is
    --
    --  Bit 0:  If set, indicates that the file is encrypted.
    Encryption_Flag_Bit : constant := 2**0;
-   --  Bit 1:  If set, indicates an EOS marker is used.
-   Lzma_Eos_Flag_Bit : constant := 2**1;
+
+   --  Bit 3:  If set, indicates data is followed by a data descriptor
+   --  See 4.3.9 of appnote
+   Descriptor_Flag_Bit : constant := 2**3;
+
    --  Bit 11: Language encoding flag (EFS). If this bit is set, the filename and
    --          comment fields for this file MUST be encoded using UTF-8.
    Language_Encoding_Flag_Bit : constant := 2**11;
@@ -160,6 +163,12 @@ package Zip.Headers is
    procedure Read_And_Check
      (Stream : in out Root_Zipstream_Type'Class;
       Header :    out Central_File_Header);
+
+   function Valid_Version (Header : Local_File_Header) return Boolean is
+     (Header.Needed_Extract_Version <= 45);
+
+   function Valid_Bitflag (Header : Local_File_Header) return Boolean is
+     ((Header.Bit_Flag and 2#1111_0111_1111_0001#) = 0);
 
    Bad_Central_Header : exception;
 

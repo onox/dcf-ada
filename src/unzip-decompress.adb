@@ -32,8 +32,6 @@ package body Unzip.Decompress is
       Mode                       :        Write_Mode;
       Output_Memory_Access       :    out P_Stream_Element_Array; -- \ = write_to_memory
       Output_Stream_Access       :        P_Stream;                   -- \ = write_to_stream
-      Explode_Literal_Tree       :        Boolean;
-      Explode_Slide_8kb_Lzma_Eos :        Boolean;
       Data_Descriptor_After_Data :        Boolean;
       Hint                       : in out Zip.Headers.Local_File_Header)
    is
@@ -105,7 +103,6 @@ package body Unzip.Decompress is
 
       package Unz_Meth is
          procedure Copy_Stored;
-         Deflate_E_Mode : Boolean := False;
          procedure Inflate;
       end Unz_Meth;
 
@@ -482,7 +479,7 @@ package body Unzip.Decompress is
 
          --  Copy lengths for literal codes 257..285
 
-         Copy_Lengths_Literal : Length_Array (0 .. 30) :=
+         Copy_Lengths_Literal : constant Length_Array (0 .. 30) :=
            (3,
             4,
             5,
@@ -517,7 +514,7 @@ package body Unzip.Decompress is
 
          --  Extra bits for literal codes 257..285
 
-         Extra_Bits_Literal : Length_Array (0 .. 30) :=
+         Extra_Bits_Literal : constant Length_Array (0 .. 30) :=
            (0,
             0,
             0,
@@ -622,7 +619,7 @@ package body Unzip.Decompress is
             14,
             14);
 
-         Max_Dist : Integer := 29; -- changed to 31 for deflate_e
+         Max_Dist : constant Integer := 29; -- changed to 31 for deflate_e
 
          Length_List_For_Fixed_Block_Literals : constant Length_Array (0 .. 287) :=
            (0 .. 143 => 8, 144 .. 255 => 9, 256 .. 279 => 7, 280 .. 287 => 8);
@@ -862,11 +859,6 @@ package body Unzip.Decompress is
             Is_Last_Block                  : Boolean;
             Blocks, Blocks_Fix, Blocks_Dyn : Long_Integer := 0;
          begin
-            if Deflate_E_Mode then
-               Copy_Lengths_Literal (28) := 3; -- instead of 258
-               Extra_Bits_Literal (28)   := 16;  -- instead of 0
-               Max_Dist                  := 31;
-            end if;
             loop
                Blocks := Blocks + 1;
                Inflate_Block (Is_Last_Block, Blocks_Fix, Blocks_Dyn);
@@ -928,14 +920,8 @@ package body Unzip.Decompress is
          case Format is
             when Store =>
                Copy_Stored;
-            when Deflate | Deflate_E =>
-               Unz_Meth.Deflate_E_Mode := Format = Deflate_E;
+            when Deflate =>
                Unz_Meth.Inflate;
-            when others =>
-               raise Unsupported_Method with
-                 "Format/method " &
-                 Pkzip_Method'Image (Format) &
-                 " not supported for decompression";
          end case;
       exception
          when others =>

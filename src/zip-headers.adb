@@ -112,6 +112,13 @@ package body Zip.Headers is
       Header.External_Attributes             := Intel_Nb (Chb (39 .. 42));
       Header.Local_Header_Offset             := Intel_Nb (Chb (43 .. 46));
 
+      if not Valid_Version (Header.Short_Info) then
+         raise Bad_Central_Header with "Archive needs invalid version to extract";
+      end if;
+
+      if not Valid_Bitflag (Header.Short_Info) then
+         raise Bad_Central_Header with "Archive uses prohibited features";
+      end if;
    end Read_And_Check;
 
    procedure Write (Stream : in out Root_Zipstream_Type'Class; Header : in Central_File_Header) is
@@ -164,6 +171,13 @@ package body Zip.Headers is
       Header.Filename_Length      := Intel_Nb (Lhb (27 .. 28));
       Header.Extra_Field_Length   := Intel_Nb (Lhb (29 .. 30));
 
+      if not Valid_Version (Header) then
+         raise Bad_Local_Header with "Archived file needs invalid version to extract";
+      end if;
+
+      if not Valid_Bitflag (Header) then
+         raise Bad_Local_Header with "Archived file uses prohibited features";
+      end if;
    end Read_And_Check;
 
    procedure Write (Stream : in out Root_Zipstream_Type'Class; Header : in Local_File_Header) is

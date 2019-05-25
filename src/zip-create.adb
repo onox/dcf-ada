@@ -203,17 +203,6 @@ package body Zip.Create is
             Crc              => Shi.Dd.Crc_32,
             Output_Size      => Shi.Dd.Compressed_Size,
             Zip_Type         => Shi.Zip_Type);
-         if Shi.Zip_Type = Compression_Format_Code.Lzma then
-            --  For LZMA, we always put an EOS marker. From PKWARE's Appnote:
-            --
-            --      5.8.9 Data compressed with method 14, LZMA, may include an end-of-stream
-            --      (EOS) marker ending the compressed data stream.  This marker is not
-            --      required, but its use is highly recommended to facilitate processing
-            --      and implementers should include the EOS marker whenever possible.
-            --      When the EOS marker is used, general purpose bit 1 must be set.  If
-            --      general purpose bit 1 is not set, the EOS marker is not present.
-            Shi.Bit_Flag := Shi.Bit_Flag or Lzma_Eos_Flag_Bit;
-         end if;
          Mem2 := Index (Info.Stream.all);
          if Info.Zip_Archive_Format = Zip_32 and then Mem2 > Four_Gb then
             raise Zip_Capacity_Exceeded with Zip_32_Exceeded_Message;

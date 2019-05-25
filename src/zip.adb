@@ -52,7 +52,7 @@ package body Zip is
      (Object.Node.Date_Time);
 
    function Compressed (Object : Archived_File) return Boolean is
-     (Object.Node.Method in Deflate | Deflate_E);
+     (Object.Node.Method = Deflate);
 
    function Encrypted (Object : Archived_File) return Boolean is
      (Object.Node.Encrypted_2_X);
@@ -681,74 +681,23 @@ package body Zip is
       case M is
          when Store =>
             return "Store";
-         when Shrink =>
-            return "Shrink";
-         when Reduce_1 =>
-            return "Reduce 1";
-         when Reduce_2 =>
-            return "Reduce 2";
-         when Reduce_3 =>
-            return "Reduce 3";
-         when Reduce_4 =>
-            return "Reduce 4";
-         when Implode =>
-            return "Implode";
-         when Tokenize =>
-            return "Tokenize";
          when Deflate =>
             return "Deflate";
-         when Deflate_E =>
-            return "Deflate64";
-         when Bzip2 =>
-            return "BZip2";
-         when Lzma_Meth =>
-            return "LZMA";
-         when Ppmd =>
-            return "PPMd";
-         when Unknown =>
-            return "(unknown)";
       end case;
    end Image;
 
-   function Method_From_Code (X : Natural) return Pkzip_Method is
+   function Method_From_Code (Code : Interfaces.Unsigned_16) return Pkzip_Method is
    --  An enumeration clause might be more elegant, but needs
    --  curiously an Unchecked_Conversion... (RM 13.4)
    begin
-      case X is
+      case Code is
          when Compression_Format_Code.Store =>
             return Store;
-         when Compression_Format_Code.Shrink =>
-            return Shrink;
-         when Compression_Format_Code.Reduce =>
-            return Reduce_1;
-         when Compression_Format_Code.Reduce + 1 =>
-            return Reduce_2;
-         when Compression_Format_Code.Reduce + 2 =>
-            return Reduce_3;
-         when Compression_Format_Code.Reduce + 3 =>
-            return Reduce_4;
-         when Compression_Format_Code.Implode =>
-            return Implode;
-         when Compression_Format_Code.Tokenize =>
-            return Tokenize;
          when Compression_Format_Code.Deflate =>
             return Deflate;
-         when Compression_Format_Code.Deflate_E =>
-            return Deflate_E;
-         when Compression_Format_Code.Bzip2 =>
-            return Bzip2;
-         when Compression_Format_Code.Lzma =>
-            return Lzma_Meth;
-         when Compression_Format_Code.Ppmd =>
-            return Ppmd;
          when others =>
-            return Unknown;
+            raise Constraint_Error with "Unknown compression method " & Code'Image;
       end case;
-   end Method_From_Code;
-
-   function Method_From_Code (X : Interfaces.Unsigned_16) return Pkzip_Method is
-   begin
-      return Method_From_Code (Natural (X));
    end Method_From_Code;
 
    --  Copy a chunk from a stream into another one, using a temporary buffer

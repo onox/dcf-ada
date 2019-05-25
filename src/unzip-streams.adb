@@ -45,7 +45,7 @@ package body Unzip.Streams is
 
    Fallback_Compressed_Size : constant File_Size_Type := File_Size_Type'Last;
 
-   procedure Unzipfile
+   procedure Unzip_File
      (Zip_Stream     : in out Zip_Streams.Root_Zipstream_Type'Class;
       Header_Index   : in     Zip_Streams.Zs_Index_Type;
       Mem_Ptr        :    out P_Stream_Element_Array;
@@ -74,9 +74,6 @@ package body Unzip.Streams is
       end;
 
       Method := Method_From_Code (Local_Header.Zip_Type);
-      if Method not in Store | Deflate | Deflate_E then
-         raise Unsupported_Method;
-      end if;
 
       --  Calculate offset of data
       Work_Index :=
@@ -86,12 +83,12 @@ package body Unzip.Streams is
            Local_Header.Extra_Field_Length +
            Zip.Headers.Local_Header_Length);
 
-      Data_Descriptor_After_Data := (Local_Header.Bit_Flag and 8) /= 0;
+      Data_Descriptor_After_Data := (Local_Header.Bit_Flag and Zip.Headers.Descriptor_Flag_Bit) /= 0;
 
       if Data_Descriptor_After_Data then
          --  Sizes and CRC are stored after the data
          --  We set size to avoid getting a sudden Zip_EOF !
-         if Local_Header.Zip_Type = 0 and then Hint_Comp_Size = Fallback_Compressed_Size then
+         if Method = Store and then Hint_Comp_Size = Fallback_Compressed_Size then
             --  For Stored (Method 0) data we need a correct "compressed" size.
             --  If the hint is the bogus fallback value, it is better to trust
             --  the local header, since this size is known in advance. Case found
@@ -136,24 +133,20 @@ package body Unzip.Streams is
          Mode                       => Mode,
          Output_Memory_Access       => Mem_Ptr,
          Output_Stream_Access       => Out_Stream_Ptr,
-         Explode_Literal_Tree       => (Local_Header.Bit_Flag and 4) /= 0,
-         Explode_Slide_8kb_Lzma_Eos =>
-           (Local_Header.Bit_Flag and Zip.Headers.Lzma_Eos_Flag_Bit) /= 0,
          Data_Descriptor_After_Data => Data_Descriptor_After_Data,
          Hint                       => Local_Header);
    exception
       when Ada.IO_Exceptions.End_Error =>
          raise Zip.Archive_Corrupted with "End of stream reached";
-   end Unzipfile;
+   end Unzip_File;
 
    procedure Extract_File
-     (From             :        Zip.Zip_Info;
-      Zip_Stream       : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (Zip_Stream       : in out Zip_Streams.Root_Zipstream_Type'Class;
       What             :        Zip.Archived_File;
       Mem_Ptr          :    out P_Stream_Element_Array;
       Out_Stream_Ptr   :        P_Stream) is
    begin
-      Unzipfile
+      Unzip_File
         (Zip_Stream      => Zip_Stream,
          Header_Index    => What.File_Index,
          Mem_Ptr         => Mem_Ptr,
@@ -211,8 +204,7 @@ package body Unzip.Streams is
       File.Archive_Info := Archive_Info;  --  Full clone. Now a copy is safely with File
       File.File_Name    := new String'(Name.Name);
       Extract_File
-        (File.Archive_Info,
-         Archive_Info.Stream.all,  --  Use the given stream
+        (File.Archive_Info.Stream.all,  --  Use the given stream
          Name,
          File.Uncompressed,
          null);
@@ -307,8 +299,7 @@ package body Unzip.Streams is
       Dummy_Mem_Ptr : P_Stream_Element_Array;
    begin
       Extract_File
-        (Archive_Info,
-         Archive_Info.Stream.all,  --  Use the given stream
+        (Archive_Info.Stream.all,  --  Use the given stream
          File,
          Dummy_Mem_Ptr,
          Destination'Unchecked_Access);  -- /= null then ignore Dummy_Mem_Ptr

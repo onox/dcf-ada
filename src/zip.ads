@@ -130,28 +130,13 @@ package Zip is
    --   C: supported by Zip-Ada for compressing
    --   D: supported by Zip-Ada for decompressing
 
-   type Pkzip_Method is
-     (Store,     -- C,D
-      Shrink,    -- C,D
-      Reduce_1,  -- C,D
-      Reduce_2,  -- C,D
-      Reduce_3,  -- C,D
-      Reduce_4,  -- C,D
-      Implode,   --   D
-      Tokenize,
-      Deflate,   -- C,D
-      Deflate_E, --   D - "Enhanced deflate" or "Deflate64"
-      Bzip2,     --   D
-      Lzma_Meth, -- C,D
-      Ppmd,
-      Unknown);
+   type Pkzip_Method is (Store, Deflate);
 
    --  Return a String image, nicer than the 'Image attribute
    function Image (M : Pkzip_Method) return String;
 
    --  Technical: translates the method code as set in zip archives
-   function Method_From_Code (X : Interfaces.Unsigned_16) return Pkzip_Method;
-   function Method_From_Code (X : Natural) return Pkzip_Method;
+   function Method_From_Code (Code : Interfaces.Unsigned_16) return Pkzip_Method;
 
    --  Internal time definition
    function Convert (Date : in Ada.Calendar.Time) return Time renames Zip_Streams.Calendar.Convert;
@@ -377,15 +362,7 @@ private
 
    package Compression_Format_Code is
       Store     : constant := 0;
-      Shrink    : constant := 1;
-      Reduce    : constant := 2;
-      Implode   : constant := 6;
-      Tokenize  : constant := 7;
       Deflate   : constant := 8;
-      Deflate_E : constant := 9;
-      Bzip2     : constant := 12;
-      Lzma      : constant := 14;
-      Ppmd      : constant := 98;
    end Compression_Format_Code;
 
    type Archived_File is tagged limited record
