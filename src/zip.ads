@@ -56,7 +56,7 @@ package Zip is
    --
    --  Documentation: PKWARE's Appnote.txt, APPENDIX D - Language Encoding (EFS)
 
-   type Archived_File is tagged private;
+   type Archived_File is tagged limited private;
 
    function Name (Object : Archived_File) return String;
 
@@ -384,7 +384,7 @@ private
       Ppmd      : constant := 98;
    end Compression_Format_Code;
 
-   type Archived_File is tagged record
+   type Archived_File is tagged limited record
       Node : P_Dir_Node;
    end record;
 
