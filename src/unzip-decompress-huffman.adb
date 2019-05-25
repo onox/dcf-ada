@@ -21,7 +21,6 @@
 
 with Interfaces;
 
-with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 package body Unzip.Decompress.Huffman is
@@ -37,23 +36,13 @@ package body Unzip.Decompress.Huffman is
       procedure Dispose is new Ada.Unchecked_Deallocation (Table_List, P_Table_List);
 
       Current : P_Table_List;
-      Tcount  : Natural := 0;  --  Just a stat. Idea: replace table_list with an array
    begin
-      if Full_Trace then
-         Ada.Text_IO.Put ("[HufT_Free... ");
-      end if;
       while Tl /= null loop
          Dispose (Tl.Table);  --  Destroy the Huffman table
          Current := Tl;
          Tl      := Tl.Next;
          Dispose (Current);   --  Destroy the current node
-         if Full_Trace then
-            Tcount := Tcount + 1;
-         end if;
       end loop;
-      if Full_Trace then
-         Ada.Text_IO.Put_Line (Integer'Image (Tcount) & " tables]");
-      end if;
    end Huft_Free;
 
    --  Build huffman table from code lengths given by array b
@@ -110,9 +99,6 @@ package body Unzip.Decompress.Huffman is
       No_Copy_Length_Array : constant Boolean := D'Length = 0 or E'Length = 0;
 
    begin
-      if Full_Trace then
-         Ada.Text_IO.Put ("[HufT_Build...");
-      end if;
       Tl := null;
 
       if B'Length > 256 then  --  Set length of EOB code, if any
@@ -337,10 +323,6 @@ package body Unzip.Decompress.Huffman is
             end loop;
          end loop;
       end loop;
-
-      if Full_Trace then
-         Ada.Text_IO.Put_Line ("finished]");
-      end if;
 
       Huft_Incomplete := Y /= 0 and G /= 1;
    exception

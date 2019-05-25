@@ -45,7 +45,6 @@
 
 with Interfaces;
 
-with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 with Zip.Crc_Crypto;
@@ -53,8 +52,6 @@ with Zip_Streams;
 
 with Lz77;
 with Length_Limited_Huffman_Code_Lengths;
-
-use Ada.Text_IO;
 
 use Interfaces;
 
@@ -72,13 +69,6 @@ is
    --  All should be on False for normal use of this procedure.
 
    Deactivate_Scanning : constant Boolean := False;  --  Impact analysis of the scanning method
-   Trace               : constant Boolean := False;  --  Log file with details
-   Trace_Descriptors   : constant Boolean := False;  --  Additional logging of Huffman descriptors
-
-   --  A log file is used when trace = True.
-   Log      : File_Type;
-   Log_Name : constant String := "Zip.Compress.Deflate.zcd";  --  A CSV with an unusual extension
-   Sep      : constant Character := ';';
 
    -------------------------------------
    -- Buffered I/O - byte granularity --
@@ -252,19 +242,10 @@ is
    begin
       for I in New_D.Lit_Len'Range loop
          New_D.Lit_Len (I) := (Bit_Length => Bl_For_Lit_Len (I), Code => Invalid);
-         if Trace_Descriptors and then Trace and then Is_Open (Log) then
-            Put (Log, Integer'Image (Bl_For_Lit_Len (I)) & Sep);
-         end if;
       end loop;
       for I in New_D.Dis'Range loop
          New_D.Dis (I) := (Bit_Length => Bl_For_Dis (I), Code => Invalid);
-         if Trace_Descriptors and then Trace and then Is_Open (Log) then
-            Put (Log, Integer'Image (Bl_For_Dis (I)) & Sep);
-         end if;
       end loop;
-      if Trace_Descriptors and then Trace and then Is_Open (Log) then
-         New_Line (Log);
-      end if;
       return New_D;
    end Build_Descriptors;
 
@@ -521,25 +502,6 @@ is
             Thres := (Thres * Thres) * (Tweak (1) * Tweak (1));
             Dist  := L2_Tweaked_Square (Convert (H1), Convert (H2));
       end case;
-      if Trace then
-         Put_Line
-           (Log,
-            "Checking similarity." &
-            Sep &
-            Distance_Type'Image (Dist_Kind) &
-            Sep &
-            "Distance (ev. x100, **2):" &
-            Sep &
-            Integer_M32'Image (Dist) &
-            Sep &
-            Sep &
-            "Threshold (ev. x100, **2):" &
-            Sep &
-            Integer_M32'Image (Thres) &
-            Sep &
-            Sep &
-            Comment);
-      end if;
       return Dist < Thres;
    end Similar;
 
@@ -1124,22 +1086,9 @@ is
       if To_Be_Sent > 16#FFFF# then  --  Ow, cannot send all that in one chunk.
          --  Instead of a tedious block splitting, just divide and conquer:
          Mid := Lz_Buffer_Index_Type ((Natural_M32 (Lzb'First) + Natural_M32 (Lzb'Last)) / 2);
-         if Trace then
-            Put_Line
-              (Log,
-               "Expand_LZ_buffer: splitting large stored block: " &
-               Lz_Buffer_Index_Type'Image (Lzb'First) &
-               Lz_Buffer_Index_Type'Image (Mid) &
-               Lz_Buffer_Index_Type'Image (Lzb'Last));
-         end if;
          Expand_Lz_Buffer (Lzb (Lzb'First .. Mid), Last_Block => False);
          Expand_Lz_Buffer (Lzb (Mid + 1 .. Lzb'Last), Last_Block => Last_Block);
          return;
-      end if;
-      if Trace then
-         Put_Line
-           (Log,
-            "Expand_LZ_buffer: sending" & Natural_M32'Image (To_Be_Sent) & " 'plain' bytes");
       end if;
       B1 := Byte (To_Be_Sent mod 256);
       B2 := Byte (To_Be_Sent / 256);
@@ -1357,31 +1306,14 @@ is
 
       --  Selection of the block format with smallest size
       if Fixed_Format_Bits = Optimal_Format_Bits then
-         if Trace then
-            Put_Line (Log, "### New ""fixed"" block");
-         end if;
          Send_Fixed_Block;
       elsif Dynamic_Format_Bits = Optimal_Format_Bits then
-         if Trace then
-            Put_Line (Log, "### New ""dynamic"" block with compression structure header");
-         end if;
          Send_Dynamic_Block (New_Descr);
       elsif Dynamic_Format_Bits_2 = Optimal_Format_Bits then
-         if Trace then
-            Put_Line
-              (Log,
-               "### New ""dynamic"" block, RLE-tweaked, with compression structure header");
-         end if;
          Send_Dynamic_Block (New_Descr_2);
       elsif Recycled_Format_Bits = Optimal_Format_Bits then
-         if Trace then
-            Put_Line (Log, "### Recycle: continue using existing Huffman compression structures");
-         end if;
          Put_Lz_Buffer (Lzb);
       else  --  We have stored_format_bits = optimal_format_bits
-         if Trace then
-            Put_Line (Log, "### Too random - use ""stored"" block");
-         end if;
          Expand_Lz_Buffer (Lzb, Last_Block);
       end if;
    end Send_As_Block;
@@ -1508,17 +1440,6 @@ is
                     Lz_Buffer_Index_Type'Image (Step_Choice (Level).Slider_Step) &
                     ')')
                then
-                  if Trace then
-                     Put_Line
-                       (Log,
-                        "### Cutting @ " &
-                        Lz_Buffer_Index_Type'Image (Slide_Mid) &
-                        "  ('from' is" &
-                        Lz_Buffer_Index_Type'Image (From) &
-                        ", 'to' is" &
-                        Lz_Buffer_Index_Type'Image (To) &
-                        ')');
-                  end if;
                   Send_As_Block (Lz_Buffer (Send_From .. Slide_Mid - 1), Last_Block => False);
                   Send_From  := Slide_Mid;
                   Initial_Hd := Sliding_Hd;  --  Reset reference descriptor for further comparisons
@@ -1669,16 +1590,6 @@ is
          if Distance in Distance_Range and Length in Length_Range then
             Put_Or_Delay_Dl_Code (Distance, Length, Expand);
          else
-            if Trace then
-               Put_Line
-                 (Log,
-                  "<> Too bad, cannot encode this distance-length pair, " &
-                  "then we have to expand to output (dist = " &
-                  Integer'Image (Distance) &
-                  " len=" &
-                  Integer'Image (Length) &
-                  ")");
-            end if;
             for K in 0 .. Text_Buffer_Index (Length - 1) loop
                Put_Or_Delay_Literal_Byte (Text_Buf (Copy_Start + K));
             end loop;
@@ -1754,30 +1665,6 @@ is
    end Encode;
 
 begin
-   if Trace then
-      begin
-         Open (Log, Append_File, Log_Name);
-      exception
-         when Name_Error =>
-            Create (Log, Out_File, Log_Name);
-      end;
-      Put (Log, "New stream" & Sep & Sep & Sep & Sep & Sep & Sep & Sep & Sep);
-      if Input_Size_Known then
-         Put
-           (Log,
-            Sep &
-            File_Size_Type'Image (Input_Size) &
-            Sep &
-            Sep &
-            Sep &
-            Sep &
-            Sep &
-            Sep &
-            "bytes input");
-      end if;
-      New_Line (Log);
-   end if;
-
    --  Allocate input and output buffers...
    if Input_Size_Known then
       Inbuf :=
@@ -1802,8 +1689,4 @@ begin
    Dispose (Lz_Buffer);
    Dispose_Buffer (Inbuf);
    Dispose_Buffer (Outbuf);
-
-   if Trace then
-      Close (Log);
-   end if;
 end Zip.Compress.Deflate;

@@ -71,7 +71,6 @@ package body Unzip.Decompress is
       end Unz_Glob;
 
       Zip_Eof   : Boolean; -- read over end of zip section for this file
-      Lz77_Dump : Ada.Text_IO.File_Type;
 
       package Unz_Io is
          Out_Bin_File : Ada.Streams.Stream_IO.File_Type;
@@ -178,9 +177,6 @@ package body Unzip.Decompress is
 
          procedure Read_Buffer is
          begin
-            if Full_Trace then
-               Ada.Text_IO.Put ("[Read_buffer...");
-            end if;
             if Unz_Glob.Reachedsize > Unz_Glob.Compsize + 2 then
                --  +2: last code is smaller than requested!
                Process_Compressed_End_Reached;
@@ -202,9 +198,6 @@ package body Unzip.Decompress is
                Unz_Glob.Readpos := Unz_Glob.Readpos - 1; -- Reason: index of inbuf starts at 0
             end if;
             Unz_Glob.Inpos := 0;
-            if Full_Trace then
-               Ada.Text_IO.Put_Line ("finished]");
-            end if;
          end Read_Buffer;
 
          procedure Read_Byte_No_Decrypt (Bt : out Zip.Byte) is
@@ -285,9 +278,6 @@ package body Unzip.Decompress is
          procedure Flush (X : Natural) is
             use Zip, Ada.Streams;
          begin
-            if Full_Trace then
-               Ada.Text_IO.Put ("[Flush...");
-            end if;
             begin
                case Mode is
                   when Write_To_Binary_File =>
@@ -316,9 +306,6 @@ package body Unzip.Decompress is
             end;
             Zip.Crc_Crypto.Update (Unz_Glob.Crc32val, Unz_Glob.Slide (0 .. X - 1));
             Process_Feedback (File_Size_Type (X));
-            if Full_Trace then
-               Ada.Text_IO.Put_Line ("finished]");
-            end if;
          end Flush;
 
          procedure Flush_If_Full (W : in out Integer) is
@@ -362,25 +349,7 @@ package body Unzip.Decompress is
          procedure Copy_Range (Source, Index : in out Natural; Amount : Positive) is
             pragma Inline (Copy_Range);
          begin
-            if Full_Trace then
-               Ada.Text_IO.Put
-                 ("(Copy_range: source=" &
-                  Integer'Image (Source) &
-                  " index=" &
-                  Integer'Image (Index) &
-                  " amount=" &
-                  Integer'Image (Amount));
-            end if;
             if abs (Index - Source) < Amount then
-               if Full_Trace and then Source < Index then
-                  Ada.Text_IO.Put
-                    ("; replicates" &
-                     Integer'Image (Amount) &
-                     " /" &
-                     Integer'Image (Index - Source) &
-                     " )");
-                  --  ...times the range source..index-1
-               end if;
                --  if source >= index, the effect of copy is just like the non-overlapping case
                for Count in reverse 1 .. Amount loop
                   Unz_Glob.Slide (Index) := Unz_Glob.Slide (Source);
@@ -393,9 +362,6 @@ package body Unzip.Decompress is
                Index  := Index + Amount;
                Source := Source + Amount;
             end if;
-            if Full_Trace then
-               Ada.Text_IO.Put (')');
-            end if;
          end Copy_Range;
 
          --  The copying routines:
@@ -403,11 +369,6 @@ package body Unzip.Decompress is
          procedure Copy (Distance, Length : Natural; Index : in out Natural) is
             Source, Part, Remain : Integer;
          begin
-            if Some_Trace then
-               Ada.Text_IO.Put_Line
-                 (Lz77_Dump,
-                  "DLE" & Integer'Image (Distance) & Integer'Image (Length));
-            end if;
             Source := Index - Distance;
             Remain := Length;
             loop
@@ -420,16 +381,14 @@ package body Unzip.Decompress is
 
          procedure Delete_Output is -- an error has occured (bad compressed data)
          begin
-            if No_Trace then -- if there is a trace, we are debugging
-               case Mode is   --  and want to keep the malformed file
-                  when Write_To_Binary_File =>
-                     Ada.Streams.Stream_IO.Delete (Unz_Io.Out_Bin_File);
-                  when Write_To_Text_File =>
-                     Ada.Text_IO.Delete (Unz_Io.Out_Txt_File);
-                  when Write_To_Memory | Write_To_Stream | Just_Test =>
-                     null; -- Nothing to delete!
-               end case;
-            end if;
+            case Mode is
+               when Write_To_Binary_File =>
+                  Ada.Streams.Stream_IO.Delete (Unz_Io.Out_Bin_File);
+               when Write_To_Text_File =>
+                  Ada.Text_IO.Delete (Unz_Io.Out_Txt_File);
+               when Write_To_Memory | Write_To_Stream | Just_Test =>
+                  null; -- Nothing to delete!
+            end case;
          end Delete_Output;
 
       end Unz_Io;
@@ -474,15 +433,6 @@ package body Unzip.Decompress is
 
          use Unzip.Decompress.Huffman;
 
-         Lt_Count,
-         Dl_Count,
-         Lt_Count_0,
-         Dl_Count_0,
-         Lt_Count_Dyn,
-         Dl_Count_Dyn,
-         Lt_Count_Fix,
-         Dl_Count_Fix : Long_Integer := 0;  --  Statistics of LZ codes per block
-
          procedure Inflate_Codes (Tl, Td : P_Table_List; Bl, Bd : Integer) is
             Ct      : P_Huft_Table;  --  Current table
             Ct_Idx  : Natural;       --  Current table's index
@@ -491,12 +441,6 @@ package body Unzip.Decompress is
             W       : Integer := Unz_Glob.Slide_Index;  --  More local variable for slide index
             Literal : Zip.Byte;
          begin
-            if Some_Trace then
-               Lt_Count_0 := Lt_Count;
-               Dl_Count_0 := Dl_Count;
-               Ada.Text_IO.Put_Line ("Begin Inflate_codes");
-            end if;
-
             --  Inflate the coded data
             Main_Loop :
             while not Zip_Eof loop
@@ -525,28 +469,14 @@ package body Unzip.Decompress is
                case E is
                   when 16 =>     -- CT(CT_idx).N is a Literal (code 0 .. 255)
                      Literal := Zip.Byte (Ct (Ct_Idx).N);
-                     if Some_Trace then
-                        Lt_Count := Lt_Count + 1;
-                        Ada.Text_IO.Put (Lz77_Dump, "Lit" & Zip.Byte'Image (Literal));
-                        if Literal in 32 .. 126 then
-                           Ada.Text_IO.Put (Lz77_Dump, " '" & Character'Val (Literal) & ''');
-                        end if;
-                        Ada.Text_IO.New_Line (Lz77_Dump);
-                     end if;
                      Unz_Glob.Slide (W) := Literal;
                      W                  := W + 1;
                      Unz_Io.Flush_If_Full (W);
 
                   when 15 =>     -- End of block (EOB, code 256)
-                     if Full_Trace then
-                        Ada.Text_IO.Put_Line ("Exit  Inflate_codes, e=15 -> EOB");
-                     end if;
                      exit Main_Loop;
 
                   when others => -- We have a length/distance code
-                     if Some_Trace then
-                        Dl_Count := Dl_Count + 1;
-                     end if;
                      --  Get length of block to copy:
                      Length := Ct (Ct_Idx).N + Unz_Io.Bit_Buffer.Read_And_Dump (E);
 
@@ -577,17 +507,6 @@ package body Unzip.Decompress is
             end loop Main_Loop;
 
             Unz_Glob.Slide_Index := W;
-
-            if Some_Trace then
-               Ada.Text_IO.Put_Line
-                 ("End   Inflate_codes;  " &
-                  Long_Integer'Image (Lt_Count - Lt_Count_0) &
-                  " literals," &
-                  Long_Integer'Image (Dl_Count - Dl_Count_0) &
-                  " DL codes," &
-                  Long_Integer'Image (Dl_Count + Lt_Count - Lt_Count_0 - Dl_Count_0) &
-                  " in total");
-            end if;
          end Inflate_Codes;
 
          procedure Inflate_Stored_Block is -- Actually, nothing to inflate
@@ -596,10 +515,6 @@ package body Unzip.Decompress is
             Unz_Io.Bit_Buffer.Dump_To_Byte_Boundary;
             --  Get the block length and its complement
             N := Unz_Io.Bit_Buffer.Read_And_Dump (16);
-            if Some_Trace then
-               Ada.Text_IO.Put_Line
-                 ("Begin Inflate_stored_block, bytes stored: " & Integer'Image (N));
-            end if;
             if N /= Integer ((not Unz_Io.Bit_Buffer.Read_And_Dump_U32 (16)) and 16#ffff#) then
                raise Zip.Archive_Corrupted;
             end if;
@@ -611,9 +526,6 @@ package body Unzip.Decompress is
                Unz_Glob.Slide_Index := Unz_Glob.Slide_Index + 1;
                Unz_Io.Flush_If_Full (Unz_Glob.Slide_Index);
             end loop;
-            if Some_Trace then
-               Ada.Text_IO.Put_Line ("End   Inflate_stored_block");
-            end if;
          end Inflate_Stored_Block;
 
          --  Copy lengths for literal codes 257..285
@@ -769,9 +681,6 @@ package body Unzip.Decompress is
             Bl, Bd          : Integer;          --  lookup bits for tl/bd
             Huft_Incomplete : Boolean;
          begin
-            if Some_Trace then
-               Ada.Text_IO.Put_Line ("Begin Inflate_fixed_block");
-            end if;
             --  Make a complete, but wrong [why ?] code set (see Appnote: 5.5.2, RFC 1951: 3.2.6)
             Bl := 7;
             Huft_Build
@@ -793,12 +702,6 @@ package body Unzip.Decompress is
                   Td,
                   Bd,
                   Huft_Incomplete);
-               if Huft_Incomplete then
-                  if Full_Trace then
-                     Ada.Text_IO.Put_Line
-                       ("td is incomplete, pointer=null: " & Boolean'Image (Td = null));
-                  end if;
-               end if;
             exception
                when Huft_Out_Of_Memory | Huft_Error =>
                   Huft_Free (Tl);
@@ -809,11 +712,6 @@ package body Unzip.Decompress is
             --  Done with this block, free resources.
             Huft_Free (Tl);
             Huft_Free (Td);
-            if Some_Trace then
-               Ada.Text_IO.Put_Line ("End   Inflate_fixed_block");
-               Lt_Count_Fix := Lt_Count_Fix + (Lt_Count - Lt_Count_0);
-               Dl_Count_Fix := Dl_Count_Fix + (Dl_Count - Dl_Count_0);
-            end if;
          end Inflate_Fixed_Block;
 
          Bit_Order_For_Dynamic_Block : constant array (0 .. 18) of Natural :=
@@ -855,10 +753,6 @@ package body Unzip.Decompress is
             end Repeat_Length_Code;
 
          begin
-            if Some_Trace then
-               Ada.Text_IO.Put_Line ("Begin Inflate_dynamic_block");
-            end if;
-
             --  Read in table lengths
             Nl := 257 + Unz_Io.Bit_Buffer.Read_And_Dump (5);
             Nd := 1 + Unz_Io.Bit_Buffer.Read_And_Dump (5);
@@ -980,8 +874,6 @@ package body Unzip.Decompress is
                   if Deflate_Strict then
                      raise Zip.Archive_Corrupted with
                        "Incomplete code set for distances";
-                  elsif Some_Trace then  --  not Deflate_Strict => don't stop
-                     Ada.Text_IO.Put_Line ("Huffman tree incomplete - PKZIP 1.93a bug workaround");
                   end if;
                end if;
             exception
@@ -995,11 +887,6 @@ package body Unzip.Decompress is
             --  Done with this block, free resources.
             Huft_Free (Tl);
             Huft_Free (Td);
-            if Some_Trace then
-               Ada.Text_IO.Put_Line ("End   Inflate_dynamic_block");
-               Lt_Count_Dyn := Lt_Count_Dyn + (Lt_Count - Lt_Count_0);
-               Dl_Count_Dyn := Dl_Count_Dyn + (Dl_Count - Dl_Count_0);
-            end if;
          end Inflate_Dynamic_Block;
 
          procedure Inflate_Block (Last_Block : out Boolean; Fix, Dyn : in out Long_Integer) is
@@ -1035,35 +922,7 @@ package body Unzip.Decompress is
             end loop;
             Unz_Io.Flush (Unz_Glob.Slide_Index);
             Unz_Glob.Slide_Index := 0;
-            if Some_Trace then
-               Ada.Text_IO.Put_Line
-                 ("# blocks:" &
-                  Long_Integer'Image (Blocks) &
-                  "; fixed:" &
-                  Long_Integer'Image (Blocks_Fix) &
-                  "; dynamic:" &
-                  Long_Integer'Image (Blocks_Dyn));
-               if Blocks_Fix > 0 then
-                  Ada.Text_IO.Put_Line
-                    ("Averages per fixed block: literals:" &
-                     Long_Integer'Image (Lt_Count_Fix / Blocks_Fix) &
-                     "; DL codes:" &
-                     Long_Integer'Image (Dl_Count_Fix / Blocks_Fix) &
-                     "; all codes:" &
-                     Long_Integer'Image ((Lt_Count_Fix + Dl_Count_Fix) / Blocks_Fix));
-               end if;
-               if Blocks_Dyn > 0 then
-                  Ada.Text_IO.Put_Line
-                    ("Averages per dynamic block: literals:" &
-                     Long_Integer'Image (Lt_Count_Dyn / Blocks_Dyn) &
-                     "; DL codes:" &
-                     Long_Integer'Image (Dl_Count_Dyn / Blocks_Dyn) &
-                     "; all codes:" &
-                     Long_Integer'Image ((Lt_Count_Dyn + Dl_Count_Dyn) / Blocks_Dyn));
-               end if;
-            end if;
          end Inflate;
-
       end Unz_Meth;
 
       procedure Process_Descriptor (Dd : out Zip.Headers.Data_Descriptor) is
@@ -1094,9 +953,6 @@ package body Unzip.Decompress is
 
       package SU renames Ada.Strings.Unbounded;
    begin -- Decompress_Data
-      if Some_Trace then
-         Ada.Text_IO.Create (Lz77_Dump, Ada.Text_IO.Out_File, "dump.lz77");
-      end if;
       Output_Memory_Access := null;
       --  ^ this is an 'out' parameter, we have to set it anyway
       case Mode is
@@ -1183,10 +1039,6 @@ package body Unzip.Decompress is
          when Write_To_Memory | Write_To_Stream | Just_Test =>
             null; -- Nothing to close!
       end case;
-      if Some_Trace then
-         Ada.Text_IO.Close (Lz77_Dump);
-      end if;
-
    exception
       when others => -- close the file in case of an error, if not yet closed
          case Mode is -- or deleted

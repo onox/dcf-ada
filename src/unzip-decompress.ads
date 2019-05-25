@@ -65,13 +65,4 @@ private
    --  data error detection.
    Deflate_Strict : constant Boolean := True;
 
-   --  Primitive tracing using Ada.Text_IO, plus a few statistics
-   type Trace_Type is (None, Some_T, Full);
-
-   Trace : constant Trace_Type := None; --  <==  Choice is here
-
-   No_Trace   : constant Boolean := Trace = None;
-   Some_Trace : constant Boolean := Trace >= Some_T;
-   Full_Trace : constant Boolean := Trace = Full;
-
 end Unzip.Decompress;
