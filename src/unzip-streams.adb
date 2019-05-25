@@ -47,7 +47,7 @@ package body Unzip.Streams is
 
    procedure Unzipfile
      (Zip_Stream     : in out Zip_Streams.Root_Zipstream_Type'Class;
-      Header_Index   : in out Zip_Streams.Zs_Index_Type;
+      Header_Index   : in     Zip_Streams.Zs_Index_Type;
       Mem_Ptr        :    out P_Stream_Element_Array;
       Out_Stream_Ptr :        P_Stream;
       --  If not null, extract to out_stream_ptr, not to memory
@@ -134,29 +134,13 @@ package body Unzip.Streams is
         (Zip_File                   => Zip_Stream,
          Format                     => Method,
          Mode                       => Mode,
-         Output_File_Name           => "",
          Output_Memory_Access       => Mem_Ptr,
          Output_Stream_Access       => Out_Stream_Ptr,
-         Feedback                   => null,
          Explode_Literal_Tree       => (Local_Header.Bit_Flag and 4) /= 0,
          Explode_Slide_8kb_Lzma_Eos =>
            (Local_Header.Bit_Flag and Zip.Headers.Lzma_Eos_Flag_Bit) /= 0,
          Data_Descriptor_After_Data => Data_Descriptor_After_Data,
          Hint                       => Local_Header);
-
-      --  Set the offset on the next zipped file
-      Header_Index :=
-        Header_Index +
-        Zip_Streams.Zs_Size_Type
-          (Local_Header.Filename_Length +
-           Local_Header.Extra_Field_Length +
-           Zip.Headers.Local_Header_Length) +
-        Zip_Streams.Zs_Size_Type (Local_Header.Dd.Compressed_Size);
-
-      if Data_Descriptor_After_Data then
-         Header_Index :=
-           Header_Index + Zip_Streams.Zs_Size_Type (Zip.Headers.Data_Descriptor_Length);
-      end if;
    exception
       when Ada.IO_Exceptions.End_Error =>
          raise Zip.Archive_Corrupted with "End of stream reached";

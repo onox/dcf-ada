@@ -44,10 +44,8 @@ private package Unzip.Decompress is
       --  to point to the beginning of compressed data
       Format                     :        Pkzip_Method;
       Mode                       :        Write_Mode;
-      Output_File_Name           :        String;   --  Relevant only if mode = write_to_file
       Output_Memory_Access       :    out P_Stream_Element_Array;  --  \ = write_to_memory
       Output_Stream_Access       :        P_Stream;                --  \ = write_to_stream
-      Feedback                   :        Zip.Feedback_Proc;
       Explode_Literal_Tree       :        Boolean;  --  Relevant for the "explode" format
       Explode_Slide_8kb_Lzma_Eos :        Boolean;  --  Relevant for the "explode" and "LZMA" formats
       Data_Descriptor_After_Data :        Boolean;

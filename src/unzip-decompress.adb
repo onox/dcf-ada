@@ -21,10 +21,6 @@
 
 with Interfaces;
 
-with Ada.Streams.Stream_IO;
-with Ada.Strings.Unbounded;
-with Ada.Text_IO;
-
 with Unzip.Decompress.Huffman;
 with Zip.Crc_Crypto;
 
@@ -34,10 +30,8 @@ package body Unzip.Decompress is
      (Zip_File                   : in out Zip_Streams.Root_Zipstream_Type'Class;
       Format                     :        Pkzip_Method;
       Mode                       :        Write_Mode;
-      Output_File_Name           :        String; -- relevant only if mode = write_to_file
       Output_Memory_Access       :    out P_Stream_Element_Array; -- \ = write_to_memory
       Output_Stream_Access       :        P_Stream;                   -- \ = write_to_stream
-      Feedback                   :        Zip.Feedback_Proc;
       Explode_Literal_Tree       :        Boolean;
       Explode_Slide_8kb_Lzma_Eos :        Boolean;
       Data_Descriptor_After_Data :        Boolean;
@@ -73,10 +67,6 @@ package body Unzip.Decompress is
       Zip_Eof   : Boolean; -- read over end of zip section for this file
 
       package Unz_Io is
-         Out_Bin_File : Ada.Streams.Stream_IO.File_Type;
-         Out_Txt_File : Ada.Text_IO.File_Type;
-         Last_Char    : Character := ' ';
-
          procedure Init_Buffers;
 
          procedure Read_Byte_No_Decrypt (Bt : out Zip.Byte);
@@ -118,30 +108,6 @@ package body Unzip.Decompress is
          Deflate_E_Mode : Boolean := False;
          procedure Inflate;
       end Unz_Meth;
-
-      procedure Process_Feedback (New_Bytes : File_Size_Type) is
-         pragma Inline (Process_Feedback);
-         New_Percents_Done : Natural;
-         User_Aborting     : Boolean;
-         use Zip;
-      begin
-         if Feedback = null or Unz_Glob.Uncompsize = 0 then
-            return; -- no feedback proc. or cannot calculate percentage
-         end if;
-         Unz_Glob.Effective_Writes := Unz_Glob.Effective_Writes + New_Bytes;
-         New_Percents_Done         :=
-           Natural ((100.0 * Float (Unz_Glob.Effective_Writes)) / Float (Unz_Glob.Uncompsize));
-         if New_Percents_Done > Unz_Glob.Percents_Done then
-            Feedback
-              (Percents_Done => New_Percents_Done,
-               Entry_Skipped => False,
-               User_Abort    => User_Aborting);
-            if User_Aborting then
-               raise User_Abort;
-            end if;
-            Unz_Glob.Percents_Done := New_Percents_Done;
-         end if;
-      end Process_Feedback;
 
       ------------------------------
       -- Bodies of UnZ_* packages --
@@ -280,15 +246,6 @@ package body Unzip.Decompress is
          begin
             begin
                case Mode is
-                  when Write_To_Binary_File =>
-                     Blockwrite
-                       (Ada.Streams.Stream_IO.Stream (Out_Bin_File).all,
-                        Unz_Glob.Slide (0 .. X - 1));
-                  when Write_To_Text_File =>
-                     Zip.Write_As_Text
-                       (Unz_Io.Out_Txt_File,
-                        Unz_Glob.Slide (0 .. X - 1),
-                        Unz_Io.Last_Char);
                   when Write_To_Memory =>
                      for I in 0 .. X - 1 loop
                         Output_Memory_Access (Unz_Glob.Uncompressed_Index) :=
@@ -305,7 +262,6 @@ package body Unzip.Decompress is
                   raise Unzip.Write_Error;
             end;
             Zip.Crc_Crypto.Update (Unz_Glob.Crc32val, Unz_Glob.Slide (0 .. X - 1));
-            Process_Feedback (File_Size_Type (X));
          end Flush;
 
          procedure Flush_If_Full (W : in out Integer) is
@@ -382,10 +338,6 @@ package body Unzip.Decompress is
          procedure Delete_Output is -- an error has occured (bad compressed data)
          begin
             case Mode is
-               when Write_To_Binary_File =>
-                  Ada.Streams.Stream_IO.Delete (Unz_Io.Out_Bin_File);
-               when Write_To_Text_File =>
-                  Ada.Text_IO.Delete (Unz_Io.Out_Txt_File);
                when Write_To_Memory | Write_To_Stream | Just_Test =>
                   null; -- Nothing to delete!
             end case;
@@ -950,24 +902,10 @@ package body Unzip.Decompress is
       end Process_Descriptor;
 
       use Zip, Unz_Meth;
-
-      package SU renames Ada.Strings.Unbounded;
    begin -- Decompress_Data
       Output_Memory_Access := null;
       --  ^ this is an 'out' parameter, we have to set it anyway
       case Mode is
-         when Write_To_Binary_File =>
-            Ada.Streams.Stream_IO.Create
-              (Unz_Io.Out_Bin_File,
-               Ada.Streams.Stream_IO.Out_File,
-               Output_File_Name,
-               Form => SU.To_String (Zip_Streams.Form_For_Io_Open_And_Create));
-         when Write_To_Text_File =>
-            Ada.Text_IO.Create
-              (Unz_Io.Out_Txt_File,
-               Ada.Text_IO.Out_File,
-               Output_File_Name,
-               Form => SU.To_String (Zip_Streams.Form_For_Io_Open_And_Create));
          when Write_To_Memory =>
             Output_Memory_Access :=
               new Ada.Streams
@@ -1032,24 +970,12 @@ package body Unzip.Decompress is
       end if;
 
       case Mode is
-         when Write_To_Binary_File =>
-            Ada.Streams.Stream_IO.Close (Unz_Io.Out_Bin_File);
-         when Write_To_Text_File =>
-            Ada.Text_IO.Close (Unz_Io.Out_Txt_File);
          when Write_To_Memory | Write_To_Stream | Just_Test =>
             null; -- Nothing to close!
       end case;
    exception
       when others => -- close the file in case of an error, if not yet closed
          case Mode is -- or deleted
-            when Write_To_Binary_File =>
-               if Ada.Streams.Stream_IO.Is_Open (Unz_Io.Out_Bin_File) then
-                  Ada.Streams.Stream_IO.Close (Unz_Io.Out_Bin_File);
-               end if;
-            when Write_To_Text_File =>
-               if Ada.Text_IO.Is_Open (Unz_Io.Out_Txt_File) then
-                  Ada.Text_IO.Close (Unz_Io.Out_Txt_File);
-               end if;
             when Write_To_Memory | Write_To_Stream | Just_Test =>
                null; -- Nothing to close!
          end case;

@@ -76,7 +76,7 @@ package Unzip is
 private
 
    type Write_Mode is
-     (Write_To_Binary_File, Write_To_Text_File, Write_To_Memory, Write_To_Stream, Just_Test);
+     (Write_To_Memory, Write_To_Stream, Just_Test);
 
    type P_Stream is access all Ada.Streams.Root_Stream_Type'Class;
 
