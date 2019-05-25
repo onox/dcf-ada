@@ -328,7 +328,7 @@ begin
                            Unzip.Streams.Extract
                              (Destination  => Stream_Writer,
                               Archive_Info => Zi,
-                              Name         => File.Name);
+                              File         => File);
                         end;
                      end if;
                   end;

@@ -72,6 +72,10 @@ package Zip is
 
    function Encrypted (Object : Archived_File) return Boolean;
 
+   function File_Index (Object : Archived_File) return Zip_Streams.Zs_Index_Type;
+
+   function CRC (Object : Archived_File) return Interfaces.Unsigned_32;
+
    -----------------------------------------------------------------
    --  Zip_info                                                   --
    -----------------------------------------------------------------

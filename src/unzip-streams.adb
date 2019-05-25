@@ -146,36 +146,22 @@ package body Unzip.Streams is
          raise Zip.Archive_Corrupted with "End of stream reached";
    end Unzipfile;
 
-   procedure S_Extract
+   procedure Extract_File
      (From             :        Zip.Zip_Info;
       Zip_Stream       : in out Zip_Streams.Root_Zipstream_Type'Class;
-      What             :        String;
+      What             :        Zip.Archived_File;
       Mem_Ptr          :    out P_Stream_Element_Array;
-      Out_Stream_Ptr   :        P_Stream)
-   is
-      Header_Index        : Zip_Streams.Zs_Index_Type;
-      Comp_Size           : File_Size_Type;
-      Uncomp_Size         : File_Size_Type;
-      CRC_32              : Interfaces.Unsigned_32;
-      Dummy_Name_Encoding : Zip.Zip_Name_Encoding;
+      Out_Stream_Ptr   :        P_Stream) is
    begin
-      Zip.Find_Offset
-        (Info          => From,
-         Name          => What,
-         Name_Encoding => Dummy_Name_Encoding,
-         File_Index    => Header_Index,
-         Comp_Size     => Comp_Size,
-         Uncomp_Size   => Uncomp_Size,
-         Crc_32        => CRC_32);
       Unzipfile
         (Zip_Stream      => Zip_Stream,
-         Header_Index    => Header_Index,
+         Header_Index    => What.File_Index,
          Mem_Ptr         => Mem_Ptr,
          Out_Stream_Ptr  => Out_Stream_Ptr,
-         Hint_Comp_Size  => Comp_Size,
-         Hint_Crc_32     => CRC_32,
-         Cat_Uncomp_Size => Uncomp_Size);
-   end S_Extract;
+         Hint_Comp_Size  => What.Compressed_Size,
+         Hint_Crc_32     => What.CRC,
+         Cat_Uncomp_Size => What.Uncompressed_Size);
+   end Extract_File;
 
    -------------------- for exportation:
 
@@ -211,7 +197,7 @@ package body Unzip.Streams is
    procedure Open
      (File             : in out Zipped_File_Type;  --  File-in-archive handle
       Archive_Info     : in     Zip.Zip_Info;      --  Archive's Zip_info
-      Name             : in     String)            --  Name of zipped entry
+      Name             : in     Zip.Archived_File)
    is
       use Ada.Streams;
    begin
@@ -223,8 +209,8 @@ package body Unzip.Streams is
       end if;
 
       File.Archive_Info := Archive_Info;  --  Full clone. Now a copy is safely with File
-      File.File_Name    := new String'(Name);
-      S_Extract
+      File.File_Name    := new String'(Name.Name);
+      Extract_File
         (File.Archive_Info,
          Archive_Info.Stream.all,  --  Use the given stream
          Name,
@@ -316,14 +302,14 @@ package body Unzip.Streams is
    procedure Extract
      (Destination      : in out Ada.Streams.Root_Stream_Type'Class;
       Archive_Info     : in     Zip.Zip_Info;  --  Archive's Zip_info
-      Name             : in     String)        --  Name of zipped entry
+      File             : in     Zip.Archived_File)
    is
       Dummy_Mem_Ptr : P_Stream_Element_Array;
    begin
-      S_Extract
+      Extract_File
         (Archive_Info,
          Archive_Info.Stream.all,  --  Use the given stream
-         Name,
+         File,
          Dummy_Mem_Ptr,
          Destination'Unchecked_Access);  -- /= null then ignore Dummy_Mem_Ptr
    end Extract;

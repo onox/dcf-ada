@@ -57,9 +57,11 @@ package body Zip is
    function Encrypted (Object : Archived_File) return Boolean is
      (Object.Node.Encrypted_2_X);
 
---  Dn.File_Index, Dn.Crc_32, Dn.Read_Only,
---  Zip_Streams.Zs_Index_Type, Interfaces.Unsigned_32, Boolean;
-   --  TODO Implement File_Index, CRC, and Read_Only
+   function File_Index (Object : Archived_File) return Zip_Streams.Zs_Index_Type is
+     (Object.Node.File_Index);
+
+   function CRC (Object : Archived_File) return Interfaces.Unsigned_32 is
+     (Object.Node.Crc_32);
 
    procedure Dispose is new Ada.Unchecked_Deallocation (Dir_Node, P_Dir_Node);
    procedure Dispose is new Ada.Unchecked_Deallocation (String, P_String);
