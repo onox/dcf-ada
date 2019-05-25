@@ -188,6 +188,22 @@ package body Zip is
       return Sn;
    end Normalize;
 
+   function Get_Node (Info : in Zip_Info; Name : in String) return P_Dir_Node is
+      Aux     : P_Dir_Node      := Info.Dir_Binary_Tree;
+      Up_Name : constant String := Normalize (Name, Info.Case_Sensitive);
+   begin
+      while Aux /= null loop
+         if Up_Name > Aux.Dico_Name then
+            Aux := Aux.Right;
+         elsif Up_Name < Aux.Dico_Name then
+            Aux := Aux.Left;
+         else  -- entry found !
+            return Aux;
+         end if;
+      end loop;
+      return null;
+   end Get_Node;
+
    Boolean_To_Encoding : constant array (Boolean) of Zip_Name_Encoding :=
      (False => IBM_437, True => UTF_8);
 
@@ -428,6 +444,16 @@ package body Zip is
       My_Traverse_Private (Z);
    end Traverse;
 
+   procedure Traverse_One_File (Z : Zip_Info; Name : String) is
+      Dn : constant P_Dir_Node := Get_Node (Z, Name);
+   begin
+      if Dn = null then
+         raise File_Name_Not_Found with
+           "Entry " & Name & " not found in " & Z.Zip_File_Name.all;
+      end if;
+      Action ((Node => Dn));
+   end Traverse_One_File;
+
    procedure Tree_Stat
      (Z         : in     Zip_Info;
       Total     :    out Natural;
@@ -546,20 +572,7 @@ package body Zip is
    end Find_Offset;
 
    function Exists (Info : in Zip_Info; Name : in String) return Boolean is
-      Aux     : P_Dir_Node      := Info.Dir_Binary_Tree;
-      Up_Name : constant String := Normalize (Name, Info.Case_Sensitive);
-   begin
-      while Aux /= null loop
-         if Up_Name > Aux.Dico_Name then
-            Aux := Aux.Right;
-         elsif Up_Name < Aux.Dico_Name then
-            Aux := Aux.Left;
-         else  -- entry found !
-            return True;
-         end if;
-      end loop;
-      return False;
-   end Exists;
+     (Get_Node (Info, Name) /= null);
 
    procedure Get_Sizes
      (Info        : in     Zip_Info;

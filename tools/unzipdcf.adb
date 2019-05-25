@@ -255,7 +255,7 @@ begin
                Put ("                    " & Zi.Entries'Image);
                Put_Line (if Zi.Entries > 1 then " files" else " file");
             end;
-         elsif Extract_All then
+         else
             declare
                Extraction_Folder : constant String := SU.To_String (Extraction_Directory);
                pragma Assert (Extraction_Folder (Extraction_Folder'Last) /= '/');
@@ -335,18 +335,21 @@ begin
                end Extract_File_From_Stream;
 
                procedure Extract_All_Files is new Zip.Traverse (Extract_File_From_Stream);
+               procedure Extract_One_File is new Zip.Traverse_One_File (Extract_File_From_Stream);
             begin
                if not Dirs.Exists (Extraction_Folder) then
                   Dirs.Create_Path (Extraction_Folder);
                end if;
 
-               Extract_All_Files (Zi);
+               if Extract_All then
+                  Extract_All_Files (Zi);
+               else
+                  for I in Last_Option + 2 .. Argument_Count loop
+                     Extract_One_File (Zi, Argument (I));
+                     --  TODO Create folder if necessary
+                  end loop;
+               end if;
             end;
-         else
-            for I in Last_Option + 2 .. Argument_Count loop
-               Put_Line (Argument (I));
-               --  TODO List or extract single file
-            end loop;
          end if;
       end;
    end;

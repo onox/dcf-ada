@@ -152,6 +152,10 @@ package Zip is
    --  Concretely, you can process a whole Zip file that way, by extracting data
    --  with Extract, or open a reader stream with UnZip.Streams.
 
+   generic
+      with procedure Action (File : Archived_File);
+   procedure Traverse_One_File (Z : Zip_Info; Name : String);
+
    --  Academic: see how well the name tree is balanced
    procedure Tree_Stat
      (Z         : in     Zip_Info;
