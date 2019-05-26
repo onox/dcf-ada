@@ -101,7 +101,7 @@ procedure UnzipDCF is
       New_Name        : String (1 .. 1024);
       New_Name_Length : Natural;
    begin
-      if Possible_Name = ""
+      if Test_Data or else Possible_Name = ""
         or else not Dirs.Exists (Possible_Path)
         or else Dirs.Kind (Possible_Path) = Directory
       then
@@ -273,10 +273,13 @@ begin
                   Item   : in     Ada.Streams.Stream_Element_Array)
                is
                   use type Zip_Streams.Zs_Index_Type;
+                  use Zip_Streams;
                begin
-                  Zip_Streams.Root_Zipstream_Type'Class (Stream.File.all).Set_Index (Stream.Index);
-                  Zip_Streams.Root_Zipstream_Type'Class (Stream.File.all).Write (Item);
-                  Stream.Index := Stream.Index + Item'Length;
+                  if not Test_Data then
+                     Root_Zipstream_Type'Class (Stream.File.all).Set_Index (Stream.Index);
+                     Root_Zipstream_Type'Class (Stream.File.all).Write (Item);
+                     Stream.Index := Stream.Index + Item'Length;
+                  end if;
                end Write;
 
                function No_Directory (Name : String) return String is
@@ -296,14 +299,16 @@ begin
 
                      use type Dirs.File_Kind;
                   begin
-                     if Path /= Dirs.Full_Name (Path) then
+                     if not Test_Data and then Path /= Dirs.Full_Name (Path) then
                         raise Unzip.Write_Error with
                           "Entry " & Name & " is located outside extraction directory";
                         --  TODO Ask to resolve conflict (rename) Name in Get_Out_File instead
                      end if;
 
                      if not Quiet then
-                        if File_Is_Directory then
+                        if Test_Data then
+                           Put ("    testing: " & Name);
+                        elsif File_Is_Directory then
                            pragma Assert (not Junk_Directories);
                            if not Dirs.Exists (Path) or else Dirs.Kind (Path) /= Dirs.Directory then
                               Put_Line ("   creating: " & Name);
@@ -316,25 +321,40 @@ begin
                         end if;
                      end if;
 
-                     if not File_Is_Directory then
+                     if Test_Data then
+                        declare
+                           Stream_Writer : File_Stream_Writer (null);
+                        begin
+                           Unzip.Streams.Extract
+                             (Destination      => Stream_Writer,
+                              Archive_Info     => Zi,
+                              File             => File,
+                              Verify_Integrity => Test_Data);
+                           Put_Line (" OK");
+                        exception
+                           when Unzip.Crc_Error =>
+                              Put_Line (" ERROR");
+                        end;
+                     elsif not File_Is_Directory then
                         declare
                            File_Stream : aliased Zip_Streams.File_Zipstream
                              := Zip_Streams.Create (Path);
                            Stream_Writer : File_Stream_Writer (File_Stream'Access);
                         begin
                            Unzip.Streams.Extract
-                             (Destination  => Stream_Writer,
-                              Archive_Info => Zi,
-                              File         => File);
+                             (Destination      => Stream_Writer,
+                              Archive_Info     => Zi,
+                              File             => File,
+                              Verify_Integrity => Test_Data);
                         end;
                      end if;
                   end;
                end Extract_File_From_Stream;
 
                procedure Extract_All_Files is new Zip.Traverse (Extract_File_From_Stream);
-               procedure Extract_One_File is new Zip.Traverse_One_File (Extract_File_From_Stream);
+               procedure Extract_One_File  is new Zip.Traverse_One_File (Extract_File_From_Stream);
             begin
-               if not Dirs.Exists (Extraction_Folder) then
+               if not Test_Data and then not Dirs.Exists (Extraction_Folder) then
                   Dirs.Create_Path (Extraction_Folder);
                end if;
 
