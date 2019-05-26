@@ -124,7 +124,6 @@ procedure Zipada is
    --  http://rosettacode.org/wiki/Walk_a_directory/Recursively#Ada
 
    procedure Walk (Name : String; Pattern : String; Level : Natural; Recursive : Boolean) is
-      --
       procedure Process_File (Item : Directory_Entry_Type) is
       begin
          if Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".." then
@@ -135,7 +134,7 @@ procedure Zipada is
             end;
          end if;
       end Process_File;
-      --
+
       procedure Walk_Subdirectory (Item : Directory_Entry_Type) is
       begin
          if Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".." then
@@ -145,7 +144,6 @@ procedure Zipada is
          when Ada.Directories.Name_Error =>
             null;
       end Walk_Subdirectory;
-   --
    begin
       if Level = 0 then  --  Figure out the length of the absolute path
          Len := Full_Name (".")'Length + 1;

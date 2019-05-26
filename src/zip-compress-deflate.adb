@@ -558,7 +558,7 @@ is
       end loop;
    end Prepare_Huffman_Codes;
 
-   --  This is the phase (C) for the pair of alphabets used in the Deflate format.
+   --  This is the phase (C) for the pair of alphabets used in the Deflate format
    function Prepare_Huffman_Codes
      (Dhd : Deflate_Huff_Descriptors) return Deflate_Huff_Descriptors
    is
@@ -611,7 +611,7 @@ is
       Last_Cs_Bl        : Natural;
       Max_Used_Lln_Code : Alphabet_Lit_Len := 0;
       Max_Used_Dis_Code : Alphabet_Dis     := 0;
-      --
+
       procedure Concatenate_All_Bit_Lengths is
          Idx : Natural := 0;
       begin
@@ -638,12 +638,12 @@ is
          end loop;
          Last_Cs_Bl := Idx;
       end Concatenate_All_Bit_Lengths;
-      --
+
       Extra_Bits_Needed : constant array (Alphabet) of Natural :=
         (16 => 2, 17 => 3, 18 => 7, others => 0);
-      --
+
       type Emission_Mode is (Simulate, Effective);
-      --
+
       procedure Emit_Data_Compression_Structures (Mode : Emission_Mode) is
          procedure Emit_Data_Compression_Atom (X : Alphabet; Extra_Code : U32 := 0) is
          --  x is a bit length (value in 0..15), or a RLE instruction
@@ -668,12 +668,12 @@ is
          --  Emit the bit lengths, with some RLE encoding (Appnote: 5.5.3; RFC 1951: 3.2.7)
          Idx := 1;
          loop
-            Rep := 1;  --  Current atom, cs_bl(idx), is repeated 1x so far - obvious, isn't it ?
+            Rep := 1;  --  Current atom, cs_bl(idx), is repeated 1x so far - obvious, isn't it?
             for J in Idx + 1 .. Last_Cs_Bl loop
                exit when Cs_Bl (J) /= Cs_Bl (Idx);
                Rep := Rep + 1;
             end loop;
-            --  Now rep is the number of repetitions of current atom, including itself.
+            --  Now rep is the number of repetitions of current atom, including itself
             if Idx > 1
               and then Cs_Bl (Idx) = Cs_Bl (Idx - 1)
               and then Rep >= 3
@@ -846,8 +846,7 @@ is
       163 .. 194 => 282,
       195 .. 226 => 283,
       227 .. 257 => 284,
-      258        => 285          -- Code 285, with no extra bit
-      );
+      258        => 285);        -- Code 285, with no extra bit
 
    Extra_Bits_For_Lz_Length_Offset : constant array (Length_Range) of Integer :=
      (3 .. 10 | 258 => Invalid,  --  just placeholder, there is no extra bit there!
@@ -1192,7 +1191,7 @@ is
         0;  --  Continue previous block, use current Huffman codes
       Stored_Format_Possible : Boolean;  --  Can we store (needs expansion of DL codes) ?
       Recycling_Possible     : Boolean;  --  Can we recycle current Huffman codes ?
-      --
+
       procedure Compute_Sizes_Of_Variants is
          C     : Count_Type;
          Extra : Natural;

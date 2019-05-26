@@ -27,9 +27,9 @@
 with Zip.Headers;
 
 with Ada.Characters.Handling;
-with Ada.Characters.Latin_1;
 with Ada.IO_Exceptions;
 with Ada.Strings.Fixed;
+with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 package body Zip is
@@ -361,30 +361,19 @@ package body Zip is
          raise Zip.Archive_Corrupted with "Bad central directory entry header";
    end Load;
 
-   function Is_Loaded (Info : in Zip_Info) return Boolean is
-   begin
-      return Info.Loaded;
-   end Is_Loaded;
+   function Is_Loaded (Info : in Zip_Info) return Boolean is (Info.Loaded);
 
    function Name (Info : in Zip_Info) return String is
-   begin
-      return Info.Zip_File_Name.all;
-   end Name;
+     (Info.Zip_File_Name.all);
 
    function Comment (Info : in Zip_Info) return String is
-   begin
-      return Info.Zip_File_Comment.all;
-   end Comment;
+     (Info.Zip_File_Comment.all);
 
    function Stream (Info : in Zip_Info) return Zip_Streams.Zipstream_Class_Access is
-   begin
-      return Info.Zip_Input_Stream;
-   end Stream;
+     (Info.Zip_Input_Stream);
 
    function Entries (Info : in Zip_Info) return Natural is
-   begin
-      return Info.Total_Entries;
-   end Entries;
+     (Info.Total_Entries);
 
    ------------
    -- Delete --
@@ -669,56 +658,6 @@ package body Zip is
       end loop;
       Close (F);
    end Copy_File;
-
-   procedure Put_Multi_Line (Out_File : Ada.Text_IO.File_Type; Text : String) is
-      Last_Char : Character := ' ';
-      C         : Character;
-
-      use Ada.Characters.Latin_1;
-   begin
-      for I in Text'Range loop
-         C := Text (I);
-         case C is
-            when CR =>
-               Ada.Text_IO.New_Line (Out_File);
-            when LF =>
-               if Last_Char /= CR then
-                  Ada.Text_IO.New_Line (Out_File);
-               end if;
-            when others =>
-               Ada.Text_IO.Put (Out_File, C);
-         end case;
-         Last_Char := C;
-      end loop;
-      if Text'Length > 0 then
-         Ada.Text_IO.New_Line;
-      end if;
-   end Put_Multi_Line;
-
-   procedure Write_As_Text
-     (Out_File  :        Ada.Text_IO.File_Type;
-      Buffer    :        Byte_Buffer;
-      Last_Char : in out Character)  --  Track line-ending characters across writes
-   is
-      C : Character;
-
-      use Ada.Characters.Latin_1;
-   begin
-      for I in Buffer'Range loop
-         C := Character'Val (Buffer (I));
-         case C is
-            when CR =>
-               Ada.Text_IO.New_Line (Out_File);
-            when LF =>
-               if Last_Char /= CR then
-                  Ada.Text_IO.New_Line (Out_File);
-               end if;
-            when others =>
-               Ada.Text_IO.Put (Out_File, C);
-         end case;
-         Last_Char := C;
-      end loop;
-   end Write_As_Text;
 
    function Hexadecimal (X : Interfaces.Unsigned_32) return String is
       package Mio is new Ada.Text_IO.Modular_IO (Interfaces.Unsigned_32);

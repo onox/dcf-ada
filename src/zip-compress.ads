@@ -61,11 +61,6 @@ package Zip.Compress is
 
    User_Abort : exception;
 
-   type Data_Content_Type is
-     (Neutral, Source_Code, Jpeg, Arw_Rw2,  --  Raw digital camera image
-     Orf_Cr2,                               --  Raw digital camera image
-     Zip_In_Zip, Gif, Png, Pgm, Ppm, Wav, Mp3, Mp4);
-
    --  Compress data from an input stream to an output stream until
    --  End_Of_File(input) = True, or number of input bytes = input_size.
    --  If password /= "", an encryption header is written.

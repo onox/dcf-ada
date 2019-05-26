@@ -70,8 +70,6 @@ package Unzip is
    Uncompressed_Size_Error : exception;
    Write_Error             : exception;
    User_Abort              : exception;
-   Not_Supported           : exception;
-   Unsupported_Method      : exception;
 
 private
 

@@ -36,7 +36,6 @@ with System;
 with Ada.Calendar;
 with Ada.Finalization;
 with Ada.Streams.Stream_IO;
-with Ada.Text_IO;
 
 with Zip_Streams;
 
@@ -55,6 +54,8 @@ package Zip is
    --    * Unicode UTF-8
    --
    --  Documentation: PKWARE's Appnote.txt, APPENDIX D - Language Encoding (EFS)
+
+   -----------------------------------------------------------------------------
 
    type Archived_File is tagged limited private;
 
@@ -76,14 +77,11 @@ package Zip is
 
    function CRC (Object : Archived_File) return Interfaces.Unsigned_32;
 
-   -----------------------------------------------------------------
-   --  Zip_info                                                   --
-   -----------------------------------------------------------------
-   --  Zip_info contains the Zip file name (if it is a file)      --
-   --  or its input stream access, and the archive's directory.   --
-   -----------------------------------------------------------------
+   -----------------------------------------------------------------------------
 
    type Zip_Info is new Ada.Finalization.Controlled with private;
+   --  Zip_info contains the Zip file name (if it is a file)      --
+   --  or its input stream access, and the archive's directory.   --
 
    -----------------------------------------------
    --  Load the whole .zip directory contained  --
@@ -104,7 +102,6 @@ package Zip is
    --  Load from a stream
 
    Archive_Corrupted   : exception;
-   Zip_File_Open_Error : exception;
    Duplicate_Name      : exception;
 
    --  Old name for Archive_corrupted. Change: 22-Oct-2017
@@ -127,8 +124,6 @@ package Zip is
 
    --  Compression "methods" - actually, formats - in the "official" PKWARE Zip format
    --  Details in appnote.txt, part V.J
-   --   C: supported by Zip-Ada for compressing
-   --   D: supported by Zip-Ada for decompressing
 
    type Pkzip_Method is (Store, Deflate);
 
@@ -240,21 +235,6 @@ package Zip is
      (File_Name   :        String;
       Into        : in out Ada.Streams.Root_Stream_Type'Class;
       Buffer_Size :        Positive := 1024 * 1024);
-
-   --  This does the same as Ada 2005's Ada.Directories.Exists
-   --  Just there as helper for Ada 95 only systems
-
-   --  Write a string containing line endings (possibly from another system)
-   --   into a text file, with the "correct", native line endings.
-   --   Works for displaying/saving correctly
-   --   CR&LF (DOS/Win), LF (UNIX), CR (Mac OS < 9)
-
-   procedure Put_Multi_Line (Out_File : Ada.Text_IO.File_Type; Text : String);
-
-   procedure Write_As_Text
-     (Out_File  :        Ada.Text_IO.File_Type;
-      Buffer    :        Byte_Buffer;
-      Last_Char : in out Character);  --  Track line-ending characters between writes
 
    function Hexadecimal (X : Interfaces.Unsigned_32) return String;
 

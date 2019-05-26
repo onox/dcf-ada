@@ -50,7 +50,6 @@ procedure UnzipDCF is
 
    Junk_Directories : Boolean := False;
    Lower_Case_Match : Boolean := False;
-   Extract_As_Text  : Boolean := False;
 
    Last_Option : Natural := 0;
 
@@ -67,11 +66,11 @@ procedure UnzipDCF is
       New_Line;
       Put_Line ("  -l  list files");
       Put_Line ("  -t  test integrity of files, no write");
-      Put_Line ("  -z  display .zip archive comment only");
+      Put_Line ("  -z  display archive comment only");
       Put_Line ("  -d  extract to ""exdir""");
       Put_Line ("modifiers:");
       Put_Line ("  -n  never overwrite existing files        -q  quiet mode");
-      Put_Line ("  -o  always overwrite existing files       -a  output with native line endings");
+      Put_Line ("  -o  always overwrite existing files");
       Put_Line ("  -j  junk archived directory structure     -L  force lower case on stored names");
    end Help;
 
@@ -173,8 +172,6 @@ begin
                      Last_Option := I + 1;
                   when 'L' =>
                      Lower_Case_Match := True;
-                  when 'a' =>
-                     Extract_As_Text := True;
                   when 'n' =>
                      Name_Conflict_Decision := Unzip.None;
                   when 'o' =>
@@ -217,8 +214,8 @@ begin
       begin
          Zip.Load (Zi, Archive_Stream, Archive);
 
-         if Comment or not Quiet then
-            Zip.Put_Multi_Line (Standard_Output, Zi.Comment);
+         if (Comment or not Quiet) and Zi.Comment'Length > 0 then
+            Put_Line (Zi.Comment);
          end if;
 
          if Comment then

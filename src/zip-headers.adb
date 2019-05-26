@@ -260,7 +260,7 @@ package body Zip.Headers is
                --  At this point, the buffer was successfully read, the_end is
                --  is set with its standard contents.
                --
-            --  This is the *real* position of the end-of-central-directory block, to begin with:
+               --  This is the *real* position of the end-of-central-directory block to begin with:
                X := I;
                --  We subtract the *theoretical* (stored) position of the end-of-central-directory.
                --  The theoretical position is equal to central_dir_offset + central_dir_size.
@@ -268,7 +268,6 @@ package body Zip.Headers is
                --  unless the archive is corrupted.
                --  We do it step by step, because ZS_Size_Type was modular until rev. 644.
                --  Now it's a signed 64 bits, but we don't want to change anything again...
-               --
                X := X - 1;
                --  i >= 1, so no dragons here. The "- 1" is for adapting
                --  from the 1-based Ada index.
@@ -322,7 +321,6 @@ package body Zip.Headers is
       The_Data_Desc.Crc_32            := Intel_Nb (Buffer (5 .. 8));
       The_Data_Desc.Compressed_Size   := Intel_Nb (Buffer (9 .. 12));
       The_Data_Desc.Uncompressed_Size := Intel_Nb (Buffer (13 .. 16));
-
    end Copy_And_Check;
 
    procedure Read_And_Check
