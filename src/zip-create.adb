@@ -21,40 +21,30 @@
 
 with Interfaces;
 
-with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 use Interfaces;
 
 package body Zip.Create is
 
+   Four_GB : constant := 4 * 1024 ** 3;
+
+   Zip_32_Exceeded_Message : constant String :=
+     "Zip file larger than 4 GB limit of Zip_32 archive format";
+
    procedure Create
-     (Info       :    out Zip_Create_Info;
-      Z_Stream   : in     Zipstream_Class_Access;
-      Name       :        String;
-      Compress   :        Zip.Compress.Compression_Method := Zip.Compress.Deflate_1;
-      Duplicates :        Duplicate_Name_Policy           := Admit_Duplicates) is
+     (Info       : in out   Zip_Create_Info;
+      Stream     : not null Zipstream_Class_Access;
+      Compress   :          Zip.Compress.Compression_Method := Zip.Compress.Deflate_1;
+      Duplicates :          Duplicate_Name_Policy           := Admit_Duplicates) is
    begin
-      Info.Stream   := Z_Stream;
+      Info.Stream   := Stream;
       Info.Compress := Compress;
       Info.Duplicates := Duplicates;
-      pragma Assert (Info.Stream.Get_Name /= "");
---      if Name /= "" then
---         Set_Name (Info.Stream.all, Name);
---      end if;
-
-      --  If we have a real file (File_Zipstream or descendent), create the file too
-      --  FIXME User has to create file themselves
-      raise Program_Error with "Create file yourself";
---      if Z_Stream.all in File_Zipstream'Class then
---         Zip_Streams.Create (File_Zipstream (Z_Stream.all), Zip_Streams.Out_File);
---      end if;
    end Create;
 
    function Is_Created (Info : Zip_Create_Info) return Boolean is
-   begin
-      return Info.Stream /= null;
-   end Is_Created;
+     (Info.Stream /= null);
 
    procedure Set (Info : in out Zip_Create_Info; New_Method : Zip.Compress.Compression_Method) is
    begin
@@ -62,9 +52,7 @@ package body Zip.Create is
    end Set;
 
    function Name (Info : Zip_Create_Info) return String is
-   begin
-      return Get_Name (Info.Stream.all);
-   end Name;
+     (Get_Name (Info.Stream.all));
 
    procedure Dispose is new Ada.Unchecked_Deallocation (Dir_Entries, Pdir_Entries);
 
@@ -120,27 +108,12 @@ package body Zip.Create is
       Cm : Name_Mapping.Cursor;
       Ok : Boolean;
    begin
-      M.Insert (To_Unbounded_String (File_Name), Cm, Ok);
+      M.Insert (SU.To_Unbounded_String (File_Name), Cm, Ok);
       if not Ok then
          --  Name already registered
          raise Duplicate_Name with "Entry name = " & File_Name;
       end if;
    end Insert_To_Name_Dictionary;
-
-   procedure Add_Stream
-     (Info   : in out Zip_Create_Info;
-      Stream : in out Root_Zipstream_Type'Class)
-   is
-      Compressed_Size : Zip.File_Size_Type;  --  Dummy
-      Final_Method    : Natural;             --  Dummy
-   begin
-      Add_Stream (Info, Stream, null, Compressed_Size, Final_Method);
-   end Add_Stream;
-
-   Four_Gb : constant := 4 * (1024**3);
-
-   Zip_32_Exceeded_Message : constant String :=
-     "Zip file too large (for Zip_32 archive format): more than 4GB.";
 
    procedure Add_Stream
      (Info            : in out Zip_Create_Info;
@@ -149,7 +122,7 @@ package body Zip.Create is
       Compressed_Size :    out Zip.File_Size_Type;
       Final_Method    :    out Natural)
    is
-      Mem1, Mem2 : Zs_Index_Type := 1;
+      Mem1, Mem2 : Zs_Index_Type := Zs_Index_Type'First;
       Entry_Name : String        := Get_Name (Stream);
       Last       : Positive;
    begin
@@ -161,24 +134,24 @@ package body Zip.Create is
             Entry_Name (I) := '/';
          end if;
       end loop;
+
+      --  Check for duplicates; raises Duplicate_name in this case
       if Info.Duplicates = Error_On_Duplicate then
-         --  Check for duplicates; raises Duplicate_name in this case
          Insert_To_Name_Dictionary (Entry_Name, Info.Dir);
       end if;
+
       Add_Catalogue_Entry (Info);
       Last := Info.Last_Entry;
+
       declare
          Cfh : Central_File_Header renames Info.Contains (Last).Head;
          Shi : Local_File_Header renames Cfh.Short_Info;
       begin
-         --  Administration - continued
-         if Zip_Streams.Is_Unicode_Name (Stream) then
-            Shi.Bit_Flag := Shi.Bit_Flag or Zip.Headers.Language_Encoding_Flag_Bit;
-         end if;
          pragma Assert (Zip.Headers.Encryption_Flag_Bit not in Shi.Bit_Flag);
-         if Is_Read_Only (Stream) then
-            Cfh.External_Attributes := Cfh.External_Attributes or 1;
-         end if;
+         --  TODO Handle unicode name and read only
+--            Shi.Bit_Flag := Shi.Bit_Flag or Zip.Headers.Language_Encoding_Flag_Bit;
+--            Cfh.External_Attributes := Cfh.External_Attributes or 1;
+
          Shi.File_Timedate         := Get_Time (Stream);
          Shi.Dd.Uncompressed_Size  := Unsigned_32 (Size (Stream));
          Shi.Filename_Length       := Entry_Name'Length;
@@ -187,6 +160,7 @@ package body Zip.Create is
 
          Mem1                    := Index (Info.Stream.all);
          Cfh.Local_Header_Offset := Unsigned_32 (Mem1) - 1;
+
          --  Write the local header with incomplete informations
          Zip.Headers.Write (Info.Stream.all, Shi);
 
@@ -203,93 +177,34 @@ package body Zip.Create is
             Crc              => Shi.Dd.Crc_32,
             Output_Size      => Shi.Dd.Compressed_Size,
             Zip_Type         => Shi.Zip_Type);
+
          Mem2 := Index (Info.Stream.all);
-         if Info.Zip_Archive_Format = Zip_32 and then Mem2 > Four_Gb then
+         if Info.Zip_Archive_Format = Zip_32 and then Mem2 > Four_GB then
             raise Zip_Capacity_Exceeded with Zip_32_Exceeded_Message;
          end if;
+
          --  Go back to the local header to rewrite it with complete informations
          --  known after the compression: CRC value, compressed size, actual compression format.
          Set_Index (Info.Stream.all, Mem1);
          Zip.Headers.Write (Info.Stream.all, Shi);
+
          --  Return to momentaneous end of file
          Set_Index (Info.Stream.all, Mem2);
-         --
+
          Compressed_Size := Shi.Dd.Compressed_Size;
          Final_Method    := Natural (Shi.Zip_Type);
       end;
    end Add_Stream;
 
-   procedure Add_File
-     (Info            : in out Zip_Create_Info;
-      Name            :        String;
-      Name_In_Archive :        String := "";
-      --  Default: add the file in the archive under the same name
-      Delete_File_After : Boolean := False;
-      --  Practical to delete temporary file after adding
-      Name_Encoding     : Zip_Name_Encoding := IBM_437;
-      Modification_Time : Time              := Default_Time;
-      Is_Read_Only      : Boolean           := False;
-      Feedback          : Feedback_Proc     := null)
+   procedure Add_Stream
+     (Info   : in out Zip_Create_Info;
+      Stream : in out Root_Zipstream_Type'Class)
    is
-      Temp_Zip_Stream : aliased File_Zipstream := Open (Name);
-      use Ada.Text_IO;
-      Fd              : File_Type;
-      Compressed_Size : Zip.File_Size_Type;  --  Unused
-      Final_Method    : Natural;             --  Unused
+      Compressed_Size : Zip.File_Size_Type;  --  Dummy
+      Final_Method    : Natural;             --  Dummy
    begin
-      --  Read the file
-      --  Eventually we set a new name for archiving:
-      if Name_In_Archive /= "" then
-         raise Program_Error with "Why change name to " & Name_In_Archive & "?";
---         Set_Name (Temp_Zip_Stream, Name_In_Archive);
-      end if;
-      Set_Unicode_Name_Flag (Temp_Zip_Stream, Name_Encoding = UTF_8);
-      Set_Read_Only_Flag (Temp_Zip_Stream, Is_Read_Only);
-      Set_Time (Temp_Zip_Stream, Modification_Time);
-      --  Stuff into the .zip archive:
-      Add_Stream (Info, Temp_Zip_Stream, Feedback, Compressed_Size, Final_Method);
-      if Delete_File_After then
-         Open (Fd, In_File, Name);
-         Delete (Fd);
-      end if;
-   end Add_File;
-
-   procedure Add_String
-     (Info            : in out Zip_Create_Info;
-      Contents        :        String;
-      Name_In_Archive :        String;
-      --  Name_UTF_8_encoded = True if Name is actually UTF-8 encoded (Unicode)
-      Name_Utf_8_Encoded : Boolean := False;
-      --  Time stamp for this entry, e.g. Zip.Convert (Ada.Calendar.Clock)
-      Creation_Time : Zip.Time := Default_Time)
-   is
-   begin
-      Add_String
-        (Info               => Info,
-         Contents           => To_Unbounded_String (Contents),
-         Name_In_Archive    => Name_In_Archive,
-         Name_Utf_8_Encoded => Name_Utf_8_Encoded,
-         Creation_Time      => Creation_Time);
-   end Add_String;
-
-   procedure Add_String
-     (Info            : in out Zip_Create_Info;
-      Contents        :        Unbounded_String;
-      Name_In_Archive :        String;
-      --  Name_UTF_8_encoded = True if Name is actually UTF-8 encoded (Unicode)
-      Name_Utf_8_Encoded : Boolean := False;
-      --  Time stamp for this entry, e.g. Zip.Convert (Ada.Calendar.Clock)
-      Creation_Time : Zip.Time := Default_Time)
-   is
-      Temp_Zip_Stream : aliased Memory_Zipstream;
-   begin
-      Set (Temp_Zip_Stream, Contents);
---      Set_Name (Temp_Zip_Stream, Name_In_Archive);
-      Set_Time (Temp_Zip_Stream, Creation_Time);
-      Set_Unicode_Name_Flag (Temp_Zip_Stream, Name_Utf_8_Encoded);
-      Add_Stream (Info, Temp_Zip_Stream);
-      raise Program_Error with "Why change name to " & Name_In_Archive & "?";
-   end Add_String;
+      Add_Stream (Info, Stream, null, Compressed_Size, Final_Method);
+   end Add_Stream;
 
    procedure Add_Compressed_Stream
      (Info     : in out Zip_Create_Info;            --  Destination
@@ -340,13 +255,15 @@ package body Zip.Create is
    end Add_Compressed_Stream;
 
    procedure Finish (Info : in out Zip_Create_Info) is
-      Ed : Zip.Headers.End_Of_Central_Dir;
       procedure Dispose is new Ada.Unchecked_Deallocation (String, P_String);
+
+      Ed : Zip.Headers.End_Of_Central_Dir;
       Current_Index : Zs_Index_Type;
+
       procedure Get_Index_And_Check_Zip_32_Limit is
       begin
          Current_Index := Index (Info.Stream.all);
-         if Info.Zip_Archive_Format = Zip_32 and then Current_Index > Four_Gb then
+         if Info.Zip_Archive_Format = Zip_32 and then Current_Index > Four_GB then
             raise Zip_Capacity_Exceeded with Zip_32_Exceeded_Message;
          end if;
       end Get_Index_And_Check_Zip_32_Limit;
@@ -357,12 +274,14 @@ package body Zip.Create is
       Ed.Total_Entries       := 0;
       Ed.Central_Dir_Size    := 0;
       Ed.Main_Comment_Length := 0;
+
       if Info.Zip_Archive_Format = Zip_32
         and then Info.Last_Entry > Integer (Unsigned_16'Last)
       then
          raise Zip_Capacity_Exceeded with
            "Too many entries (for Zip_32 archive format): more than 65535.";
       end if;
+
       if Info.Contains /= null then
          for E in 1 .. Info.Last_Entry loop
             Ed.Total_Entries := Ed.Total_Entries + 1;
@@ -378,15 +297,16 @@ package body Zip.Create is
          end loop;
          Dispose (Info.Contains);
       end if;
+
       Info.Last_Entry       := 0;
       Ed.Disknum            := 0;
       Ed.Disknum_With_Start := 0;
       Ed.Disk_Total_Entries := Ed.Total_Entries;
       Zip.Headers.Write (Info.Stream.all, Ed);
       Get_Index_And_Check_Zip_32_Limit;
-      --  If we have a real file (File_Zipstream or descendent),
-      --  close the file stream too. File will be closed automatically
-      --  when stream goes out of scope
+
+      --  File will be closed automatically when stream goes out of scope
+      Info.Stream := null;
    end Finish;
 
 end Zip.Create;

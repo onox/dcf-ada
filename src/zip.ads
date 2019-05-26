@@ -117,7 +117,7 @@ package Zip is
    function Comment (Info : in Zip_Info) return String
      with Pre => Info.Is_Loaded;
 
-   function Stream (Info : in Zip_Info) return Zip_Streams.Zipstream_Class_Access
+   function Stream (Info : in Zip_Info) return not null Zip_Streams.Zipstream_Class_Access
      with Pre => Info.Is_Loaded;
 
    function Entries (Info : in Zip_Info) return Natural;

@@ -78,12 +78,6 @@ package Zip_Streams is
    --  This procedure returns the name of the stream
    function Get_Name (S : in Root_Zipstream_Type) return String;
 
-   procedure Set_Unicode_Name_Flag (S : out Root_Zipstream_Type; Value : in Boolean);
-   function Is_Unicode_Name (S : in Root_Zipstream_Type) return Boolean;
-
-   procedure Set_Read_Only_Flag (S : out Root_Zipstream_Type; Value : in Boolean);
-   function Is_Read_Only (S : in Root_Zipstream_Type) return Boolean;
-
    --  This procedure sets the Modification_Time of the stream
    procedure Set_Time (S : in out Root_Zipstream_Type; Modification_Time : Time);
 
@@ -181,9 +175,7 @@ private
 
    type Root_Zipstream_Type is abstract new Ada.Streams.Root_Stream_Type with record
       Name              : Unbounded_String;
-      Modification_Time : Time    := Default_Time;
-      Is_Unicode_Name   : Boolean := False;
-      Is_Read_Only      : Boolean := False;  --  only indicative
+      Modification_Time : Time := Default_Time;
    end record;
 
    --  Memory_Zipstream spec

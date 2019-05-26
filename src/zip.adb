@@ -369,7 +369,7 @@ package body Zip is
    function Comment (Info : in Zip_Info) return String is
      (Info.Zip_File_Comment.all);
 
-   function Stream (Info : in Zip_Info) return Zip_Streams.Zipstream_Class_Access is
+   function Stream (Info : in Zip_Info) return not null Zip_Streams.Zipstream_Class_Access is
      (Info.Zip_Input_Stream);
 
    function Entries (Info : in Zip_Info) return Natural is
