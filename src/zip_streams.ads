@@ -224,7 +224,7 @@ private
 
    type Open_File is limited new Ada.Finalization.Limited_Controlled with record
       File      : Ada.Streams.Stream_IO.File_Type;
-      Finalized : Boolean;
+      Finalized : Boolean := False;
    end record;
 
    overriding
