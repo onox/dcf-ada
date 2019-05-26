@@ -28,6 +28,7 @@ with Zip.Headers;
 
 with Ada.Characters.Handling;
 with Ada.IO_Exceptions;
+with Ada.Streams.Stream_IO;
 with Ada.Strings.Fixed;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
@@ -502,36 +503,6 @@ package body Zip is
    Workaround_Possible : constant Boolean :=
      Size_Test_A'Size = Size_Test_B'Size and Size_Test_A'Alignment = Size_Test_B'Alignment;
 
-   --  BlockRead - general-purpose procedure (nothing really specific
-   --  to Zip / UnZip): reads either the whole buffer from a file, or
-   --  if the end of the file lays inbetween, a part of the buffer.
-
-   procedure Blockread
-     (File          : in     Ada.Streams.Stream_IO.File_Type;
-      Buffer        :    out Byte_Buffer;
-      Actually_Read :    out Natural)
-   is
-      use Ada.Streams, Ada.Streams.Stream_IO;
-      Se_Buffer : Stream_Element_Array (1 .. Buffer'Length);
-      for Se_Buffer'Address use Buffer'Address;
-      pragma Import (Ada, Se_Buffer);
-      Last_Read : Stream_Element_Offset;
-   begin
-      if Workaround_Possible then
-         Read (Stream (File).all, Se_Buffer, Last_Read);
-         Actually_Read := Natural (Last_Read);
-      else
-         if End_Of_File (File) then
-            Actually_Read := 0;
-         else
-            Actually_Read := Integer'Min (Buffer'Length, Integer (Size (File) - Index (File) + 1));
-            Byte_Buffer'Read
-              (Stream (File),
-               Buffer (Buffer'First .. Buffer'First + Actually_Read - 1));
-         end if;
-      end if;
-   end Blockread;
-
    procedure Blockread
      (Stream        : in out Zip_Streams.Root_Zipstream_Type'Class;
       Buffer        :    out Byte_Buffer;
@@ -581,7 +552,7 @@ package body Zip is
       pragma Import (Ada, Se_Buffer);
    begin
       if Workaround_Possible then
-         Ada.Streams.Write (Stream, Se_Buffer);
+         Stream.Write (Se_Buffer);
       else
          Byte_Buffer'Write (Stream'Access, Buffer);
          --  ^This is 30x to 70x slower on GNAT 2009 !
@@ -638,26 +609,6 @@ package body Zip is
          Zip.Blockwrite (Into, Buf (1 .. Actually_Read));
       end loop;
    end Copy_Chunk;
-
-   --  Copy a whole file into a stream, using a temporary buffer
-   procedure Copy_File
-     (File_Name   :        String;
-      Into        : in out Ada.Streams.Root_Stream_Type'Class;
-      Buffer_Size :        Positive := 1024 * 1024)
-   is
-      use Ada.Streams.Stream_IO;
-      F             : File_Type;
-      Buf           : Zip.Byte_Buffer (1 .. Buffer_Size);
-      Actually_Read : Natural;
-   begin
-      Open (F, In_File, File_Name);
-      loop
-         Zip.Blockread (F, Buf, Actually_Read);
-         exit when Actually_Read = 0; -- this is expected
-         Zip.Blockwrite (Into, Buf (1 .. Actually_Read));
-      end loop;
-      Close (F);
-   end Copy_File;
 
    function Hexadecimal (X : Interfaces.Unsigned_32) return String is
       package Mio is new Ada.Text_IO.Modular_IO (Interfaces.Unsigned_32);

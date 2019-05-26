@@ -35,7 +35,7 @@ with System;
 
 with Ada.Calendar;
 with Ada.Finalization;
-with Ada.Streams.Stream_IO;
+with Ada.Streams;
 
 with Zip_Streams;
 
@@ -193,12 +193,6 @@ package Zip is
    type Byte_Buffer is array (Integer range <>) of aliased Byte;
    type P_Byte_Buffer is access Byte_Buffer;
 
-   procedure Blockread
-     (File          : in     Ada.Streams.Stream_IO.File_Type;
-      Buffer        :    out Byte_Buffer;
-      Actually_Read :    out Natural);
-      --  = buffer'Length if no end of file before last buffer element
-
    --  Same for general streams
 
    procedure Blockread
@@ -229,12 +223,6 @@ package Zip is
       Bytes       :        Natural;
       Buffer_Size :        Positive      := 1024 * 1024;
       Feedback    :        Feedback_Proc := null);
-
-   --  Copy a whole file into a stream, using a temporary buffer
-   procedure Copy_File
-     (File_Name   :        String;
-      Into        : in out Ada.Streams.Root_Stream_Type'Class;
-      Buffer_Size :        Positive := 1024 * 1024);
 
    function Hexadecimal (X : Interfaces.Unsigned_32) return String;
 

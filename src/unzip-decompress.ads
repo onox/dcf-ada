@@ -52,13 +52,4 @@ private package Unzip.Decompress is
       --  Data_descriptor is appended to the compressed data (1-pass written
       --  zip files, like JAR, OpenDocument, etc.)
 
-private
-
-   --  When deflate_strict = True, stop if there is an incomplete Huffman
-   --  code set for decoding LZ distances. This is the correct and safe behaviour.
-   --  When dealing with Zip files from some old compression programs like PKZIP 1.93a,
-   --  the check can be bypassed with deflate_strict = False, but this lessens the
-   --  data error detection.
-   Deflate_Strict : constant Boolean := True;
-
 end Unzip.Decompress;

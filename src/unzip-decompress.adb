@@ -67,9 +67,6 @@ package body Unzip.Decompress is
       package Unz_Io is
          procedure Init_Buffers;
 
-         procedure Read_Byte_No_Decrypt (Bt : out Zip.Byte);
-         pragma Inline (Read_Byte_No_Decrypt);
-
          function Read_Byte_Decrypted return Unsigned_8; -- NB: reading goes on a while even if
          pragma Inline (Read_Byte_Decrypted);           -- Zip_EOF is set: just gives garbage
 
@@ -97,8 +94,6 @@ package body Unzip.Decompress is
 
          procedure Copy (Distance, Length : Natural; Index : in out Natural);
          pragma Inline (Copy);
-
-         procedure Delete_Output;  --  An error has occured (bad compressed data)
       end Unz_Io;
 
       package Unz_Meth is
@@ -163,19 +158,14 @@ package body Unzip.Decompress is
             Unz_Glob.Inpos := 0;
          end Read_Buffer;
 
-         procedure Read_Byte_No_Decrypt (Bt : out Zip.Byte) is
+         function Read_Byte_Decrypted return Unsigned_8 is
+            Bt : Zip.Byte;
          begin
             if Unz_Glob.Inpos > Unz_Glob.Readpos then
                Read_Buffer;
             end if;
             Bt             := Unz_Glob.Inbuf (Unz_Glob.Inpos);
             Unz_Glob.Inpos := Unz_Glob.Inpos + 1;
-         end Read_Byte_No_Decrypt;
-
-         function Read_Byte_Decrypted return Unsigned_8 is
-            Bt : Zip.Byte;
-         begin
-            Read_Byte_No_Decrypt (Bt);
             return Bt;
          end Read_Byte_Decrypted;
 
@@ -331,14 +321,6 @@ package body Unzip.Decompress is
                exit when Remain = 0;
             end loop;
          end Copy;
-
-         procedure Delete_Output is -- an error has occured (bad compressed data)
-         begin
-            case Mode is
-               when Write_To_Memory | Write_To_Stream | Just_Test =>
-                  null; -- Nothing to delete!
-            end case;
-         end Delete_Output;
 
       end Unz_Io;
 
@@ -820,10 +802,9 @@ package body Unzip.Decompress is
                   Bd,
                   Huft_Incomplete);
                if Huft_Incomplete then
-                  if Deflate_Strict then
-                     raise Zip.Archive_Corrupted with
-                       "Incomplete code set for distances";
-                  end if;
+                  --  Incomplete Huffman code set for decoding LZ distances
+                  raise Zip.Archive_Corrupted with
+                    "Incomplete code set for distances";
                end if;
             exception
                when Huft_Out_Of_Memory | Huft_Error =>
@@ -915,21 +896,16 @@ package body Unzip.Decompress is
       Unz_Glob.Uncompsize := Hint.Dd.Uncompressed_Size;
       Unz_Io.Init_Buffers;
 
-      --  UnZip correct type
-      begin
-         case Format is
-            when Store =>
-               Copy_Stored;
-            when Deflate =>
-               Unz_Meth.Inflate;
-         end case;
-      exception
-         when others =>
-            Unz_Io.Delete_Output;
-            raise;
-      end;
+      --  Unzip correct type
+      case Format is
+         when Store =>
+            Copy_Stored;
+         when Deflate =>
+            Unz_Meth.Inflate;
+      end case;
+
       Unz_Glob.Crc32val := Zip.Crc_Crypto.Final (Unz_Glob.Crc32val);
-      --  Decompression done !
+      --  Decompression done!
 
       if Data_Descriptor_After_Data then -- Sizes and CRC at the end
          declare
@@ -940,32 +916,18 @@ package body Unzip.Decompress is
               and then --
               Memo_Uncomp_Size /= Hint.Dd.Uncompressed_Size
             then
-               Unz_Io.Delete_Output;
                raise Uncompressed_Size_Error;
             end if;
          end;
       end if;
 
       if Hint.Dd.Crc_32 /= Unz_Glob.Crc32val then
-         Unz_Io.Delete_Output;
          raise Crc_Error with
            "CRC stored in archive: " &
            Hexadecimal (Hint.Dd.Crc_32) &
            "; CRC computed now: " &
            Hexadecimal (Unz_Glob.Crc32val);
       end if;
-
-      case Mode is
-         when Write_To_Memory | Write_To_Stream | Just_Test =>
-            null; -- Nothing to close!
-      end case;
-   exception
-      when others => -- close the file in case of an error, if not yet closed
-         case Mode is -- or deleted
-            when Write_To_Memory | Write_To_Stream | Just_Test =>
-               null; -- Nothing to close!
-         end case;
-         raise;
    end Decompress_Data;
 
 end Unzip.Decompress;
