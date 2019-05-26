@@ -33,7 +33,8 @@ package body Unzip.Decompress is
       Output_Memory_Access       :    out P_Stream_Element_Array; -- \ = write_to_memory
       Output_Stream_Access       :        P_Stream;                   -- \ = write_to_stream
       Data_Descriptor_After_Data :        Boolean;
-      Hint                       : in out Zip.Headers.Local_File_Header)
+      Hint                       : in out Zip.Headers.Local_File_Header;
+      Verify_Integrity           :        Boolean)
    is
       --  I/O Buffers: Size of input buffer
       Inbuf_Size : constant := 16#8000#;  -- (orig: 16#1000# B =  4 KB)
@@ -329,34 +330,40 @@ package body Unzip.Decompress is
          --------[ Method: Copy stored ]--------
 
          procedure Copy_Stored is
-            Size              : constant Unzip.File_Size_Type := Unz_Glob.Compsize;
-            Read_In, Absorbed : Unzip.File_Size_Type;
-         begin
-            Absorbed := 0;
+            use Ada.Streams;
+            pragma Assert (Mode = Write_To_Stream);
 
-            while Absorbed < Size loop
-               Read_In := Size - Absorbed;
-               if Read_In > Wsize then
-                  Read_In := Wsize;
-               end if;
+            Buffer_Size : constant := 64 * 1024;  -- 64 KiB
+
+            Size : constant Stream_Element_Offset := Stream_Element_Offset (Unz_Glob.Compsize);
+            Read : Stream_Element_Offset := 0;
+         begin
+            while Read < Size loop
+               declare
+                  Remaining : constant Stream_Element_Offset
+                    := Stream_Element_Offset'Min (Size - Read, Buffer_Size);
+
+                  Buffer : Stream_Element_Array (1 .. Remaining);
+                  Last   : Stream_Element_Offset;
                begin
-                  for I in 0 .. Read_In - 1 loop
-                     Unz_Glob.Slide (Natural (I)) := Unz_Io.Read_Byte_Decrypted;
-                  end loop;
-               exception
-                  when others =>
+                  Zip_File.Read (Item => Buffer, Last => Last);
+                  Read := Read + Last;
+
+                  if Last /= Remaining then
                      raise Zip.Archive_Corrupted with
-                       "End of stream reached (format: Store)";
+                       "Expected to read " & Remaining'Image & " bytes";
+                  end if;
+
+                  begin
+                     Output_Stream_Access.all.Write (Buffer);
+                  exception
+                     when others =>
+                        raise Unzip.Write_Error;
+                  end;
+                  if Verify_Integrity then
+                     Zip.Crc_Crypto.Update_Stream_Array (Unz_Glob.Crc32val, Buffer);
+                  end if;
                end;
-               begin
-                  Unz_Io.Flush (Natural (Read_In));  -- Takes care of CRC too
-               exception
-                  when User_Abort =>
-                     raise;
-                  when others =>
-                     raise Unzip.Write_Error;
-               end;
-               Absorbed := Absorbed + Read_In;
             end loop;
          end Copy_Stored;
 
@@ -904,8 +911,9 @@ package body Unzip.Decompress is
             Unz_Meth.Inflate;
       end case;
 
-      Unz_Glob.Crc32val := Zip.Crc_Crypto.Final (Unz_Glob.Crc32val);
-      --  Decompression done!
+      if Verify_Integrity then
+         Unz_Glob.Crc32val := Zip.Crc_Crypto.Final (Unz_Glob.Crc32val);
+      end if;
 
       if Data_Descriptor_After_Data then -- Sizes and CRC at the end
          declare
@@ -921,7 +929,7 @@ package body Unzip.Decompress is
          end;
       end if;
 
-      if Hint.Dd.Crc_32 /= Unz_Glob.Crc32val then
+      if Verify_Integrity and then Hint.Dd.Crc_32 /= Unz_Glob.Crc32val then
          raise Crc_Error with
            "CRC stored in archive: " &
            Hexadecimal (Hint.Dd.Crc_32) &

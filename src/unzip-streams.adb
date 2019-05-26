@@ -46,14 +46,15 @@ package body Unzip.Streams is
    Fallback_Compressed_Size : constant File_Size_Type := File_Size_Type'Last;
 
    procedure Unzip_File
-     (Zip_Stream     : in out Zip_Streams.Root_Zipstream_Type'Class;
-      Header_Index   : in     Zip_Streams.Zs_Index_Type;
-      Mem_Ptr        :    out P_Stream_Element_Array;
-      Out_Stream_Ptr :        P_Stream;
+     (Zip_Stream       : in out Zip_Streams.Root_Zipstream_Type'Class;
+      Header_Index     : in     Zip_Streams.Zs_Index_Type;
+      Mem_Ptr          :    out P_Stream_Element_Array;
+      Out_Stream_Ptr   :        P_Stream;
       --  If not null, extract to out_stream_ptr, not to memory
-      Hint_Comp_Size  : in File_Size_Type;  --  Added 2007 for .ODS files
-      Hint_Crc_32     : in Unsigned_32;     --  Added 2012 for decryption
-      Cat_Uncomp_Size : in File_Size_Type)
+      Hint_Comp_Size   : in File_Size_Type;  --  Added 2007 for .ODS files
+      Hint_Crc_32      : in Unsigned_32;     --  Added 2012 for decryption
+      Cat_Uncomp_Size  : in File_Size_Type;
+      Verify_Integrity : in Boolean)
    is
       Work_Index                 : Zip_Streams.Zs_Index_Type := Header_Index;
       Local_Header               : Zip.Headers.Local_File_Header;
@@ -134,7 +135,8 @@ package body Unzip.Streams is
          Output_Memory_Access       => Mem_Ptr,
          Output_Stream_Access       => Out_Stream_Ptr,
          Data_Descriptor_After_Data => Data_Descriptor_After_Data,
-         Hint                       => Local_Header);
+         Hint                       => Local_Header,
+         Verify_Integrity           => Verify_Integrity);
    exception
       when Ada.IO_Exceptions.End_Error =>
          raise Zip.Archive_Corrupted with "End of stream reached";
@@ -144,7 +146,8 @@ package body Unzip.Streams is
      (Zip_Stream       : in out Zip_Streams.Root_Zipstream_Type'Class;
       What             :        Zip.Archived_File;
       Mem_Ptr          :    out P_Stream_Element_Array;
-      Out_Stream_Ptr   :        P_Stream) is
+      Out_Stream_Ptr   :        P_Stream;
+      Verify_Integrity :        Boolean) is
    begin
       Unzip_File
         (Zip_Stream      => Zip_Stream,
@@ -153,7 +156,8 @@ package body Unzip.Streams is
          Out_Stream_Ptr  => Out_Stream_Ptr,
          Hint_Comp_Size  => What.Compressed_Size,
          Hint_Crc_32     => What.CRC,
-         Cat_Uncomp_Size => What.Uncompressed_Size);
+         Cat_Uncomp_Size => What.Uncompressed_Size,
+         Verify_Integrity => Verify_Integrity);
    end Extract_File;
 
    -------------------- for exportation:
@@ -190,7 +194,8 @@ package body Unzip.Streams is
    procedure Open
      (File             : in out Zipped_File_Type;  --  File-in-archive handle
       Archive_Info     : in     Zip.Zip_Info;      --  Archive's Zip_info
-      Name             : in     Zip.Archived_File)
+      Name             : in     Zip.Archived_File;
+      Verify_Integrity : in     Boolean)
    is
       use Ada.Streams;
    begin
@@ -207,7 +212,8 @@ package body Unzip.Streams is
         (File.Archive_Info.Stream.all,  --  Use the given stream
          Name,
          File.Uncompressed,
-         null);
+         null,
+         Verify_Integrity);
       File.Index := File.Uncompressed'First;
       File.State := Data_Uncompressed;
 
@@ -294,7 +300,8 @@ package body Unzip.Streams is
    procedure Extract
      (Destination      : in out Ada.Streams.Root_Stream_Type'Class;
       Archive_Info     : in     Zip.Zip_Info;  --  Archive's Zip_info
-      File             : in     Zip.Archived_File)
+      File             : in     Zip.Archived_File;
+      Verify_Integrity : in     Boolean)
    is
       Dummy_Mem_Ptr : P_Stream_Element_Array;
    begin
@@ -302,7 +309,8 @@ package body Unzip.Streams is
         (Archive_Info.Stream.all,  --  Use the given stream
          File,
          Dummy_Mem_Ptr,
-         Destination'Unchecked_Access);  -- /= null then ignore Dummy_Mem_Ptr
+         Destination'Unchecked_Access,  -- /= null then ignore Dummy_Mem_Ptr
+         Verify_Integrity);
    end Extract;
 
 end Unzip.Streams;

@@ -57,7 +57,8 @@ package Unzip.Streams is
    procedure Open
      (File             : in out Zipped_File_Type;   --  File-in-archive handle
       Archive_Info     : in     Zip.Zip_Info;       --  Archive's Zip_info
-      Name             : in     Zip.Archived_File)  --  Zipped entry
+      Name             : in     Zip.Archived_File;  --  Zipped entry
+      Verify_Integrity : in     Boolean)
    with Pre  => Archive_Info.Is_Loaded and Archive_Info.Stream /= null,
         Post => Is_Open (File);
    --  Opens an input stream for the compressed entry named Name stored
@@ -94,7 +95,8 @@ package Unzip.Streams is
    procedure Extract
      (Destination      : in out Ada.Streams.Root_Stream_Type'Class;
       Archive_Info     : in     Zip.Zip_Info;       --  Archive's Zip_info
-      File             : in     Zip.Archived_File)  --  Zipped entry
+      File             : in     Zip.Archived_File;  --  Zipped entry
+      Verify_Integrity : in     Boolean)
    with Pre  => Archive_Info.Is_Loaded and Archive_Info.Stream /= null;
    --  Extract a Zip archive entry to the given output stream
    --

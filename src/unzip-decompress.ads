@@ -47,7 +47,8 @@ private package Unzip.Decompress is
       Output_Memory_Access       :    out P_Stream_Element_Array;  --  \ = write_to_memory
       Output_Stream_Access       :        P_Stream;                --  \ = write_to_stream
       Data_Descriptor_After_Data :        Boolean;
-      Hint                       : in out Zip.Headers.Local_File_Header);
+      Hint                       : in out Zip.Headers.Local_File_Header;
+      Verify_Integrity           :        Boolean);
       --  Values are known, or smart fakes, and are later corrected if a closing
       --  Data_descriptor is appended to the compressed data (1-pass written
       --  zip files, like JAR, OpenDocument, etc.)

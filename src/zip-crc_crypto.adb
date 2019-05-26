@@ -53,6 +53,21 @@ package body Zip.Crc_Crypto is
       Crc := Local_Crc;
    end Update;
 
+   procedure Update_Stream_Array
+     (Crc   : in out Unsigned_32;
+      Inbuf : Ada.Streams.Stream_Element_Array)
+   is
+      Local_Crc : Unsigned_32;
+   begin
+      Local_Crc := Crc;
+      for I in Inbuf'Range loop
+         Local_Crc :=
+           Crc32_Table (16#FF# and (Local_Crc xor Unsigned_32 (Inbuf (I)))) xor
+           Shift_Right (Local_Crc, 8);
+      end loop;
+      Crc := Local_Crc;
+   end Update_Stream_Array;
+
    Table_Empty : Boolean := True;
 
    procedure Init (Crc : out Unsigned_32) is
