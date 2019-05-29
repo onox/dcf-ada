@@ -75,6 +75,8 @@ package Zip_Streams is
    --  Returns the Size of the stream
    function Size (S : in Root_Zipstream_Type) return Zs_Size_Type is abstract;
 
+   procedure Set_Name (S : in out Root_Zipstream_Type; Name : String);
+
    --  This procedure returns the name of the stream
    function Get_Name (S : in Root_Zipstream_Type) return String;
 

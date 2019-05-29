@@ -33,8 +33,8 @@ project Tools is
    for Source_Dirs use ("tools");
 
    Executables := (
-      "zipada",
-      "unzipdcf"
+      "unzipdcf",
+      "zipdcf"
    );
 
    for Main use Executables;

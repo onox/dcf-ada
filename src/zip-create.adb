@@ -36,7 +36,7 @@ package body Zip.Create is
      (Info       : in out   Zip_Create_Info;
       Stream     : not null Zipstream_Class_Access;
       Compress   :          Zip.Compress.Compression_Method := Zip.Compress.Deflate_1;
-      Duplicates :          Duplicate_Name_Policy           := Admit_Duplicates) is
+      Duplicates :          Duplicate_Name_Policy           := Error_On_Duplicate) is
    begin
       Info.Stream   := Stream;
       Info.Compress := Compress;

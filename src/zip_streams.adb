@@ -52,6 +52,11 @@ package body Zip_Streams is
 
    -----------------------------------------------------------------------------
 
+   procedure Set_Name (S : in out Root_Zipstream_Type; Name : String) is
+   begin
+      S.Name := To_Unbounded_String (Name);
+   end Set_Name;
+
    function Get_Name (S : in Root_Zipstream_Type) return String is
    begin
       return To_String (S.Name);

@@ -62,7 +62,7 @@ procedure UnzipDCF is
    begin
       Put_Line ("UnZipDCF " & Zip.Version & " - unzip document container files");
       New_Line;
-      Put_Line ("Usage: unzipdcf [-options[modifiers]] file [list] [-d exdir]");
+      Put_Line ("Usage: unzipdcf [-options[modifiers]] [-d exdir] file [list]");
       New_Line;
       Put_Line ("  -l  list files");
       Put_Line ("  -t  test integrity of files, no write");
@@ -145,15 +145,17 @@ begin
    end if;
 
    for I in 1 .. Argument_Count loop
-      if Argument (I) (1) = '-' or else Argument (I) (1) = '/' then
+      if Argument (I) (1) = '-' then
          if Last_Option = I then
             null; -- was in fact an argument for previous option (e.g. "-s")
          else
             Last_Option := I;
+
             if Argument (I)'Length = 1 then
                Help;
                return;
             end if;
+
             for J in 2 .. Argument (I)'Last loop
                case Argument (I) (J) is
                   when 't' =>

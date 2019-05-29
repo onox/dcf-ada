@@ -40,7 +40,7 @@ package Zip.Create is
      (Info       : in out   Zip_Create_Info;
       Stream     : not null Zipstream_Class_Access;
       Compress   :          Zip.Compress.Compression_Method := Zip.Compress.Deflate_1;
-      Duplicates :          Duplicate_Name_Policy           := Admit_Duplicates)
+      Duplicates :          Duplicate_Name_Policy           := Error_On_Duplicate)
    with Pre  => Stream.Get_Name /= "",
         Post => Is_Created (Info);
 
