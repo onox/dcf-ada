@@ -20,13 +20,13 @@ modifications:
 
  * Binary and Windows-specific files have been removed with [The BFG Repo Cleaner][url-bfg]
 
- * UNIX line endings
-
  * Reformatted code to Ada default style guide
 
  * Removed obsolescent features and implementation-defined extensions
 
  * Removed prohibited features
+
+ * Removed lots of duplicated code and simplified API
 
 ## Dependencies
 
