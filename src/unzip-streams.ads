@@ -33,6 +33,7 @@ with Zip;
 with Zip_Streams;
 
 package Unzip.Streams is
+   pragma Preelaborate;
 
    ----------------------------------------------------------------------------
    --                           ** Input Stream **                           --

@@ -36,6 +36,7 @@
 with Zip_Streams;
 
 package Zip.Compress is
+   pragma Preelaborate;
 
    --  Compression_Method is actually reflecting the way of compressing
    --  data, not only the final compression format called "method" in

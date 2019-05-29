@@ -55,3 +55,4 @@ generic
 procedure Length_Limited_Huffman_Code_Lengths
   (Frequencies : in Count_Array;
    Bit_Lengths : out Length_Array);
+pragma Preelaborate (Length_Limited_Huffman_Code_Lengths);

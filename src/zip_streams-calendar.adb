@@ -103,14 +103,4 @@ package body Zip_Streams.Calendar is
       return Time_Of (Year, Month, Day, Seconds_Day_Dur);
    end Convert;
 
-   function Convert (Date : in Dos_Time) return Time is
-   begin
-      return Time (Date);  --  Currently a trivial conversion
-   end Convert;
-
-   function Convert (Date : in Time) return Dos_Time is
-   begin
-      return Dos_Time (Date);  --  Currently a trivial conversion
-   end Convert;
-
 end Zip_Streams.Calendar;

@@ -37,6 +37,7 @@ with Zip.Headers;
 with Zip_Streams;
 
 private package Unzip.Decompress is
+   pragma Preelaborate;
 
    procedure Decompress_Data
      (Zip_File : in out Zip_Streams.Root_Zipstream_Type'Class;

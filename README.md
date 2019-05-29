@@ -24,9 +24,11 @@ modifications:
 
  * Removed obsolescent features and implementation-defined extensions
 
- * Removed prohibited features
+ * Removed features prohibited by ISO standard
 
  * Removed lots of duplicated code and simplified API
+
+ * All packages except one that uses `Ada.Calendar` are preelaborated
 
 ## Dependencies
 

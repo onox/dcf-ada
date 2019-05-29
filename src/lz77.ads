@@ -31,6 +31,7 @@
 with Interfaces;
 
 package Lz77 is
+   pragma Preelaborate;
 
    type Method_Type is
      (Iz_4, Iz_5, Iz_6, Iz_7, Iz_8, Iz_9, Iz_10);

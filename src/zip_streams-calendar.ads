@@ -19,11 +19,6 @@ package Zip_Streams.Calendar is
    function Convert (Date : in Ada.Calendar.Time) return Time;
    function Convert (Date : in Time) return Ada.Calendar.Time;
 
-   subtype Dos_Time is Interfaces.Unsigned_32;
-
-   function Convert (Date : in Dos_Time) return Time;
-   function Convert (Date : in Time) return Dos_Time;
-
    use Ada.Calendar;
 
    procedure Split

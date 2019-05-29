@@ -39,6 +39,7 @@ with Ada.Streams;
 with Zip_Streams;
 
 package Zip is
+   pragma Preelaborate;
 
    --  Data sizes in archive
    subtype File_Size_Type is Interfaces.Unsigned_32;

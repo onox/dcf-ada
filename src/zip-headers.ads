@@ -61,6 +61,7 @@ with Zip_Streams;
 use Zip_Streams;
 
 package Zip.Headers is
+   pragma Preelaborate;
 
    use Interfaces;
 

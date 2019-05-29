@@ -42,6 +42,7 @@ with Zip;
 private with Ada.Streams;
 
 package Unzip is
+   pragma Preelaborate;
 
    subtype Pkzip_Method is Zip.Pkzip_Method;
 

@@ -31,3 +31,4 @@ private procedure Zip.Compress.Deflate
    CRC              : in out Interfaces.Unsigned_32;  --  Only updated here
    Output_Size      :    out File_Size_Type;
    Compression_Ok   :    out Boolean);  --  Indicates when compressed <= uncompressed
+pragma Preelaborate (Zip.Compress.Deflate);

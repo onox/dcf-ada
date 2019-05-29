@@ -26,6 +26,7 @@
 --  Originally from info-zip's unzip, data structure rewritten by G. de Montmollin
 
 private package Unzip.Decompress.Huffman is
+   pragma Preelaborate;
 
    type Huft_Table;
    type P_Huft_Table is access Huft_Table;

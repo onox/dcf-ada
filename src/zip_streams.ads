@@ -47,6 +47,7 @@ use Ada.Strings.Unbounded;
 use Interfaces;
 
 package Zip_Streams is
+   pragma Preelaborate;
 
    type Time is private;
    --  We define an own Time (Ada.Calendar's body can be very time-consuming!)
@@ -116,6 +117,13 @@ package Zip_Streams is
    --  Is the File_Zipstream open ?
    function Is_Open (Str : in File_Zipstream) return Boolean
      with Post => Is_Open'Result;
+
+   -----------------------------------------------------------------------------
+
+   subtype Dos_Time is Interfaces.Unsigned_32;
+
+   function Convert (Date : in Dos_Time) return Time;
+   function Convert (Date : in Time) return Dos_Time;
 
 private
 

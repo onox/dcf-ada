@@ -22,6 +22,7 @@
 with Ada.Streams;
 
 package Zip.CRC is
+   pragma Preelaborate;
 
    use Interfaces;
 

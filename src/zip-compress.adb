@@ -22,8 +22,6 @@
 with Zip.Compress.Deflate;
 with Zip.CRC;
 
-with Ada.Numerics.Discrete_Random;
-
 package body Zip.Compress is
 
    use Zip_Streams;
@@ -51,9 +49,6 @@ package body Zip.Compress is
       Idx_Out        : constant Zs_Index_Type := Index (Output);
       Compression_Ok : Boolean;
       First_Feedback : Boolean                := True;
-
-      package Byte_Soup is new Ada.Numerics.Discrete_Random (Byte);
-      use Byte_Soup;
 
       --  Store data as is, or, if do_write = False, just compute
       --  CRC (this is for encryption)

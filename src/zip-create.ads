@@ -33,6 +33,7 @@ use Zip.Headers;
 use Zip_Streams;
 
 package Zip.Create is
+   pragma Preelaborate;
 
    type Zip_Create_Info is private;
 

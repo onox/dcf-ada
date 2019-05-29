@@ -19,8 +19,6 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
-with Zip_Streams.Calendar;
-
 package body Zip.Headers is
 
    -----------------------------------------------------------
@@ -102,7 +100,7 @@ package body Zip.Headers is
       Header.Short_Info.Bit_Flag               := Intel_Nb (Chb (9 .. 10));
       Header.Short_Info.Zip_Type               := Intel_Nb (Chb (11 .. 12));
       Header.Short_Info.File_Timedate          :=
-        Zip_Streams.Calendar.Convert (Unsigned_32'(Intel_Nb (Chb (13 .. 16))));
+        Zip_Streams.Convert (Unsigned_32'(Intel_Nb (Chb (13 .. 16))));
       Header.Short_Info.Dd.Crc_32            := Intel_Nb (Chb (17 .. 20));
       Header.Short_Info.Dd.Compressed_Size   := Intel_Nb (Chb (21 .. 24));
       Header.Short_Info.Dd.Uncompressed_Size := Intel_Nb (Chb (25 .. 28));
@@ -132,7 +130,7 @@ package body Zip.Headers is
       Chb (7 .. 8)   := Intel_Bf (Header.Short_Info.Needed_Extract_Version);
       Chb (9 .. 10)  := Intel_Bf (Header.Short_Info.Bit_Flag);
       Chb (11 .. 12) := Intel_Bf (Header.Short_Info.Zip_Type);
-      Chb (13 .. 16) := Intel_Bf (Zip_Streams.Calendar.Convert (Header.Short_Info.File_Timedate));
+      Chb (13 .. 16) := Intel_Bf (Zip_Streams.Convert (Header.Short_Info.File_Timedate));
       Chb (17 .. 20) := Intel_Bf (Header.Short_Info.Dd.Crc_32);
       Chb (21 .. 24) := Intel_Bf (Header.Short_Info.Dd.Compressed_Size);
       Chb (25 .. 28) := Intel_Bf (Header.Short_Info.Dd.Uncompressed_Size);
@@ -166,7 +164,7 @@ package body Zip.Headers is
       Header.Bit_Flag               := Intel_Nb (Lhb (7 .. 8));
       Header.Zip_Type               := Intel_Nb (Lhb (9 .. 10));
       Header.File_Timedate          :=
-        Zip_Streams.Calendar.Convert (Unsigned_32'(Intel_Nb (Lhb (11 .. 14))));
+        Zip_Streams.Convert (Unsigned_32'(Intel_Nb (Lhb (11 .. 14))));
       Header.Dd.Crc_32            := Intel_Nb (Lhb (15 .. 18));
       Header.Dd.Compressed_Size   := Intel_Nb (Lhb (19 .. 22));
       Header.Dd.Uncompressed_Size := Intel_Nb (Lhb (23 .. 26));
@@ -190,7 +188,7 @@ package body Zip.Headers is
       Lhb (5 .. 6)   := Intel_Bf (Header.Needed_Extract_Version);
       Lhb (7 .. 8)   := Intel_Bf (Header.Bit_Flag);
       Lhb (9 .. 10)  := Intel_Bf (Header.Zip_Type);
-      Lhb (11 .. 14) := Intel_Bf (Zip_Streams.Calendar.Convert (Header.File_Timedate));
+      Lhb (11 .. 14) := Intel_Bf (Zip_Streams.Convert (Header.File_Timedate));
       Lhb (15 .. 18) := Intel_Bf (Header.Dd.Crc_32);
       Lhb (19 .. 22) := Intel_Bf (Header.Dd.Compressed_Size);
       Lhb (23 .. 26) := Intel_Bf (Header.Dd.Uncompressed_Size);
