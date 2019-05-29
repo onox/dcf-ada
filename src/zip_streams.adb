@@ -26,16 +26,14 @@ package body Zip_Streams is
    function Open (File_Name : String) return Open_File is
    begin
       return Result : Open_File do
-         Stream_IO.Open (Result.File, Stream_IO.File_Mode (In_File), File_Name,
-           Form => To_String (Form_For_Io_Open_And_Create));
+         Stream_IO.Open (Result.File, Stream_IO.File_Mode (In_File), File_Name);
       end return;
    end Open;
 
    function Create (File_Name : String) return Open_File is
    begin
       return Result : Open_File do
-         Stream_IO.Create (Result.File, Stream_IO.File_Mode (Out_File), File_Name,
-           Form => To_String (Form_For_Io_Open_And_Create));
+         Stream_IO.Create (Result.File, Stream_IO.File_Mode (Out_File), File_Name);
       end return;
    end Create;
 
