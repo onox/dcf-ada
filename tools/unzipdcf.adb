@@ -339,6 +339,15 @@ begin
                         end;
                      elsif not File_Is_Directory then
                         declare
+                           Directory_Path : constant String := Dirs.Containing_Directory (Path);
+                        begin
+                           --  Create folder if necessary
+                           if not Dirs.Exists (Directory_Path) then
+                              Dirs.Create_Path (Directory_Path);
+                           end if;
+                        end;
+
+                        declare
                            File_Stream : aliased Zip_Streams.File_Zipstream
                              := Zip_Streams.Create (Path);
                            Stream_Writer : File_Stream_Writer (File_Stream'Access);
@@ -365,7 +374,6 @@ begin
                else
                   for I in Last_Option + 2 .. Argument_Count loop
                      Extract_One_File (Zi, Argument (I));
-                     --  TODO Create folder if necessary
                   end loop;
                end if;
             end;
