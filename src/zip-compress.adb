@@ -20,14 +20,14 @@
 --  THE SOFTWARE.
 
 with Zip.Compress.Deflate;
-with Zip.Crc_Crypto;
+with Zip.CRC;
 
 with Ada.Numerics.Discrete_Random;
 
 package body Zip.Compress is
 
    use Zip_Streams;
-   use Zip.Crc_Crypto;
+   use Zip.CRC;
 
    ---------------------
    --  Compress_data  --
@@ -39,7 +39,7 @@ package body Zip.Compress is
       Input_Size       :        File_Size_Type;
       Method           :        Compression_Method;
       Feedback         :        Feedback_Proc;
-      Crc              :    out Interfaces.Unsigned_32;
+      CRC              :    out Interfaces.Unsigned_32;
       Output_Size      :    out File_Size_Type;
       Zip_Type         :    out Interfaces.Unsigned_16)
    is
@@ -70,7 +70,7 @@ package body Zip.Compress is
             --  Copy data
             Blockread (Input, Buffer, Last_Read);
             Counted := Counted + File_Size_Type (Last_Read);
-            Update (Crc, Buffer (1 .. Last_Read));
+            Update (CRC, Buffer (1 .. Last_Read));
             if Do_Write then
                Blockwrite (Output, Buffer (1 .. Last_Read));
             end if;
@@ -104,7 +104,7 @@ package body Zip.Compress is
 
       procedure Compress_Data_Single_Method (Actual_Method : Compression_Method) is
       begin
-         Init (Crc);
+         Init (CRC);
          --  Dispatch the work to child procedures doing the stream compression
          --  in different formats, depending on the actual compression method.
          --  For example, for methods LZMA_for_JPEG, LZMA_for_WAV, or LZMA_3, we
@@ -120,12 +120,12 @@ package body Zip.Compress is
                   Input_Size,
                   Feedback,
                   Actual_Method,
-                  Crc,
+                  CRC,
                   Output_Size,
                   Compression_Ok);
                Zip_Type := Compression_Format_Code.Deflate;
          end case;
-         Crc := Final (Crc);
+         CRC := Final (CRC);
          --  Handle case where compression has been unefficient:
          --  data to be compressed is too "random"; then compressed data
          --  happen to be larger than uncompressed data
@@ -133,9 +133,9 @@ package body Zip.Compress is
             --  Go back to the beginning and just store the data
             Set_Index (Input, Idx_In);
             Set_Index (Output, Idx_Out);
-            Init (Crc);
+            Init (CRC);
             Store_Data (Do_Write => True);
-            Crc := Final (Crc);
+            CRC := Final (CRC);
          end if;
       end Compress_Data_Single_Method;
    begin

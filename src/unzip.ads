@@ -66,7 +66,7 @@ package Unzip is
    --  Data sizes in archive
    subtype File_Size_Type is Zip.File_Size_Type;
 
-   Crc_Error               : exception;
+   CRC_Error               : exception;
    Uncompressed_Size_Error : exception;
    Write_Error             : exception;
    User_Abort              : exception;

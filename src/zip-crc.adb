@@ -19,16 +19,16 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
-package body Zip.Crc_Crypto is
+package body Zip.CRC is
 
-   Crc32_Table : array (Unsigned_32'(0) .. 255) of Unsigned_32;
+   CRC32_Table : array (Unsigned_32'(0) .. 255) of Unsigned_32;
 
    procedure Prepare_Table is
       --  CRC-32 algorithm, ISO-3309
       Seed : constant := 16#EDB88320#;
       L    : Unsigned_32;
    begin
-      for I in Crc32_Table'Range loop
+      for I in CRC32_Table'Range loop
          L := I;
          for Bit in 0 .. 7 loop
             if (L and 1) = 0 then
@@ -37,51 +37,51 @@ package body Zip.Crc_Crypto is
                L := Shift_Right (L, 1) xor Seed;
             end if;
          end loop;
-         Crc32_Table (I) := L;
+         CRC32_Table (I) := L;
       end loop;
    end Prepare_Table;
 
-   procedure Update (Crc : in out Unsigned_32; Inbuf : Zip.Byte_Buffer) is
-      Local_Crc : Unsigned_32;
+   procedure Update (CRC : in out Unsigned_32; Inbuf : Zip.Byte_Buffer) is
+      Local_CRC : Unsigned_32;
    begin
-      Local_Crc := Crc;
+      Local_CRC := CRC;
       for I in Inbuf'Range loop
-         Local_Crc :=
-           Crc32_Table (16#FF# and (Local_Crc xor Unsigned_32 (Inbuf (I)))) xor
-           Shift_Right (Local_Crc, 8);
+         Local_CRC :=
+           CRC32_Table (16#FF# and (Local_CRC xor Unsigned_32 (Inbuf (I)))) xor
+           Shift_Right (Local_CRC, 8);
       end loop;
-      Crc := Local_Crc;
+      CRC := Local_CRC;
    end Update;
 
    procedure Update_Stream_Array
-     (Crc   : in out Unsigned_32;
+     (CRC   : in out Unsigned_32;
       Inbuf : Ada.Streams.Stream_Element_Array)
    is
-      Local_Crc : Unsigned_32;
+      Local_CRC : Unsigned_32;
    begin
-      Local_Crc := Crc;
+      Local_CRC := CRC;
       for I in Inbuf'Range loop
-         Local_Crc :=
-           Crc32_Table (16#FF# and (Local_Crc xor Unsigned_32 (Inbuf (I)))) xor
-           Shift_Right (Local_Crc, 8);
+         Local_CRC :=
+           CRC32_Table (16#FF# and (Local_CRC xor Unsigned_32 (Inbuf (I)))) xor
+           Shift_Right (Local_CRC, 8);
       end loop;
-      Crc := Local_Crc;
+      CRC := Local_CRC;
    end Update_Stream_Array;
 
    Table_Empty : Boolean := True;
 
-   procedure Init (Crc : out Unsigned_32) is
+   procedure Init (CRC : out Unsigned_32) is
    begin
       if Table_Empty then
          Prepare_Table;
          Table_Empty := False;
       end if;
-      Crc := 16#FFFF_FFFF#;
+      CRC := 16#FFFF_FFFF#;
    end Init;
 
-   function Final (Crc : Unsigned_32) return Unsigned_32 is
+   function Final (CRC : Unsigned_32) return Unsigned_32 is
    begin
-      return not Crc;
+      return not CRC;
    end Final;
 
-end Zip.Crc_Crypto;
+end Zip.CRC;

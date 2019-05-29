@@ -75,7 +75,7 @@ package Zip is
 
    function File_Index (Object : Archived_File) return Zip_Streams.Zs_Index_Type;
 
-   function CRC (Object : Archived_File) return Interfaces.Unsigned_32;
+   function CRC_32 (Object : Archived_File) return Interfaces.Unsigned_32;
 
    -----------------------------------------------------------------------------
 

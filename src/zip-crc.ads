@@ -19,11 +19,9 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
---  Zip.CRC_Crypto deals with hash-like functions for data integrity check
-
 with Ada.Streams;
 
-package Zip.Crc_Crypto is
+package Zip.CRC is
 
    use Interfaces;
 
@@ -31,17 +29,17 @@ package Zip.Crc_Crypto is
    --  CRC: Cyclic Redundancy Check to verify data integrity  --
    -------------------------------------------------------------
 
-   procedure Init (Crc : out Unsigned_32);
+   procedure Init (CRC : out Unsigned_32);
 
-   procedure Update (Crc : in out Unsigned_32; Inbuf : Zip.Byte_Buffer);
+   procedure Update (CRC : in out Unsigned_32; Inbuf : Zip.Byte_Buffer);
    pragma Inline (Update);
 
    procedure Update_Stream_Array
-     (Crc   : in out Unsigned_32;
+     (CRC   : in out Unsigned_32;
       Inbuf : Ada.Streams.Stream_Element_Array);
    pragma Inline (Update_Stream_Array);
 
-   function Final (Crc : Unsigned_32) return Unsigned_32;
+   function Final (CRC : Unsigned_32) return Unsigned_32;
    pragma Inline (Final);
 
-end Zip.Crc_Crypto;
+end Zip.CRC;

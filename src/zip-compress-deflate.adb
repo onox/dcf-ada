@@ -47,7 +47,7 @@ with Interfaces;
 
 with Ada.Unchecked_Deallocation;
 
-with Zip.Crc_Crypto;
+with Zip.CRC;
 with Zip_Streams;
 
 with Lz77;
@@ -61,7 +61,7 @@ procedure Zip.Compress.Deflate
    Input_Size       :        File_Size_Type;
    Feedback         :        Feedback_Proc;
    Method           :        Deflation_Method;
-   Crc              : in out Interfaces.Unsigned_32;  --  Only updated here
+   CRC              : in out Interfaces.Unsigned_32;  --  Only updated here
    Output_Size      :    out File_Size_Type;
    Compression_Ok   :    out Boolean)  --  Indicates compressed < uncompressed
 is
@@ -1518,7 +1518,7 @@ is
       begin
          B        := Inbuf (Inbufidx);
          Inbufidx := Inbufidx + 1;
-         Zip.Crc_Crypto.Update (Crc, (1 => B));
+         Zip.CRC.Update (CRC, (1 => B));
          Bytes_In := Bytes_In + 1;
          if Feedback /= null then
             if Bytes_In = 1 then

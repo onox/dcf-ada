@@ -71,7 +71,7 @@ package Zip.Compress is
       Input_Size       :        File_Size_Type;  --  Ignored if input_size_known = False
       Method           :        Compression_Method;
       Feedback         :        Feedback_Proc;
-      Crc              :    out Interfaces.Unsigned_32;
+      CRC              :    out Interfaces.Unsigned_32;
       Output_Size      :    out File_Size_Type;
       Zip_Type         :    out Interfaces.Unsigned_16
       --  ^ code corresponding to the compression method actually used

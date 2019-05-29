@@ -332,7 +332,7 @@ begin
                               Verify_Integrity => Test_Data);
                            Put_Line (" OK");
                         exception
-                           when Unzip.Crc_Error =>
+                           when Unzip.CRC_Error =>
                               Put_Line (" ERROR");
                         end;
                      elsif not File_Is_Directory then

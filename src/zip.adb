@@ -28,7 +28,6 @@ with Zip.Headers;
 
 with Ada.Characters.Handling;
 with Ada.IO_Exceptions;
-with Ada.Streams.Stream_IO;
 with Ada.Strings.Fixed;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
@@ -61,7 +60,7 @@ package body Zip is
    function File_Index (Object : Archived_File) return Zip_Streams.Zs_Index_Type is
      (Object.Node.File_Index);
 
-   function CRC (Object : Archived_File) return Interfaces.Unsigned_32 is
+   function CRC_32 (Object : Archived_File) return Interfaces.Unsigned_32 is
      (Object.Node.Crc_32);
 
    procedure Dispose is new Ada.Unchecked_Deallocation (Dir_Node, P_Dir_Node);

@@ -174,7 +174,7 @@ package body Zip.Create is
             Input_Size       => Shi.Dd.Uncompressed_Size,
             Method           => Info.Compress,
             Feedback         => Feedback,
-            Crc              => Shi.Dd.Crc_32,
+            CRC              => Shi.Dd.Crc_32,
             Output_Size      => Shi.Dd.Compressed_Size,
             Zip_Type         => Shi.Zip_Type);
 

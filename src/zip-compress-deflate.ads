@@ -28,6 +28,6 @@ private procedure Zip.Compress.Deflate
    Input_Size       :        File_Size_Type;  --  Ignored if unknown
    Feedback         :        Feedback_Proc;
    Method           :        Deflation_Method;
-   Crc              : in out Interfaces.Unsigned_32;  --  Only updated here
+   CRC              : in out Interfaces.Unsigned_32;  --  Only updated here
    Output_Size      :    out File_Size_Type;
    Compression_Ok   :    out Boolean);  --  Indicates when compressed <= uncompressed

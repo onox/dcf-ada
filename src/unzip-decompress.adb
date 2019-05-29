@@ -22,7 +22,7 @@
 with Interfaces;
 
 with Unzip.Decompress.Huffman;
-with Zip.Crc_Crypto;
+with Zip.CRC;
 
 package body Unzip.Decompress is
 
@@ -116,7 +116,7 @@ package body Unzip.Decompress is
             Unz_Glob.Effective_Writes := 0;
             Unz_Glob.Percents_Done    := 0;
             Zip_Eof                   := False;
-            Zip.Crc_Crypto.Init (Unz_Glob.Crc32val);
+            Zip.CRC.Init (Unz_Glob.Crc32val);
             Bit_Buffer.Init;
          end Init_Buffers;
 
@@ -249,7 +249,7 @@ package body Unzip.Decompress is
                when others =>
                   raise Unzip.Write_Error;
             end;
-            Zip.Crc_Crypto.Update (Unz_Glob.Crc32val, Unz_Glob.Slide (0 .. X - 1));
+            Zip.CRC.Update (Unz_Glob.Crc32val, Unz_Glob.Slide (0 .. X - 1));
          end Flush;
 
          procedure Flush_If_Full (W : in out Integer) is
@@ -361,7 +361,7 @@ package body Unzip.Decompress is
                         raise Unzip.Write_Error;
                   end;
                   if Verify_Integrity then
-                     Zip.Crc_Crypto.Update_Stream_Array (Unz_Glob.Crc32val, Buffer);
+                     Zip.CRC.Update_Stream_Array (Unz_Glob.Crc32val, Buffer);
                   end if;
                end;
             end loop;
@@ -912,7 +912,7 @@ package body Unzip.Decompress is
       end case;
 
       if Verify_Integrity then
-         Unz_Glob.Crc32val := Zip.Crc_Crypto.Final (Unz_Glob.Crc32val);
+         Unz_Glob.Crc32val := Zip.CRC.Final (Unz_Glob.Crc32val);
       end if;
 
       if Data_Descriptor_After_Data then -- Sizes and CRC at the end
@@ -930,7 +930,7 @@ package body Unzip.Decompress is
       end if;
 
       if Verify_Integrity and then Hint.Dd.Crc_32 /= Unz_Glob.Crc32val then
-         raise Crc_Error with
+         raise CRC_Error with
            "CRC stored in archive: " &
            Hexadecimal (Hint.Dd.Crc_32) &
            "; CRC computed now: " &

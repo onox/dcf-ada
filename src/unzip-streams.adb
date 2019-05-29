@@ -155,7 +155,7 @@ package body Unzip.Streams is
          Mem_Ptr         => Mem_Ptr,
          Out_Stream_Ptr  => Out_Stream_Ptr,
          Hint_Comp_Size  => What.Compressed_Size,
-         Hint_Crc_32     => What.CRC,
+         Hint_Crc_32     => What.CRC_32,
          Cat_Uncomp_Size => What.Uncompressed_Size,
          Verify_Integrity => Verify_Integrity);
    end Extract_File;
