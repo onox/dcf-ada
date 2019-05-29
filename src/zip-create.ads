@@ -51,6 +51,8 @@ package Zip.Create is
 
    procedure Set (Info : in out Zip_Create_Info; New_Method : Zip.Compress.Compression_Method);
 
+   procedure Set_Comment (Info : in out Zip_Create_Info; Comment : String);
+
    function Name (Info : Zip_Create_Info) return String;
 
    procedure Add_Stream
@@ -110,6 +112,7 @@ private
       --  We set up a name dictionary just for avoiding duplicate entries:
       Dir                : Name_Mapping.Map;
       Zip_Archive_Format : Zip_Archive_Format_Type := Zip_32;
+      Comment : SU.Unbounded_String;
    end record;
 
 end Zip.Create;

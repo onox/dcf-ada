@@ -51,6 +51,11 @@ package body Zip.Create is
       Info.Compress := New_Method;
    end Set;
 
+   procedure Set_Comment (Info : in out Zip_Create_Info; Comment : String) is
+   begin
+      Info.Comment := SU.To_Unbounded_String (Comment);
+   end Set_Comment;
+
    function Name (Info : Zip_Create_Info) return String is
      (Get_Name (Info.Stream.all));
 
@@ -273,7 +278,7 @@ package body Zip.Create is
       Ed.Central_Dir_Offset  := Unsigned_32 (Current_Index) - 1;
       Ed.Total_Entries       := 0;
       Ed.Central_Dir_Size    := 0;
-      Ed.Main_Comment_Length := 0;
+      Ed.Main_Comment_Length := Unsigned_16 (SU.Length (Info.Comment));
 
       if Info.Zip_Archive_Format = Zip_32
         and then Info.Last_Entry > Integer (Unsigned_16'Last)
@@ -303,6 +308,11 @@ package body Zip.Create is
       Ed.Disknum_With_Start := 0;
       Ed.Disk_Total_Entries := Ed.Total_Entries;
       Zip.Headers.Write (Info.Stream.all, Ed);
+
+      if Ed.Main_Comment_Length > 0 then
+         String'Write (Info.Stream, SU.To_String (Info.Comment));
+      end if;
+
       Get_Index_And_Check_Zip_32_Limit;
 
       --  File will be closed automatically when stream goes out of scope

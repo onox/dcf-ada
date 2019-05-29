@@ -210,6 +210,7 @@ begin
             if not Quiet then
                Put_Line (" comment: " & String_Comment);
             end if;
+            Zip.Create.Set_Comment (Info, String_Comment);
          end if;
 
          Zip.Create.Finish (Info);
