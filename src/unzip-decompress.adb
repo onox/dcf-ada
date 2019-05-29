@@ -932,9 +932,9 @@ package body Unzip.Decompress is
       if Verify_Integrity and then Hint.Dd.Crc_32 /= Unz_Glob.Crc32val then
          raise CRC_Error with
            "CRC stored in archive: " &
-           Hexadecimal (Hint.Dd.Crc_32) &
+           Zip.CRC.Image (Hint.Dd.Crc_32) &
            "; CRC computed now: " &
-           Hexadecimal (Unz_Glob.Crc32val);
+           Zip.CRC.Image (Unz_Glob.Crc32val);
       end if;
    end Decompress_Data;
 

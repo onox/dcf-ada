@@ -42,4 +42,6 @@ package Zip.CRC is
    function Final (CRC : Unsigned_32) return Unsigned_32;
    pragma Inline (Final);
 
+   function Image (Value : Interfaces.Unsigned_32) return String;
+
 end Zip.CRC;

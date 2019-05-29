@@ -224,8 +224,6 @@ package Zip is
       Buffer_Size :        Positive      := 1024 * 1024;
       Feedback    :        Feedback_Proc := null);
 
-   function Hexadecimal (X : Interfaces.Unsigned_32) return String;
-
    -----------------------------------------------------------------
    --  Information about this package - e.g., for an "about" box  --
    -----------------------------------------------------------------

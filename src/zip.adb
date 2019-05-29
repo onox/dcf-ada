@@ -28,8 +28,6 @@ with Zip.Headers;
 
 with Ada.Characters.Handling;
 with Ada.IO_Exceptions;
-with Ada.Strings.Fixed;
-with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 package body Zip is
@@ -608,15 +606,6 @@ package body Zip is
          Zip.Blockwrite (Into, Buf (1 .. Actually_Read));
       end loop;
    end Copy_Chunk;
-
-   function Hexadecimal (X : Interfaces.Unsigned_32) return String is
-      package Mio is new Ada.Text_IO.Modular_IO (Interfaces.Unsigned_32);
-      Str : String (1 .. 12);
-      use Ada.Strings.Fixed;
-   begin
-      Mio.Put (Str, X, 16);
-      return Str (Index (Str, "#") + 1 .. 11);
-   end Hexadecimal;
 
    overriding
    procedure Adjust (Info : in out Zip_Info) is

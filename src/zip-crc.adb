@@ -84,4 +84,16 @@ package body Zip.CRC is
       return not CRC;
    end Final;
 
+   function Image (Value : Interfaces.Unsigned_32) return String is
+      Alphabet : constant String := "0123456789abcdef";
+
+      V : array (1 .. 4) of Interfaces.Unsigned_8
+        with Import, Convention => Ada, Address => Value'Address;
+
+      function Byte (Value : Interfaces.Unsigned_8) return String is
+        (Alphabet (Natural (Value) / 16 + 1) & Alphabet (Natural (Value) mod 16 + 1));
+   begin
+      return Byte (V (4)) & Byte (V (3)) & Byte (V (2)) & Byte (V (1));
+   end Image;
+
 end Zip.CRC;
