@@ -19,6 +19,8 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
+with Zip_Streams.Calendar;
+
 package body Zip.Headers is
 
    -----------------------------------------------------------

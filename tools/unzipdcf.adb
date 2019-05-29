@@ -31,7 +31,7 @@ with Ada.Text_IO;
 
 with Unzip.Streams;
 with Zip;
-with Zip_Streams;
+with Zip_Streams.Calendar;
 
 use Ada.Command_Line;
 use Ada.Text_IO;
@@ -231,7 +231,8 @@ begin
                procedure List_File_From_Stream (File : Zip.Archived_File) is
                   use type Unzip.File_Size_Type;
 
-                  Date_Time : constant Ada.Calendar.Time := Zip.Convert (File.Date_Time);
+                  Date_Time : constant Ada.Calendar.Time
+                    := Zip_Streams.Calendar.Convert (File.Date_Time);
                   Date : constant String := Ada.Calendar.Formatting.Image
                     (Date_Time, Time_Zone => Ada.Calendar.Time_Zones.UTC_Time_Offset (Date_Time));
                begin

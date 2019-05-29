@@ -33,7 +33,6 @@ with Interfaces;
 
 with System;
 
-with Ada.Calendar;
 with Ada.Finalization;
 with Ada.Streams;
 
@@ -132,10 +131,6 @@ package Zip is
 
    --  Technical: translates the method code as set in zip archives
    function Method_From_Code (Code : Interfaces.Unsigned_16) return Pkzip_Method;
-
-   --  Internal time definition
-   function Convert (Date : in Ada.Calendar.Time) return Time renames Zip_Streams.Calendar.Convert;
-   function Convert (Date : in Time) return Ada.Calendar.Time renames Zip_Streams.Calendar.Convert;
 
    generic
       with procedure Action (File : Archived_File);

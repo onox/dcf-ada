@@ -37,7 +37,6 @@
 
 with Interfaces;
 
-with Ada.Calendar;
 with Ada.Finalization;
 with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded;
@@ -49,12 +48,12 @@ use Interfaces;
 
 package Zip_Streams is
 
-   --  We define an own Time (Ada.Calendar's body can be very time-consuming!)
-   --  See subpackage Calendar below for own Split, Time_Of and Convert from/to
-   --  Ada.Calendar.Time.
    type Time is private;
+   --  We define an own Time (Ada.Calendar's body can be very time-consuming!)
+   --  See child package Calendar for own Split, Time_Of and Convert from/to
+   --  Ada.Calendar.Time.
 
-   Default_Time : constant Time;  --  some default time
+   Default_Time : constant Time;  --  Some default time
 
    ------------------------------------------------------
    --  Root_Zipstream_Type: root abstract stream type  --
@@ -83,18 +82,8 @@ package Zip_Streams is
    --  This procedure sets the Modification_Time of the stream
    procedure Set_Time (S : in out Root_Zipstream_Type; Modification_Time : Time);
 
-   --  Set_Time again, but with the standard Ada Time type.
-   --  Overriding is useless and potentially harmful, so we prevent it with
-   --  a class-wide profile.
-   procedure Set_Time (S : out Root_Zipstream_Type'Class; Modification_Time : Ada.Calendar.Time);
-
    --  This procedure returns the ModificationTime of the stream
    function Get_Time (S : in Root_Zipstream_Type) return Time;
-
-   --  Get_Time again, but with the standard Ada Time type.
-   --  Overriding is useless and potentially harmful, so we prevent it with
-   --  a class-wide profile.
-   function Get_Time (S : in Root_Zipstream_Type'Class) return Ada.Calendar.Time;
 
    --  Returns true if the index is at the end of the stream, else false
    function End_Of_Stream (S : in Root_Zipstream_Type) return Boolean is abstract;
@@ -127,39 +116,6 @@ package Zip_Streams is
    --  Is the File_Zipstream open ?
    function Is_Open (Str : in File_Zipstream) return Boolean
      with Post => Is_Open'Result;
-
-   ----------------------------
-   --  Routines around Time  --
-   ----------------------------
-
-   package Calendar is
-      function Convert (Date : in Ada.Calendar.Time) return Time;
-      function Convert (Date : in Time) return Ada.Calendar.Time;
-
-      subtype Dos_Time is Interfaces.Unsigned_32;
-
-      function Convert (Date : in Dos_Time) return Time;
-      function Convert (Date : in Time) return Dos_Time;
-
-      use Ada.Calendar;
-
-      procedure Split
-        (Date    :     Time;
-         Year    : out Year_Number;
-         Month   : out Month_Number;
-         Day     : out Day_Number;
-         Seconds : out Day_Duration);
-
-      function Time_Of
-        (Year    : Year_Number;
-         Month   : Month_Number;
-         Day     : Day_Number;
-         Seconds : Day_Duration := 0.0) return Time;
-
-      function ">" (Left, Right : Time) return Boolean;
-
-      Time_Error : exception;
-   end Calendar;
 
    --  Parameter Form added to *_IO.[Open|Create]
    --  See RM A.8.2: File Management

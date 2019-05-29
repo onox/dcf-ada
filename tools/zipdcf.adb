@@ -26,7 +26,7 @@ with Ada.Text_IO;
 
 with Zip.Compress;
 with Zip.Create;
-with Zip_Streams;
+with Zip_Streams.Calendar;
 
 use Ada.Command_Line;
 use Ada.Text_IO;
@@ -160,7 +160,8 @@ begin
                        := Zip_Streams.Open (Path);
                   begin
                      Zip_Streams.Set_Name (File_Stream, Name);
-                     Zip_Streams.Set_Time (File_Stream, Dirs.Modification_Time (Path));
+                     Zip_Streams.Set_Time (File_Stream,
+                       Zip_Streams.Calendar.Convert (Dirs.Modification_Time (Path)));
                      Zip.Create.Add_Stream (Info, File_Stream);
                   end;
                else
@@ -173,7 +174,8 @@ begin
                         Dir_Stream : aliased Zip_Streams.Memory_Zipstream;
                      begin
                         Zip_Streams.Set_Name (Dir_Stream, Name & '/');
-                        Zip_Streams.Set_Time (Dir_Stream, Dirs.Modification_Time (Path));
+                        Zip_Streams.Set_Time (Dir_Stream,
+                          Zip_Streams.Calendar.Convert (Dirs.Modification_Time (Path)));
                         Zip.Create.Add_Stream (Info, Dir_Stream);
                      end;
                   end if;
