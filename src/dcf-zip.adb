@@ -386,41 +386,17 @@ package body DCF.Zip is
       Info.Loaded := False; -- <-- added 14-Jan-2002
    end Delete;
 
-   --  Traverse a whole Zip_info directory in sorted order, giving the
-   --  name for each entry to an user-defined "Action" procedure.
-
-   generic
-      with procedure Action_Private (Dn : P_Dir_Node);
-      --  Dir_node is private: only known to us, contents subject to change
-   procedure Traverse_Private (Z : Zip_Info);
-
-   procedure Traverse_Private (Z : Zip_Info) is
+   procedure Traverse (Z : Zip_Info) is
       procedure Traverse_Tree (P : P_Dir_Node) is
       begin
          if P /= null then
             Traverse_Tree (P.Left);
-            Action_Private (P);
+            Action ((Node => P));
             Traverse_Tree (P.Right);
          end if;
       end Traverse_Tree;
    begin
       Traverse_Tree (Z.Dir_Binary_Tree);
-   end Traverse_Private;
-
-   -----------------------
-   --  Public versions  --
-   -----------------------
-
-   procedure Traverse (Z : Zip_Info) is
-      procedure My_Action_Private (Dn : P_Dir_Node) is
-         pragma Inline (My_Action_Private);
-      begin
-         Action ((Node => Dn));
-      end My_Action_Private;
-
-      procedure My_Traverse_Private is new Traverse_Private (My_Action_Private);
-   begin
-      My_Traverse_Private (Z);
    end Traverse;
 
    procedure Traverse_One_File (Z : Zip_Info; Name : String) is
