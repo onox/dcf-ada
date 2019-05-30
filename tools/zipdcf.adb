@@ -201,7 +201,8 @@ begin
 
          String_Comment : constant String := SU.To_String (Comment);
       begin
-         DCF.Zip.Create.Create (Info, Archive_Stream'Unchecked_Access, Compress => Compression_Method);
+         DCF.Zip.Create.Create
+           (Info, Archive_Stream'Unchecked_Access, Compress => Compression_Method);
 
          for I in Last_Option + 2 .. Argument_Count loop
             Add_File (Argument (I));

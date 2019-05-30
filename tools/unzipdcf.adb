@@ -205,19 +205,19 @@ begin
          return;
       end if;
 
-      if not Quiet then
-         Put_Line ("Archive:  " & Archive);
-      end if;
-
       declare
          Archive_Stream : aliased DCF.Streams.File_Zipstream
            := DCF.Streams.Open (Archive);
-         Zi : DCF.Zip.Zip_Info;
+         Info : DCF.Zip.Zip_Info;
       begin
-         DCF.Zip.Load (Zi, Archive_Stream, Archive);
+         DCF.Zip.Load (Info, Archive_Stream);
 
-         if (Comment or not Quiet) and Zi.Comment'Length > 0 then
-            Put_Line (Zi.Comment);
+         if not Quiet then
+            Put_Line ("Archive:  " & Info.Name);
+         end if;
+
+         if (Comment or not Quiet) and Info.Comment'Length > 0 then
+            Put_Line (Info.Comment);
          end if;
 
          if Comment then
@@ -248,12 +248,12 @@ begin
                Put_Line ("  Length      Date    Time    Name");
                Put_Line ("---------  ---------- -----   ----");
 
-               List_All_Files (Zi);
+               List_All_Files (Info);
 
                Put_Line ("---------                     -------");
                Mod_IO.Put (Total_Uncompressed_Size, 9);
-               Put ("                    " & Zi.Entries'Image);
-               Put_Line (if Zi.Entries > 1 then " files" else " file");
+               Put ("                    " & Info.Entries'Image);
+               Put_Line (if Info.Entries > 1 then " files" else " file");
             end;
          else
             declare
@@ -330,7 +330,7 @@ begin
                         begin
                            DCF.Unzip.Streams.Extract
                              (Destination      => Stream_Writer,
-                              Archive_Info     => Zi,
+                              Archive_Info     => Info,
                               File             => File,
                               Verify_Integrity => Test_Data);
                            Put_Line (" OK");
@@ -355,7 +355,7 @@ begin
                         begin
                            DCF.Unzip.Streams.Extract
                              (Destination      => Stream_Writer,
-                              Archive_Info     => Zi,
+                              Archive_Info     => Info,
                               File             => File,
                               Verify_Integrity => Test_Data);
                         end;
@@ -371,10 +371,10 @@ begin
                end if;
 
                if Extract_All then
-                  Extract_All_Files (Zi);
+                  Extract_All_Files (Info);
                else
                   for I in Last_Option + 2 .. Argument_Count loop
-                     Extract_One_File (Zi, Argument (I));
+                     Extract_One_File (Info, Argument (I));
                   end loop;
                end if;
             end;
