@@ -24,9 +24,9 @@ with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
-with Zip.Compress;
-with Zip.Create;
-with Zip_Streams.Calendar;
+with DCF.Streams.Calendar;
+with DCF.Zip.Compress;
+with DCF.Zip.Create;
 
 use Ada.Command_Line;
 use Ada.Text_IO;
@@ -42,13 +42,13 @@ procedure ZipDCF is
    Junk_Directories : Boolean := False;
 
    Comment            : SU.Unbounded_String;
-   Compression_Method : Zip.Compress.Compression_Method := Zip.Compress.Deflate_2;
+   Compression_Method : DCF.Zip.Compress.Compression_Method := DCF.Zip.Compress.Deflate_2;
 
    Last_Option : Natural := 0;
 
    procedure Help is
    begin
-      Put_Line ("ZipDCF " & Zip.Version & " - create document container files");
+      Put_Line ("ZipDCF " & DCF.Zip.Version & " - create document container files");
       New_Line;
       Put_Line ("Usage: zipdcf [-options] [-z comment] file list");
       New_Line;
@@ -89,11 +89,11 @@ begin
                   when 'r' =>
                      Recursive := True;
                   when '0' =>
-                     Compression_Method := Zip.Compress.Store;
+                     Compression_Method := DCF.Zip.Compress.Store;
                   when '1' =>
-                     Compression_Method := Zip.Compress.Deflate_1;
+                     Compression_Method := DCF.Zip.Compress.Deflate_1;
                   when '9' =>
-                     Compression_Method := Zip.Compress.Deflate_3;
+                     Compression_Method := DCF.Zip.Compress.Deflate_3;
                   when 'q' =>
                      Quiet := True;
                   when 'j' =>
@@ -133,9 +133,9 @@ begin
       end if;
 
       declare
-         Archive_Stream : aliased Zip_Streams.File_Zipstream
-           := Zip_Streams.Create (Archive);
-         Info : Zip.Create.Zip_Create_Info;
+         Archive_Stream : aliased DCF.Streams.File_Zipstream
+           := DCF.Streams.Create (Archive);
+         Info : DCF.Zip.Create.Zip_Create_Info;
 
          procedure Add_File (Path : String) is
             Name : constant String := Maybe_Trash_Dir (Path);
@@ -156,13 +156,13 @@ begin
                   end if;
 
                   declare
-                     File_Stream : aliased Zip_Streams.File_Zipstream
-                       := Zip_Streams.Open (Path);
+                     File_Stream : aliased DCF.Streams.File_Zipstream
+                       := DCF.Streams.Open (Path);
                   begin
-                     Zip_Streams.Set_Name (File_Stream, Name);
-                     Zip_Streams.Set_Time (File_Stream,
-                       Zip_Streams.Calendar.Convert (Dirs.Modification_Time (Path)));
-                     Zip.Create.Add_Stream (Info, File_Stream);
+                     DCF.Streams.Set_Name (File_Stream, Name);
+                     DCF.Streams.Set_Time (File_Stream,
+                       DCF.Streams.Calendar.Convert (Dirs.Modification_Time (Path)));
+                     DCF.Zip.Create.Add_Stream (Info, File_Stream);
                   end;
                else
                   if Add_Directories then
@@ -171,12 +171,12 @@ begin
                      end if;
 
                      declare
-                        Dir_Stream : aliased Zip_Streams.Memory_Zipstream;
+                        Dir_Stream : aliased DCF.Streams.Memory_Zipstream;
                      begin
-                        Zip_Streams.Set_Name (Dir_Stream, Name & '/');
-                        Zip_Streams.Set_Time (Dir_Stream,
-                          Zip_Streams.Calendar.Convert (Dirs.Modification_Time (Path)));
-                        Zip.Create.Add_Stream (Info, Dir_Stream);
+                        DCF.Streams.Set_Name (Dir_Stream, Name & '/');
+                        DCF.Streams.Set_Time (Dir_Stream,
+                          DCF.Streams.Calendar.Convert (Dirs.Modification_Time (Path)));
+                        DCF.Zip.Create.Add_Stream (Info, Dir_Stream);
                      end;
                   end if;
 
@@ -201,7 +201,7 @@ begin
 
          String_Comment : constant String := SU.To_String (Comment);
       begin
-         Zip.Create.Create (Info, Archive_Stream'Unchecked_Access, Compress => Compression_Method);
+         DCF.Zip.Create.Create (Info, Archive_Stream'Unchecked_Access, Compress => Compression_Method);
 
          for I in Last_Option + 2 .. Argument_Count loop
             Add_File (Argument (I));
@@ -212,10 +212,10 @@ begin
             if not Quiet then
                Put_Line (" comment: " & String_Comment);
             end if;
-            Zip.Create.Set_Comment (Info, String_Comment);
+            DCF.Zip.Create.Set_Comment (Info, String_Comment);
          end if;
 
-         Zip.Create.Finish (Info);
+         DCF.Zip.Create.Finish (Info);
       end;
    end;
 end ZipDCF;

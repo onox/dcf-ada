@@ -1,6 +1,6 @@
 with Ada.Calendar;
 
-package Zip_Streams.Calendar is
+package DCF.Streams.Calendar is
 
    --  Set_Time again, but with the standard Ada Time type.
    --  Overriding is useless and potentially harmful, so we prevent it with
@@ -38,4 +38,4 @@ package Zip_Streams.Calendar is
 
    Time_Error : exception;
 
-end Zip_Streams.Calendar;
+end DCF.Streams.Calendar;

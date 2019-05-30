@@ -35,8 +35,6 @@
 --
 --  Pure Ada 95+ code, 100% portable: OS-, CPU- and compiler- independent.
 
-with Interfaces;
-
 with Ada.Finalization;
 with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded;
@@ -44,9 +42,7 @@ with Ada.Strings.Unbounded;
 use Ada.Streams;
 use Ada.Strings.Unbounded;
 
-use Interfaces;
-
-package Zip_Streams is
+package DCF.Streams is
    pragma Preelaborate;
 
    type Time is private;
@@ -120,7 +116,7 @@ package Zip_Streams is
 
    -----------------------------------------------------------------------------
 
-   subtype Dos_Time is Interfaces.Unsigned_32;
+   subtype Dos_Time is Unsigned_32;
 
    function Convert (Date : in Dos_Time) return Time;
    function Convert (Date : in Time) return Dos_Time;
@@ -129,7 +125,7 @@ private
 
    --  Time. Currently, DOS format (pkzip appnote.txt: part V., J.), as stored
    --  in Zip archives. Subject to change, this is why this type is private.
-   type Time is new Interfaces.Unsigned_32;
+   type Time is new Unsigned_32;
 
    Default_Time : constant Time := 16789 * 65536;
 
@@ -217,4 +213,4 @@ private
    overriding
    function End_Of_Stream (S : in File_Zipstream) return Boolean;
 
-end Zip_Streams;
+end DCF.Streams;

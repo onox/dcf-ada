@@ -19,13 +19,9 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
-with Interfaces;
-
 with Ada.Unchecked_Deallocation;
 
-use Interfaces;
-
-package body Zip.Create is
+package body DCF.Zip.Create is
 
    Four_GB : constant := 4 * 1024 ** 3;
 
@@ -319,4 +315,4 @@ package body Zip.Create is
       Info.Stream := null;
    end Finish;
 
-end Zip.Create;
+end DCF.Zip.Create;

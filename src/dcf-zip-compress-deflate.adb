@@ -43,25 +43,21 @@
 --    - Make this procedure standalone & generic like LZMA.Encoding;
 --        use it in the Zada project (Zlib replacement)
 
-with Interfaces;
-
 with Ada.Unchecked_Deallocation;
 
-with Zip.CRC;
-with Zip_Streams;
+with DCF.Zip.CRC;
+with DCF.Streams;
 
-with Lz77;
-with Length_Limited_Huffman_Code_Lengths;
+with DCF.Lz77;
+with DCF.Length_Limited_Huffman_Code_Lengths;
 
-use Interfaces;
-
-procedure Zip.Compress.Deflate
-  (Input, Output    : in out Zip_Streams.Root_Zipstream_Type'Class;
+procedure DCF.Zip.Compress.Deflate
+  (Input, Output    : in out DCF.Streams.Root_Zipstream_Type'Class;
    Input_Size_Known :        Boolean;
    Input_Size       :        File_Size_Type;
    Feedback         :        Feedback_Proc;
    Method           :        Deflation_Method;
-   CRC              : in out Interfaces.Unsigned_32;  --  Only updated here
+   CRC              : in out Unsigned_32;  --  Only updated here
    Output_Size      :    out File_Size_Type;
    Compression_Ok   :    out Boolean)  --  Indicates compressed < uncompressed
 is
@@ -1688,4 +1684,4 @@ begin
    Dispose (Lz_Buffer);
    Dispose_Buffer (Inbuf);
    Dispose_Buffer (Outbuf);
-end Zip.Compress.Deflate;
+end DCF.Zip.Compress.Deflate;

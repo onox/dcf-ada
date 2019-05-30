@@ -19,16 +19,12 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
-with Interfaces;
-
 with Ada.Unchecked_Deallocation;
 
-with Unzip.Decompress;
-with Zip.Headers;
+with DCF.Unzip.Decompress;
+with DCF.Zip.Headers;
 
-use Interfaces;
-
-package body Unzip.Streams is
+package body DCF.Unzip.Streams is
 
    procedure Dispose is new Ada.Unchecked_Deallocation (String, P_String);
 
@@ -46,8 +42,8 @@ package body Unzip.Streams is
    Fallback_Compressed_Size : constant File_Size_Type := File_Size_Type'Last;
 
    procedure Unzip_File
-     (Zip_Stream       : in out Zip_Streams.Root_Zipstream_Type'Class;
-      Header_Index     : in     Zip_Streams.Zs_Index_Type;
+     (Zip_Stream       : in out DCF.Streams.Root_Zipstream_Type'Class;
+      Header_Index     : in     DCF.Streams.Zs_Index_Type;
       Mem_Ptr          :    out P_Stream_Element_Array;
       Out_Stream_Ptr   :        P_Stream;
       --  If not null, extract to out_stream_ptr, not to memory
@@ -56,7 +52,7 @@ package body Unzip.Streams is
       Cat_Uncomp_Size  : in File_Size_Type;
       Verify_Integrity : in Boolean)
    is
-      Work_Index                 : Zip_Streams.Zs_Index_Type := Header_Index;
+      Work_Index                 : DCF.Streams.Zs_Index_Type := Header_Index;
       Local_Header               : Zip.Headers.Local_File_Header;
       Data_Descriptor_After_Data : Boolean;
       Encrypted                  : Boolean;
@@ -65,7 +61,7 @@ package body Unzip.Streams is
       Mode : Write_Mode;
    begin
       begin
-         Zip_Streams.Set_Index (Zip_Stream, Header_Index);
+         DCF.Streams.Set_Index (Zip_Stream, Header_Index);
          Zip.Headers.Read_And_Check (Zip_Stream, Local_Header);
       exception
          when Zip.Headers.Bad_Local_Header =>
@@ -79,7 +75,7 @@ package body Unzip.Streams is
       --  Calculate offset of data
       Work_Index :=
         Work_Index +
-        Zip_Streams.Zs_Size_Type
+        DCF.Streams.Zs_Size_Type
           (Local_Header.Filename_Length +
            Local_Header.Extra_Field_Length +
            Zip.Headers.Local_Header_Length);
@@ -114,7 +110,7 @@ package body Unzip.Streams is
       pragma Assert (not Encrypted);
 
       begin
-         Zip_Streams.Set_Index (Zip_Stream, Work_Index); -- eventually skips the file name
+         DCF.Streams.Set_Index (Zip_Stream, Work_Index); -- eventually skips the file name
       exception
          when others =>
             raise Zip.Archive_Corrupted with
@@ -143,7 +139,7 @@ package body Unzip.Streams is
    end Unzip_File;
 
    procedure Extract_File
-     (Zip_Stream       : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (Zip_Stream       : in out DCF.Streams.Root_Zipstream_Type'Class;
       What             :        Zip.Archived_File;
       Mem_Ptr          :    out P_Stream_Element_Array;
       Out_Stream_Ptr   :        P_Stream;
@@ -313,4 +309,4 @@ package body Unzip.Streams is
          Verify_Integrity);
    end Extract;
 
-end Unzip.Streams;
+end DCF.Unzip.Streams;

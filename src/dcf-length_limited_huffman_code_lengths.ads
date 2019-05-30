@@ -44,7 +44,7 @@
 --  Translated by G. de Montmollin to Ada from katajainen.c (Zopfli project), 7-Feb-2016
 --  Translation notes in procedure's body.
 
-generic
+private generic
    type Alphabet is (<>);  --  Any discrete type
    --  Count_Type is an integer type large enough for counting
    --  and indexing. See body for actual bounds.
@@ -52,7 +52,7 @@ generic
    type Count_Array is array (Alphabet) of Count_Type;
    type Length_Array is array (Alphabet) of Natural;
    Max_Bits : Positive;  --  Length limit in Huffman codes
-procedure Length_Limited_Huffman_Code_Lengths
+procedure DCF.Length_Limited_Huffman_Code_Lengths
   (Frequencies : in Count_Array;
    Bit_Lengths : out Length_Array);
-pragma Preelaborate (Length_Limited_Huffman_Code_Lengths);
+pragma Preelaborate (DCF.Length_Limited_Huffman_Code_Lengths);

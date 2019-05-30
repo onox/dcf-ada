@@ -1,18 +1,16 @@
---  Legal licensing note:
-
 --  Copyright (c) 1999 .. 2018 Gautier de Montmollin
 --  SWITZERLAND
-
+--
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
 --  in the Software without restriction, including without limitation the rights
 --  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 --  copies of the Software, and to permit persons to whom the Software is
 --  furnished to do so, subject to the following conditions:
-
+--
 --  The above copyright notice and this permission notice shall be included in
 --  all copies or substantial portions of the Software.
-
+--
 --  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 --  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 --  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,18 +19,13 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
---  NB: this is the MIT License, as found 12-Sep-2007 on the site
---  http://www.opensource.org/licenses/mit-license.php
-
-with Zip.Headers;
+with DCF.Zip.Headers;
 
 with Ada.Characters.Handling;
 with Ada.IO_Exceptions;
 with Ada.Unchecked_Deallocation;
 
-package body Zip is
-
-   use Interfaces;
+package body DCF.Zip is
 
    function Name (Object : Archived_File) return String is
      (Object.Node.File_Name);
@@ -55,10 +48,10 @@ package body Zip is
    function Encrypted (Object : Archived_File) return Boolean is
      (Object.Node.Encrypted_2_X);
 
-   function File_Index (Object : Archived_File) return Zip_Streams.Zs_Index_Type is
+   function File_Index (Object : Archived_File) return DCF.Streams.Zs_Index_Type is
      (Object.Node.File_Index);
 
-   function CRC_32 (Object : Archived_File) return Interfaces.Unsigned_32 is
+   function CRC_32 (Object : Archived_File) return Unsigned_32 is
      (Object.Node.Crc_32);
 
    procedure Dispose is new Ada.Unchecked_Deallocation (Dir_Node, P_Dir_Node);
@@ -211,7 +204,7 @@ package body Zip is
 
    procedure Load
      (Info            :    out Zip_Info;
-      From            : in out Zip_Streams.Root_Zipstream_Type'Class;
+      From            : in out DCF.Streams.Root_Zipstream_Type'Class;
       From_Name       : in     String; -- Zip file name
       Case_Sensitive  : in     Boolean               := False;
       Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
@@ -219,7 +212,7 @@ package body Zip is
       procedure Insert
         (Dico_Name              :        String; -- UPPER if case-insensitive search
          File_Name              :        String;
-         File_Index             :        Zip_Streams.Zs_Index_Type;
+         File_Index             :        DCF.Streams.Zs_Index_Type;
          Comp_Size, Uncomp_Size :        File_Size_Type;
          Crc_32                 :        Unsigned_32;
          Date_Time              :        Time;
@@ -291,33 +284,30 @@ package body Zip is
       Zip.Headers.Load (From, The_End);
 
       --  We take the opportunity to read the main comment, which is right
-      --  after the end-of-central-directory block.
+      --  after the end-of-central-directory block
       Main_Comment := new String (1 .. Integer (The_End.Main_Comment_Length));
       String'Read (From'Access, Main_Comment.all);
 
-      --  Process central directory:
-      Zip_Streams.Set_Index
-        (From,
-         Zip_Streams.Zs_Index_Type (1 + The_End.Central_Dir_Offset) + The_End.Offset_Shifting);
+      --  Process central directory
+      From.Set_Index
+        (DCF.Streams.Zs_Index_Type (1 + The_End.Central_Dir_Offset) + The_End.Offset_Shifting);
 
       for I in 1 .. The_End.Total_Entries loop
          Zip.Headers.Read_And_Check (From, Header);
          declare
             This_Name : String (1 .. Natural (Header.Short_Info.Filename_Length));
-            use Zip_Streams;
          begin
             String'Read (From'Access, This_Name);
-            --  Skip extra field and entry comment.
-            Set_Index
-              (From,
-               Index (From) +
-               Zs_Size_Type (Header.Short_Info.Extra_Field_Length + Header.Comment_Length));
+            --  Skip extra field and entry comment
+            From.Set_Index
+              (From.Index +
+               DCF.Streams.Zs_Size_Type (Header.Short_Info.Extra_Field_Length + Header.Comment_Length));
             --  Now the whole i_th central directory entry is behind
             Insert
               (Dico_Name  => Normalize (This_Name, Case_Sensitive),
                File_Name  => Normalize (This_Name, True),
                File_Index =>
-                 Zip_Streams.Zs_Index_Type (1 + Header.Local_Header_Offset) +
+                 DCF.Streams.Zs_Index_Type (1 + Header.Local_Header_Offset) +
                  The_End.Offset_Shifting,
                Comp_Size     => Header.Short_Info.Dd.Compressed_Size,
                Uncomp_Size   => Header.Short_Info.Dd.Uncompressed_Size,
@@ -343,7 +333,9 @@ package body Zip is
             end if;
          end;
       end loop;
+
       Binary_Tree_Rebalancing.Rebalance (P);
+
       Info.Loaded             := True;
       Info.Case_Sensitive     := Case_Sensitive;
       Info.Zip_File_Name      := new String'(From_Name);
@@ -367,7 +359,7 @@ package body Zip is
    function Comment (Info : in Zip_Info) return String is
      (Info.Zip_File_Comment.all);
 
-   function Stream (Info : in Zip_Info) return not null Zip_Streams.Zipstream_Class_Access is
+   function Stream (Info : in Zip_Info) return not null DCF.Streams.Zipstream_Class_Access is
      (Info.Zip_Input_Stream);
 
    function Entries (Info : in Zip_Info) return Natural is
@@ -501,11 +493,13 @@ package body Zip is
      Size_Test_A'Size = Size_Test_B'Size and Size_Test_A'Alignment = Size_Test_B'Alignment;
 
    procedure Blockread
-     (Stream        : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (Stream        : in out DCF.Streams.Root_Zipstream_Type'Class;
       Buffer        :    out Byte_Buffer;
       Actually_Read :    out Natural)
    is
-      use Ada.Streams, Zip_Streams;
+      use Ada.Streams;
+      use DCF.Streams;
+
       Se_Buffer : Stream_Element_Array (1 .. Buffer'Length);
       for Se_Buffer'Address use Buffer'Address;
       pragma Import (Ada, Se_Buffer);
@@ -528,7 +522,7 @@ package body Zip is
    end Blockread;
 
    procedure Blockread
-     (Stream : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (Stream : in out DCF.Streams.Root_Zipstream_Type'Class;
       Buffer :    out Byte_Buffer)
    is
       Actually_Read : Natural;
@@ -566,7 +560,7 @@ package body Zip is
       end case;
    end Image;
 
-   function Method_From_Code (Code : Interfaces.Unsigned_16) return Pkzip_Method is
+   function Method_From_Code (Code : Unsigned_16) return Pkzip_Method is
    --  An enumeration clause might be more elegant, but needs
    --  curiously an Unchecked_Conversion... (RM 13.4)
    begin
@@ -582,7 +576,7 @@ package body Zip is
 
    --  Copy a chunk from a stream into another one, using a temporary buffer
    procedure Copy_Chunk
-     (From        : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (From        : in out DCF.Streams.Root_Zipstream_Type'Class;
       Into        : in out Ada.Streams.Root_Stream_Type'Class;
       Bytes       :        Natural;
       Buffer_Size :        Positive      := 1024 * 1024;
@@ -633,4 +627,4 @@ package body Zip is
       Delete (Info);
    end Finalize;
 
-end Zip;
+end DCF.Zip;

@@ -29,9 +29,9 @@ with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
-with Unzip.Streams;
-with Zip;
-with Zip_Streams.Calendar;
+with DCF.Streams.Calendar;
+with DCF.Unzip.Streams;
+with DCF.Zip;
 
 use Ada.Command_Line;
 use Ada.Text_IO;
@@ -56,11 +56,11 @@ procedure UnzipDCF is
    Extraction_Directory : SU.Unbounded_String
      := SU.To_Unbounded_String (Dirs.Current_Directory);
 
-   Name_Conflict_Decision : Unzip.Name_Conflict_Intervention := Unzip.Yes;
+   Name_Conflict_Decision : DCF.Unzip.Name_Conflict_Intervention := DCF.Unzip.Yes;
 
    procedure Help is
    begin
-      Put_Line ("UnZipDCF " & Zip.Version & " - unzip document container files");
+      Put_Line ("UnZipDCF " & DCF.Zip.Version & " - unzip document container files");
       New_Line;
       Put_Line ("Usage: unzipdcf [-options[modifiers]] [-d exdir] file [list]");
       New_Line;
@@ -76,13 +76,13 @@ procedure UnzipDCF is
 
    function Get_Out_File
      (Containing_Directory   : String;
-      File                   : Zip.Archived_File;
-      Name_Conflict_Decision : in out Unzip.Name_Conflict_Intervention) return String
+      File                   : DCF.Zip.Archived_File;
+      Name_Conflict_Decision : in out DCF.Unzip.Name_Conflict_Intervention) return String
    is
       pragma Assert (Containing_Directory (Containing_Directory'Last) /= '/');
 
       use Ada.Characters.Handling;
-      use all type Unzip.Name_Conflict_Intervention;
+      use all type DCF.Unzip.Name_Conflict_Intervention;
       use all type Dirs.File_Kind;
 
       function Maybe_Trash_Dir (File_Name : String) return String is
@@ -175,9 +175,9 @@ begin
                   when 'L' =>
                      Lower_Case_Match := True;
                   when 'n' =>
-                     Name_Conflict_Decision := Unzip.None;
+                     Name_Conflict_Decision := DCF.Unzip.None;
                   when 'o' =>
-                     Name_Conflict_Decision := Unzip.Yes_To_All;
+                     Name_Conflict_Decision := DCF.Unzip.Yes_To_All;
                   when 'q' =>
                      Quiet := True;
                   when 'z' =>
@@ -210,11 +210,11 @@ begin
       end if;
 
       declare
-         Archive_Stream : aliased Zip_Streams.File_Zipstream
-           := Zip_Streams.Open (Archive);
-         Zi : Zip.Zip_Info;
+         Archive_Stream : aliased DCF.Streams.File_Zipstream
+           := DCF.Streams.Open (Archive);
+         Zi : DCF.Zip.Zip_Info;
       begin
-         Zip.Load (Zi, Archive_Stream, Archive);
+         DCF.Zip.Load (Zi, Archive_Stream, Archive);
 
          if (Comment or not Quiet) and Zi.Comment'Length > 0 then
             Put_Line (Zi.Comment);
@@ -224,15 +224,15 @@ begin
             null;
          elsif List_Files then
             declare
-               package Mod_IO is new Modular_IO (Unzip.File_Size_Type);
+               package Mod_IO is new Modular_IO (DCF.Unzip.File_Size_Type);
 
-               Total_Uncompressed_Size : Unzip.File_Size_Type := 0;
+               Total_Uncompressed_Size : DCF.Unzip.File_Size_Type := 0;
 
-               procedure List_File_From_Stream (File : Zip.Archived_File) is
-                  use type Unzip.File_Size_Type;
+               procedure List_File_From_Stream (File : DCF.Zip.Archived_File) is
+                  use type DCF.Unzip.File_Size_Type;
 
                   Date_Time : constant Ada.Calendar.Time
-                    := Zip_Streams.Calendar.Convert (File.Date_Time);
+                    := DCF.Streams.Calendar.Convert (File.Date_Time);
                   Date : constant String := Ada.Calendar.Formatting.Image
                     (Date_Time, Time_Zone => Ada.Calendar.Time_Zones.UTC_Time_Offset (Date_Time));
                begin
@@ -243,7 +243,7 @@ begin
                   Put_Line ("  " & Date (Date'First .. Date'Last - 3) & "   " & File.Name);
                end List_File_From_Stream;
 
-               procedure List_All_Files is new Zip.Traverse (List_File_From_Stream);
+               procedure List_All_Files is new DCF.Zip.Traverse (List_File_From_Stream);
             begin
                Put_Line ("  Length      Date    Time    Name");
                Put_Line ("---------  ---------- -----   ----");
@@ -261,9 +261,9 @@ begin
                pragma Assert (Extraction_Folder (Extraction_Folder'Last) /= '/');
 
                type File_Stream_Writer
-                 (File : access Zip_Streams.File_Zipstream)
+                 (File : access DCF.Streams.File_Zipstream)
                is new Ada.Streams.Root_Stream_Type with record
-                  Index : Zip_Streams.Zs_Index_Type := Zip_Streams.Zs_Index_Type'First;
+                  Index : DCF.Streams.Zs_Index_Type := DCF.Streams.Zs_Index_Type'First;
                end record;
 
                overriding procedure Read
@@ -275,8 +275,8 @@ begin
                  (Stream : in out File_Stream_Writer;
                   Item   : in     Ada.Streams.Stream_Element_Array)
                is
-                  use type Zip_Streams.Zs_Index_Type;
-                  use Zip_Streams;
+                  use type DCF.Streams.Zs_Index_Type;
+                  use DCF.Streams;
                begin
                   if not Test_Data then
                      Root_Zipstream_Type'Class (Stream.File.all).Set_Index (Stream.Index);
@@ -288,7 +288,7 @@ begin
                function No_Directory (Name : String) return String is
                  (if Name (Name'Last) = '/' then Name (Name'First .. Name'Last - 1) else Name);
 
-               procedure Extract_File_From_Stream (File : Zip.Archived_File) is
+               procedure Extract_File_From_Stream (File : DCF.Zip.Archived_File) is
                   Name : constant String
                     := Get_Out_File (Extraction_Folder, File, Name_Conflict_Decision);
                   File_Is_Directory : constant Boolean := File.Name (File.Name'Last) = '/';
@@ -303,7 +303,7 @@ begin
                      use type Dirs.File_Kind;
                   begin
                      if not Test_Data and then Path /= Dirs.Full_Name (Path) then
-                        raise Unzip.Write_Error with
+                        raise DCF.Unzip.Write_Error with
                           "Entry " & Name & " is located outside extraction directory";
                         --  TODO Ask to resolve conflict (rename) Name in Get_Out_File instead
                      end if;
@@ -328,14 +328,14 @@ begin
                         declare
                            Stream_Writer : File_Stream_Writer (null);
                         begin
-                           Unzip.Streams.Extract
+                           DCF.Unzip.Streams.Extract
                              (Destination      => Stream_Writer,
                               Archive_Info     => Zi,
                               File             => File,
                               Verify_Integrity => Test_Data);
                            Put_Line (" OK");
                         exception
-                           when Unzip.CRC_Error =>
+                           when DCF.Unzip.CRC_Error =>
                               Put_Line (" ERROR");
                         end;
                      elsif not File_Is_Directory then
@@ -349,11 +349,11 @@ begin
                         end;
 
                         declare
-                           File_Stream : aliased Zip_Streams.File_Zipstream
-                             := Zip_Streams.Create (Path);
+                           File_Stream : aliased DCF.Streams.File_Zipstream
+                             := DCF.Streams.Create (Path);
                            Stream_Writer : File_Stream_Writer (File_Stream'Access);
                         begin
-                           Unzip.Streams.Extract
+                           DCF.Unzip.Streams.Extract
                              (Destination      => Stream_Writer,
                               Archive_Info     => Zi,
                               File             => File,
@@ -363,8 +363,8 @@ begin
                   end;
                end Extract_File_From_Stream;
 
-               procedure Extract_All_Files is new Zip.Traverse (Extract_File_From_Stream);
-               procedure Extract_One_File  is new Zip.Traverse_One_File (Extract_File_From_Stream);
+               procedure Extract_All_Files is new DCF.Zip.Traverse (Extract_File_From_Stream);
+               procedure Extract_One_File  is new DCF.Zip.Traverse_One_File (Extract_File_From_Stream);
             begin
                if not Test_Data and then not Dirs.Exists (Extraction_Folder) then
                   Dirs.Create_Path (Extraction_Folder);

@@ -37,7 +37,7 @@
 --    - All structures are allocated on stack
 --    - Sub-programs are nested, then unneeded parameters are removed
 
-procedure Length_Limited_Huffman_Code_Lengths
+procedure DCF.Length_Limited_Huffman_Code_Lengths
   (Frequencies : in     Count_Array;
    Bit_Lengths :    out Length_Array)
 is
@@ -45,7 +45,7 @@ is
 
    Null_Index : constant Index_Type := Index_Type'Last;
 
-   --  Nodes forming chains.
+   --  Nodes forming chains
    type Node is record
       Weight : Count_Type;
       Count  : Count_Type;                --  Number of leaves before this chain
@@ -272,4 +272,4 @@ begin
          end if;
       end loop;
    end if;
-end Length_Limited_Huffman_Code_Lengths;
+end DCF.Length_Limited_Huffman_Code_Lengths;

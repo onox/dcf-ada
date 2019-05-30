@@ -28,16 +28,14 @@
 --
 --  Pure Ada 95+ code, 100% portable: OS-, CPU- and compiler- independent.
 
-with Interfaces;
-
-package Lz77 is
+private package DCF.Lz77 is
    pragma Preelaborate;
 
    type Method_Type is
      (Iz_4, Iz_5, Iz_6, Iz_7, Iz_8, Iz_9, Iz_10);
    --  Use the Info-Zip algorithm, levels 4-10 (see body for details and credits)
 
-   subtype Byte is Interfaces.Unsigned_8;
+   subtype Byte is Unsigned_8;
 
    generic
       --  LZSS Parameters
@@ -56,4 +54,4 @@ package Lz77 is
       with procedure Write_Dl_Code (Distance, Length : Integer);
    procedure Encode;
 
-end Lz77;
+end DCF.Lz77;

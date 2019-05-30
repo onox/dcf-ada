@@ -25,7 +25,7 @@
 --  Huffman tree generation and deletion.
 --  Originally from info-zip's unzip, data structure rewritten by G. de Montmollin
 
-private package Unzip.Decompress.Huffman is
+private package DCF.Unzip.Decompress.Huffman is
    pragma Preelaborate;
 
    type Huft_Table;
@@ -71,4 +71,4 @@ private package Unzip.Decompress.Huffman is
    Huft_Error         : exception;  --  Bad tree constructed
    Huft_Out_Of_Memory : exception;  --  Not enough memory
 
-end Unzip.Decompress.Huffman;
+end DCF.Unzip.Decompress.Huffman;

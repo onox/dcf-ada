@@ -25,14 +25,14 @@
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Strings.Unbounded.Hash;
 
-with Zip.Compress;
-with Zip.Headers;
-with Zip_Streams;
+with DCF.Streams;
+with DCF.Zip.Compress;
+with DCF.Zip.Headers;
 
-use Zip.Headers;
-use Zip_Streams;
+use DCF.Streams;
+use DCF.Zip.Headers;
 
-package Zip.Create is
+package DCF.Zip.Create is
    pragma Preelaborate;
 
    type Zip_Create_Info is private;
@@ -100,6 +100,7 @@ private
    --  with the unbalanced binary tree of previous versions.
 
    package SU renames Ada.Strings.Unbounded;
+
    package Name_Mapping is new Ada.Containers.Hashed_Maps
      (SU.Unbounded_String, Positive, SU.Hash, SU."=");
 
@@ -116,4 +117,4 @@ private
       Comment : SU.Unbounded_String;
    end record;
 
-end Zip.Create;
+end DCF.Zip.Create;

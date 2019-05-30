@@ -37,11 +37,11 @@
 
 --  Technical documentation: read appnote.txt
 
-with Zip;
+with DCF.Zip;
 
 private with Ada.Streams;
 
-package Unzip is
+package DCF.Unzip is
    pragma Preelaborate;
 
    subtype Pkzip_Method is Zip.Pkzip_Method;
@@ -81,4 +81,4 @@ private
 
    type P_Stream_Element_Array is access all Ada.Streams.Stream_Element_Array;
 
-end Unzip;
+end DCF.Unzip;

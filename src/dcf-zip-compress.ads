@@ -33,9 +33,9 @@
 --  two criteria that usually go in opposite directions: speed and
 --  compression ratio, a bit like risk and return in finance.
 
-with Zip_Streams;
+with DCF.Streams;
 
-package Zip.Compress is
+package DCF.Zip.Compress is
    pragma Preelaborate;
 
    --  Compression_Method is actually reflecting the way of compressing
@@ -67,16 +67,15 @@ package Zip.Compress is
    --  If password /= "", an encryption header is written.
 
    procedure Compress_Data
-     (Input, Output    : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (Input, Output    : in out DCF.Streams.Root_Zipstream_Type'Class;
       Input_Size_Known :        Boolean;
       Input_Size       :        File_Size_Type;  --  Ignored if input_size_known = False
       Method           :        Compression_Method;
       Feedback         :        Feedback_Proc;
-      CRC              :    out Interfaces.Unsigned_32;
+      CRC              :    out Unsigned_32;
       Output_Size      :    out File_Size_Type;
-      Zip_Type         :    out Interfaces.Unsigned_16
+      Zip_Type         :    out Unsigned_16);
       --  ^ code corresponding to the compression method actually used
-   );
 
 private
 
@@ -85,4 +84,4 @@ private
    Method_To_Format : constant Method_To_Format_Type :=
      (Store => Store, Deflation_Method => Deflate);
 
-end Zip.Compress;
+end DCF.Zip.Compress;

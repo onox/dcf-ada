@@ -1,4 +1,4 @@
-package body Zip_Streams.Calendar is
+package body DCF.Streams.Calendar is
 
    procedure Set_Time (S : out Root_Zipstream_Type'Class; Modification_Time : Ada.Calendar.Time) is
    begin
@@ -103,4 +103,4 @@ package body Zip_Streams.Calendar is
       return Time_Of (Year, Month, Day, Seconds_Day_Dur);
    end Convert;
 
-end Zip_Streams.Calendar;
+end DCF.Streams.Calendar;

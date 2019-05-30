@@ -1,14 +1,14 @@
 with Ada.Text_IO;
 
-with Zip;
-with Unzip;
+with DCF.Zip;
+with DCF.Unzip;
 
-use Unzip;
+use DCF.Unzip;
 use Ada.Text_IO;
 
 procedure My_Resolve_Conflict
   (Name            : in     String;
-   Name_Encoding   : in     Zip.Zip_Name_Encoding;
+   Name_Encoding   : in     DCF.Zip.Zip_Name_Encoding;
    Action          :    out Name_Conflict_Intervention;
    New_Name        :    out String;
    New_Name_Length :    out Natural)

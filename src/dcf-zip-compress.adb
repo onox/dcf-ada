@@ -19,30 +19,28 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
-with Zip.Compress.Deflate;
-with Zip.CRC;
+with DCF.Zip.Compress.Deflate;
+with DCF.Zip.CRC;
 
-package body Zip.Compress is
+package body DCF.Zip.Compress is
 
-   use Zip_Streams;
-   use Zip.CRC;
+   use DCF.Streams;
+   use DCF.Zip.CRC;
 
    ---------------------
    --  Compress_data  --
    ---------------------
 
    procedure Compress_Data
-     (Input, Output    : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (Input, Output    : in out DCF.Streams.Root_Zipstream_Type'Class;
       Input_Size_Known :        Boolean;
       Input_Size       :        File_Size_Type;
       Method           :        Compression_Method;
       Feedback         :        Feedback_Proc;
-      CRC              :    out Interfaces.Unsigned_32;
+      CRC              :    out Unsigned_32;
       Output_Size      :    out File_Size_Type;
-      Zip_Type         :    out Interfaces.Unsigned_16)
+      Zip_Type         :    out Unsigned_16)
    is
-      use Interfaces;
-
       Counted        : File_Size_Type;
       User_Aborting  : Boolean;
       Idx_In         : constant Zs_Index_Type := Index (Input);
@@ -137,4 +135,4 @@ package body Zip.Compress is
       Compress_Data_Single_Method (Method);
    end Compress_Data;
 
-end Zip.Compress;
+end DCF.Zip.Compress;

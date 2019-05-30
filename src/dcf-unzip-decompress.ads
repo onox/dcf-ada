@@ -33,14 +33,14 @@
 --  Previously global variables are since then local and task-safe
 --  with one copy per concurrent call.
 
-with Zip.Headers;
-with Zip_Streams;
+with DCF.Zip.Headers;
+with DCF.Streams;
 
-private package Unzip.Decompress is
+private package DCF.Unzip.Decompress is
    pragma Preelaborate;
 
    procedure Decompress_Data
-     (Zip_File : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (Zip_File : in out DCF.Streams.Root_Zipstream_Type'Class;
       --  Zip_File must be open and its index is meant
       --  to point to the beginning of compressed data
       Format                     :        Pkzip_Method;
@@ -54,4 +54,4 @@ private package Unzip.Decompress is
       --  Data_descriptor is appended to the compressed data (1-pass written
       --  zip files, like JAR, OpenDocument, etc.)
 
-end Unzip.Decompress;
+end DCF.Unzip.Decompress;

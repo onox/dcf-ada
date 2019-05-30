@@ -1,4 +1,4 @@
---  Copyright (c) 2011 - 2018 Gautier de Montmollin
+--  Copyright (c) 1999 - 2018 Gautier de Montmollin
 --  SWITZERLAND
 --
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,16 +19,28 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
---  The "Deflate" method combines the LZ77 compression
---  method with some Huffman encoding gymnastics
+with Ada.Streams;
 
-private procedure Zip.Compress.Deflate
-  (Input, Output    : in out Zip_Streams.Root_Zipstream_Type'Class;
-   Input_Size_Known :        Boolean;
-   Input_Size       :        File_Size_Type;  --  Ignored if unknown
-   Feedback         :        Feedback_Proc;
-   Method           :        Deflation_Method;
-   CRC              : in out Interfaces.Unsigned_32;  --  Only updated here
-   Output_Size      :    out File_Size_Type;
-   Compression_Ok   :    out Boolean);  --  Indicates when compressed <= uncompressed
-pragma Preelaborate (Zip.Compress.Deflate);
+package DCF.Zip.CRC is
+   pragma Preelaborate;
+
+   -------------------------------------------------------------
+   --  CRC: Cyclic Redundancy Check to verify data integrity  --
+   -------------------------------------------------------------
+
+   procedure Init (CRC : out Unsigned_32);
+
+   procedure Update (CRC : in out Unsigned_32; Inbuf : Zip.Byte_Buffer);
+   pragma Inline (Update);
+
+   procedure Update_Stream_Array
+     (CRC   : in out Unsigned_32;
+      Inbuf : Ada.Streams.Stream_Element_Array);
+   pragma Inline (Update_Stream_Array);
+
+   function Final (CRC : Unsigned_32) return Unsigned_32;
+   pragma Inline (Final);
+
+   function Image (Value : Unsigned_32) return String;
+
+end DCF.Zip.CRC;

@@ -19,15 +19,13 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
-with Interfaces;
+with DCF.Unzip.Decompress.Huffman;
+with DCF.Zip.CRC;
 
-with Unzip.Decompress.Huffman;
-with Zip.CRC;
-
-package body Unzip.Decompress is
+package body DCF.Unzip.Decompress is
 
    procedure Decompress_Data
-     (Zip_File                   : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (Zip_File                   : in out DCF.Streams.Root_Zipstream_Type'Class;
       Format                     :        Pkzip_Method;
       Mode                       :        Write_Mode;
       Output_Memory_Access       :    out P_Stream_Element_Array; -- \ = write_to_memory
@@ -44,7 +42,6 @@ package body Unzip.Decompress is
       ----------------------------------------------------------------------------
       -- Specifications of UnZ_* packages (remain of Info Zip's code structure) --
       ----------------------------------------------------------------------------
-      use Interfaces;
 
       package Unz_Glob is -- Not global anymore, since local to Decompress_data :-)
          --  I/O Buffers: Sliding dictionary for unzipping, and output buffer as well
@@ -938,4 +935,4 @@ package body Unzip.Decompress is
       end if;
    end Decompress_Data;
 
-end Unzip.Decompress;
+end DCF.Unzip.Decompress;

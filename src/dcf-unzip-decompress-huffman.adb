@@ -19,11 +19,9 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
-with Interfaces;
-
 with Ada.Unchecked_Deallocation;
 
-package body Unzip.Decompress.Huffman is
+package body DCF.Unzip.Decompress.Huffman is
 
    --  Note from Pascal source:
    --  C code by info-zip group, translated to pascal by Christian Ghisler
@@ -55,8 +53,6 @@ package body Unzip.Decompress.Huffman is
       M               : in out Integer;
       Huft_Incomplete :    out Boolean)
    is
-      use Interfaces;
-
       B_Max   : constant := 16;
       B_Maxp1 : constant := B_Max + 1;
 
@@ -331,4 +327,4 @@ package body Unzip.Decompress.Huffman is
          raise;
    end Huft_Build;
 
-end Unzip.Decompress.Huffman;
+end DCF.Unzip.Decompress.Huffman;

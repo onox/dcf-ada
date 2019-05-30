@@ -29,10 +29,10 @@
 with Ada.IO_Exceptions;
 with Ada.Streams;
 
-with Zip;
-with Zip_Streams;
+with DCF.Zip;
+with DCF.Streams;
 
-package Unzip.Streams is
+package DCF.Unzip.Streams is
    pragma Preelaborate;
 
    ----------------------------------------------------------------------------
@@ -52,9 +52,10 @@ package Unzip.Streams is
 
    type Zipped_File_Type is private;
 
-   type Count is new Zip_Streams.Zs_Size_Type;
+   type Count is new DCF.Streams.Zs_Size_Type;
 
-   use type Zip_Streams.Zipstream_Class_Access;
+   use type DCF.Streams.Zipstream_Class_Access;
+
    procedure Open
      (File             : in out Zipped_File_Type;   --  File-in-archive handle
       Archive_Info     : in     Zip.Zip_Info;       --  Archive's Zip_info
@@ -137,4 +138,4 @@ private
 
    type Zipped_File_Type is access Unzip_Stream_Type;
 
-end Unzip.Streams;
+end DCF.Unzip.Streams;

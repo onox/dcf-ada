@@ -54,16 +54,12 @@
 --  2) central directory
 --  3) zipped data entries
 
-with Interfaces;
+with DCF.Streams;
 
-with Zip_Streams;
+use DCF.Streams;
 
-use Zip_Streams;
-
-package Zip.Headers is
+package DCF.Zip.Headers is
    pragma Preelaborate;
-
-   use Interfaces;
 
    ------------------------------------------------------------------------
    --  PKZIP data descriptor, put after streamed compressed data - PK78  --
@@ -225,4 +221,4 @@ package Zip.Headers is
      (Stream  : in out Root_Zipstream_Type'Class;
       The_End : in     End_Of_Central_Dir);
 
-end Zip.Headers;
+end DCF.Zip.Headers;

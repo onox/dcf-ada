@@ -19,7 +19,7 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
-package body Zip.CRC is
+package body DCF.Zip.CRC is
 
    CRC32_Table : array (Unsigned_32'(0) .. 255) of Unsigned_32;
 
@@ -84,16 +84,16 @@ package body Zip.CRC is
       return not CRC;
    end Final;
 
-   function Image (Value : Interfaces.Unsigned_32) return String is
+   function Image (Value : Unsigned_32) return String is
       Alphabet : constant String := "0123456789abcdef";
 
-      V : array (1 .. 4) of Interfaces.Unsigned_8
+      V : array (1 .. 4) of Unsigned_8
         with Import, Convention => Ada, Address => Value'Address;
 
-      function Byte (Value : Interfaces.Unsigned_8) return String is
+      function Byte (Value : Unsigned_8) return String is
         (Alphabet (Natural (Value) / 16 + 1) & Alphabet (Natural (Value) mod 16 + 1));
    begin
       return Byte (V (4)) & Byte (V (3)) & Byte (V (2)) & Byte (V (1));
    end Image;
 
-end Zip.CRC;
+end DCF.Zip.CRC;

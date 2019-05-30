@@ -29,22 +29,20 @@
 --  Version / date / download info: see the version, reference, web strings
 --  defined at the end of the public part of this package.
 
-with Interfaces;
-
 with System;
 
 with Ada.Finalization;
 with Ada.Streams;
 
-with Zip_Streams;
+with DCF.Streams;
 
-package Zip is
+package DCF.Zip is
    pragma Preelaborate;
 
    --  Data sizes in archive
-   subtype File_Size_Type is Interfaces.Unsigned_32;
+   subtype File_Size_Type is Unsigned_32;
 
-   subtype Time is Zip_Streams.Time;
+   subtype Time is DCF.Streams.Time;
 
    type Zip_Name_Encoding is (IBM_437, UTF_8);
    --  Entry names within Zip archives are encoded either with
@@ -73,9 +71,9 @@ package Zip is
 
    function Encrypted (Object : Archived_File) return Boolean;
 
-   function File_Index (Object : Archived_File) return Zip_Streams.Zs_Index_Type;
+   function File_Index (Object : Archived_File) return DCF.Streams.Zs_Index_Type;
 
-   function CRC_32 (Object : Archived_File) return Interfaces.Unsigned_32;
+   function CRC_32 (Object : Archived_File) return Unsigned_32;
 
    -----------------------------------------------------------------------------
 
@@ -94,7 +92,7 @@ package Zip is
 
    procedure Load
      (Info            :    out Zip_Info;
-      From            : in out Zip_Streams.Root_Zipstream_Type'Class;
+      From            : in out DCF.Streams.Root_Zipstream_Type'Class;
       From_Name       : in     String; -- Zip file name
       Case_Sensitive  : in     Boolean               := False;
       Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
@@ -117,7 +115,7 @@ package Zip is
    function Comment (Info : in Zip_Info) return String
      with Pre => Info.Is_Loaded;
 
-   function Stream (Info : in Zip_Info) return not null Zip_Streams.Zipstream_Class_Access
+   function Stream (Info : in Zip_Info) return not null DCF.Streams.Zipstream_Class_Access
      with Pre => Info.Is_Loaded;
 
    function Entries (Info : in Zip_Info) return Natural;
@@ -131,7 +129,7 @@ package Zip is
    function Image (M : Pkzip_Method) return String;
 
    --  Technical: translates the method code as set in zip archives
-   function Method_From_Code (Code : Interfaces.Unsigned_16) return Pkzip_Method;
+   function Method_From_Code (Code : Unsigned_16) return Pkzip_Method;
 
    generic
       with procedure Action (File : Archived_File);
@@ -185,14 +183,14 @@ package Zip is
    --
    --  The procedure's names and parameters match Borland Pascal / Delphi
 
-   subtype Byte is Interfaces.Unsigned_8;
+   subtype Byte is Unsigned_8;
    type Byte_Buffer is array (Integer range <>) of aliased Byte;
    type P_Byte_Buffer is access Byte_Buffer;
 
    --  Same for general streams
 
    procedure Blockread
-     (Stream        : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (Stream        : in out DCF.Streams.Root_Zipstream_Type'Class;
       Buffer        :    out Byte_Buffer;
       Actually_Read :    out Natural);
       --  = buffer'Length if no end of stream before last buffer element
@@ -202,7 +200,7 @@ package Zip is
    --  This mimics the 'Read stream attribute; can be a lot faster, depending
    --  on the compiler's run-time library.
    procedure Blockread
-     (Stream : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (Stream : in out DCF.Streams.Root_Zipstream_Type'Class;
       Buffer :    out Byte_Buffer);
 
    --  This mimics the 'Write stream attribute; can be a lot faster, depending
@@ -214,7 +212,7 @@ package Zip is
 
    --  Copy a chunk from a stream into another one, using a temporary buffer
    procedure Copy_Chunk
-     (From        : in out Zip_Streams.Root_Zipstream_Type'Class;
+     (From        : in out DCF.Streams.Root_Zipstream_Type'Class;
       Into        : in out Ada.Streams.Root_Stream_Type'Class;
       Bytes       :        Natural;
       Buffer_Size :        Positive      := 1024 * 1024;
@@ -251,10 +249,10 @@ private
       Left, Right   : P_Dir_Node;
       Dico_Name     : String (1 .. Name_Len);  --  UPPER if case-insensitive search
       File_Name     : String (1 .. Name_Len);
-      File_Index    : Zip_Streams.Zs_Index_Type;
+      File_Index    : DCF.Streams.Zs_Index_Type;
       Comp_Size     : File_Size_Type;
       Uncomp_Size   : File_Size_Type;
-      Crc_32        : Interfaces.Unsigned_32;
+      Crc_32        : Unsigned_32;
       Date_Time     : Time;
       Method        : Pkzip_Method;
       Name_Encoding : Zip_Name_Encoding;
@@ -270,7 +268,7 @@ private
       Loaded           : Boolean := False;
       Case_Sensitive   : Boolean;
       Zip_File_Name    : P_String;                            --  A file name
-      Zip_Input_Stream : Zip_Streams.Zipstream_Class_Access;  --  Or an input stream
+      Zip_Input_Stream : DCF.Streams.Zipstream_Class_Access;  --  Or an input stream
       --  ^ When not null, we use this, and not zip_file_name
       Dir_Binary_Tree    : P_Dir_Node;
       Total_Entries      : Natural;
@@ -310,4 +308,4 @@ private
       Node : P_Dir_Node;
    end record;
 
-end Zip;
+end DCF.Zip;

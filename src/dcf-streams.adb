@@ -21,7 +21,7 @@
 
 with Ada.Characters.Latin_1;
 
-package body Zip_Streams is
+package body DCF.Streams is
 
    function Open (File_Name : String) return Open_File is
    begin
@@ -260,4 +260,4 @@ package body Zip_Streams is
       return Ada.Streams.Stream_IO.End_Of_File (S.File.File);
    end End_Of_Stream;
 
-end Zip_Streams;
+end DCF.Streams;

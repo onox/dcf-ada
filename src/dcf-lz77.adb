@@ -47,13 +47,9 @@
 --    - LZ77 / IZ: tune TOO_FAR (max: 32767), see http://optipng.sf.net/pngtech/too_far.html
 --        "TOO_FAR in zlib Is Not Too Far" for discussion
 
-with Interfaces;
-
 with System;
 
-use Interfaces;
-
-package body Lz77 is
+package body DCF.Lz77 is
 
    --  System.Word_Size: 13.3(8): A word is the largest amount of storage
    --  that can be conveniently and efficiently manipulated by the hardware,
@@ -591,4 +587,4 @@ package body Lz77 is
       Lz77_Using_Iz (4 + Method_Type'Pos (Method) - Method_Type'Pos (Iz_4));
    end Encode;
 
-end Lz77;
+end DCF.Lz77;
