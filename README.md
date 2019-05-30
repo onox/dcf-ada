@@ -30,6 +30,97 @@ modifications:
 
  * All packages except one that uses `Ada.Calendar` are preelaborated
 
+## Usage
+
+Before the archived files in a document container file can be queried
+or extracted, the archive first needs to be opened and loaded:
+
+```ada
+Archive_Stream : aliased DCF.Streams.File_Zipstream := DCF.Streams.Open (Archive);
+Info : DCF.Zip.Zip_Info;
+```
+
+Then load the archive by calling `DCF.Zip.Load (Info, Archive_Stream)`.
+While the `Info` and `Archive_Stream` objects are in scope, the files
+can be visited in order to extract them.
+
+### Visiting archived files in a document container file
+
+Files can be extracted by visiting over all the archived files in the
+archive and then extracting each of them:
+
+```ada
+procedure Visit_File (File : DCF.Zip.Archived_File) is
+begin
+   Ada.Text_IO.Put_Line ("Visiting " & File.Name);
+end Visit_File;
+
+package Visit_Files is new DCF.Zip.Traverse (Visit_File);
+```
+
+Call `Visit_All_Files (Info)` to visit all files. To extract a single
+file, use `Traverse_One_File` instead.
+
+### Querying an archived file
+
+A `File` object of type `Archived_File` can be queried:
+
+ * `Name` returns the name (path) of the file
+
+ * `Compressed_Size` gives the compressed size
+
+ * `Uncompressed_Size` gives the uncompressed size
+
+ * `Date_Time` returns the modification date and time
+
+ * `Compressed` returns True if compressed with the "deflate" algorithm
+   and False if stored uncompressed
+
+ * `Encrypted` returns True if the file is encrypted and False otherwise.
+   Note that encryption is prohibited and not supported, thus these files
+   cannot be decrypted and extracted
+
+ * `CRC_32` returns the CRC code. This number can be printed with
+   `DCF.Zip.CRC.Image`
+
+### Extracting an archived file
+
+While visiting an archived file, the file can be extracted using a stream
+object:
+
+```ada
+type File_Stream_Writer
+  (File : access DCF.Streams.File_Zipstream)
+is new Ada.Streams.Root_Stream_Type with record
+  Index : DCF.Streams.Zs_Index_Type := DCF.Streams.Zs_Index_Type'First;
+end record;
+```
+
+In the implementation of `File_Stream_Writer.Write`, set the index of
+`This.File.all` to `This.Index` and then write `Item` to `This.File.all`.
+After writing, make sure to update `This.Index` because the `Write` procedure
+may be called multiple times for large files. See [unzipdcf][url-unzipdcf]
+tool for the exact implementation.
+
+Create the file and then write to it using the `File_Stream_Writer` object:
+
+```ada
+declare
+   File_Stream : aliased DCF.Streams.File_Zipstream
+     := DCF.Streams.Create (File.Name);
+   Stream_Writer : File_Stream_Writer (File_Stream'Access);
+begin
+   DCF.Unzip.Streams.Extract
+     (Destination      => Stream_Writer,
+      Archive_Info     => Info,
+      File             => File,
+      Verify_Integrity => False);
+end;
+```
+
+Note that you should verify that `File.Name` is a valid path and sanitize
+it before attempting to create and write to the file.
+
 ## Dependencies
 
 In order to build the library, you need to have:
@@ -91,3 +182,4 @@ This library is distributed under the terms of the [MIT License][url-mit].
   [url-iso-21320]: https://www.iso.org/standard/60101.html
   [url-mit]: https://opensource.org/licenses/mit
   [url-zip-ada]: https://unzip-ada.sourceforge.net
+  [url-unzipdcf]: /tools/unzipdcf.adb
