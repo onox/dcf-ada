@@ -205,7 +205,6 @@ package body DCF.Zip is
    procedure Load
      (Info            :    out Zip_Info;
       From            : in out DCF.Streams.Root_Zipstream_Type'Class;
-      From_Name       : in     String; -- Zip file name
       Case_Sensitive  : in     Boolean               := False;
       Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
    is
@@ -338,7 +337,6 @@ package body DCF.Zip is
 
       Info.Loaded             := True;
       Info.Case_Sensitive     := Case_Sensitive;
-      Info.Zip_File_Name      := new String'(From_Name);
       Info.Zip_Input_Stream   := From'Unchecked_Access;
       Info.Dir_Binary_Tree    := P;
       Info.Total_Entries      := Integer (The_End.Total_Entries);
@@ -354,7 +352,7 @@ package body DCF.Zip is
    function Is_Loaded (Info : in Zip_Info) return Boolean is (Info.Loaded);
 
    function Name (Info : in Zip_Info) return String is
-     (Info.Zip_File_Name.all);
+     (Info.Zip_Input_Stream.Get_Name);
 
    function Comment (Info : in Zip_Info) return String is
      (Info.Zip_File_Comment.all);
@@ -381,7 +379,6 @@ package body DCF.Zip is
       end Delete;
    begin
       Delete (Info.Dir_Binary_Tree);
-      Dispose (Info.Zip_File_Name);
       Dispose (Info.Zip_File_Comment);
       Info.Loaded := False; -- <-- added 14-Jan-2002
    end Delete;
@@ -404,7 +401,7 @@ package body DCF.Zip is
    begin
       if Dn = null then
          raise File_Name_Not_Found with
-           "Entry " & Name & " not found in " & Z.Zip_File_Name.all;
+           "Entry " & Name & " not found in " & Z.Name;
       end if;
       Action ((Node => Dn));
    end Traverse_One_File;
@@ -453,7 +450,7 @@ package body DCF.Zip is
    begin
       if Node = null then
          raise File_Name_Not_Found with
-           "Entry " & Name & " not found in " & Info.Zip_File_Name.all;
+           "Entry " & Name & " not found in " & Info.Name;
       end if;
       Comp_Size := Node.Comp_Size;
       Uncomp_Size := Node.Uncomp_Size;
@@ -593,7 +590,6 @@ package body DCF.Zip is
       end Tree_Clone;
    begin
       Info.Dir_Binary_Tree  := Tree_Clone (Info.Dir_Binary_Tree);
-      Info.Zip_File_Name    := new String'(Info.Zip_File_Name.all);
       Info.Zip_File_Comment := new String'(Info.Zip_File_Comment.all);
    end Adjust;
 

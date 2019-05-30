@@ -93,7 +93,6 @@ package DCF.Zip is
    procedure Load
      (Info            :    out Zip_Info;
       From            : in out DCF.Streams.Root_Zipstream_Type'Class;
-      From_Name       : in     String; -- Zip file name
       Case_Sensitive  : in     Boolean               := False;
       Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
    with Post => Info.Is_Loaded;
@@ -265,21 +264,20 @@ private
    type P_String is access String;
 
    type Zip_Info is new Ada.Finalization.Controlled with record
-      Loaded           : Boolean := False;
-      Case_Sensitive   : Boolean;
-      Zip_File_Name    : P_String;                            --  A file name
-      Zip_Input_Stream : DCF.Streams.Zipstream_Class_Access;  --  Or an input stream
-      --  ^ When not null, we use this, and not zip_file_name
+      Loaded             : Boolean := False;
+      Case_Sensitive     : Boolean;
+      Zip_Input_Stream   : DCF.Streams.Zipstream_Class_Access;
       Dir_Binary_Tree    : P_Dir_Node;
       Total_Entries      : Natural;
       Zip_File_Comment   : P_String;
       Zip_Archive_Format : Zip_Archive_Format_Type := Zip_32;
    end record;
 
-   --  After a copy, need to clone a few things
    overriding procedure Adjust (Info : in out Zip_Info);
-   --  Free heap-allocated memory
+   --  After a copy, need to clone a few things
+
    overriding procedure Finalize (Info : in out Zip_Info);
+   --  Free heap-allocated memory
 
    --  System.Word_Size: 13.3(8): A word is the largest amount of storage
    --  that can be conveniently and efficiently manipulated by the hardware,
