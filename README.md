@@ -36,7 +36,7 @@ Before the archived files in a document container file can be queried
 or extracted, the archive first needs to be opened and loaded:
 
 ```ada
-Archive_Stream : aliased DCF.Streams.File_Zipstream := DCF.Streams.Open (Archive);
+Archive_Stream : aliased DCF.Streams.File_Zipstream := DCF.Streams.Open (Archive_Name);
 Info : DCF.Zip.Zip_Info;
 ```
 
@@ -55,7 +55,7 @@ begin
    Ada.Text_IO.Put_Line ("Visiting " & File.Name);
 end Visit_File;
 
-package Visit_Files is new DCF.Zip.Traverse (Visit_File);
+package Visit_All_Files is new DCF.Zip.Traverse (Visit_File);
 ```
 
 Call `Visit_All_Files (Info)` to visit all files. To extract a single
