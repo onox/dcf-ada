@@ -44,3 +44,4 @@ install:
 		--lib-subdir=$(libdir) \
 		--ali-subdir=$(alidir) \
 		--prefix=$(PREFIX) -P dcf_ada.gpr
+	install bin/* $(PREFIX)/bin/
