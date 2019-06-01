@@ -50,13 +50,9 @@ package body DCF.Unzip.Decompress is
          --  I/O Buffers: Input buffer
          Inbuf          : Zip.Byte_Buffer (0 .. Inbuf_Size - 1);
          Inpos, Readpos : Integer;  -- pos. in input buffer, pos. read from file
-         Compsize,            -- compressed size of file
-         Reachedsize,         -- number of bytes read from zipfile
-         Uncompsize,          -- uncompressed size of file
-         Effective_Writes : Unzip.File_Size_Type;
-         --  ^ count of effective bytes written or tested, for feedback only
-         Percents_Done      : Natural;
-         Crc32val           : Unsigned_32;  -- crc calculated from data
+         Compsize    : Unzip.File_Size_Type;  --  Compressed size of file
+         Reachedsize : Unzip.File_Size_Type;  --  Number of bytes read from zipfile
+         Crc32val           : Unsigned_32;    --  CRC calculated from data
          Uncompressed_Index : Ada.Streams.Stream_Element_Offset;
       end Unz_Glob;
 
@@ -95,7 +91,8 @@ package body DCF.Unzip.Decompress is
       end Unz_Io;
 
       package Unz_Meth is
-         procedure Copy_Stored;
+         procedure Copy_Stored (Size : Ada.Streams.Stream_Element_Offset)
+           with Pre => Mode = Write_To_Stream;
          procedure Inflate;
       end Unz_Meth;
 
@@ -110,8 +107,6 @@ package body DCF.Unzip.Decompress is
             Unz_Glob.Readpos          := -1;  -- Nothing read
             Unz_Glob.Slide_Index      := 0;
             Unz_Glob.Reachedsize      := 0;
-            Unz_Glob.Effective_Writes := 0;
-            Unz_Glob.Percents_Done    := 0;
             Zip_Eof                   := False;
             Zip.CRC.Init (Unz_Glob.Crc32val);
             Bit_Buffer.Init;
@@ -227,7 +222,8 @@ package body DCF.Unzip.Decompress is
          end Bit_Buffer;
 
          procedure Flush (X : Natural) is
-            use Zip, Ada.Streams;
+            use Zip;
+            use Ada.Streams;
          begin
             begin
                case Mode is
@@ -324,13 +320,10 @@ package body DCF.Unzip.Decompress is
 
          --------[ Method: Copy stored ]--------
 
-         procedure Copy_Stored is
+         procedure Copy_Stored (Size : Ada.Streams.Stream_Element_Offset) is
             use Ada.Streams;
-            pragma Assert (Mode = Write_To_Stream);
 
             Buffer_Size : constant := 64 * 1024;  -- 64 KiB
-
-            Size : constant Stream_Element_Offset := Stream_Element_Offset (Unz_Glob.Compsize);
             Read : Stream_Element_Offset := 0;
          begin
             while Read < Size loop
@@ -876,7 +869,8 @@ package body DCF.Unzip.Decompress is
             raise Zip.Archive_Corrupted;
       end Process_Descriptor;
 
-      use Zip, Unz_Meth;
+      use Zip;
+      use Unz_Meth;
    begin -- Decompress_Data
       Output_Memory_Access := null;
       --  ^ this is an 'out' parameter, we have to set it anyway
@@ -895,13 +889,12 @@ package body DCF.Unzip.Decompress is
       if Unz_Glob.Compsize > File_Size_Type'Last - 2 then -- This means: unknown size
          Unz_Glob.Compsize := File_Size_Type'Last - 2;      -- Avoid wraparound in read_buffer
       end if;                                             -- From TT's version, 2008
-      Unz_Glob.Uncompsize := Hint.Dd.Uncompressed_Size;
       Unz_Io.Init_Buffers;
 
       --  Unzip correct type
       case Format is
          when Store =>
-            Copy_Stored;
+            Copy_Stored (Ada.Streams.Stream_Element_Offset (Unz_Glob.Compsize));
          when Deflate =>
             Unz_Meth.Inflate;
       end case;
