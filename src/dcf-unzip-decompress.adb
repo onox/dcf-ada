@@ -239,8 +239,6 @@ package body DCF.Unzip.Decompress is
                      end loop;
                   when Write_To_Stream =>
                      Blockwrite (Output_Stream_Access.all, Unz_Glob.Slide (0 .. X - 1));
-                  when Just_Test =>
-                     null;
                end case;
             exception
                when others =>
@@ -889,7 +887,7 @@ package body DCF.Unzip.Decompress is
                 .Stream_Element_Array
               (1 .. Ada.Streams.Stream_Element_Offset (Hint.Dd.Uncompressed_Size));
             Unz_Glob.Uncompressed_Index := Output_Memory_Access'First;
-         when Write_To_Stream | Just_Test =>
+         when Write_To_Stream =>
             null;
       end case;
 
