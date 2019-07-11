@@ -226,33 +226,50 @@ begin
             declare
                package Mod_IO is new Modular_IO (DCF.Unzip.File_Size_Type);
 
+               use type DCF.Unzip.File_Size_Type;
+
+               function Percentage
+                 (Left, Right : DCF.Unzip.File_Size_Type) return DCF.Unzip.File_Size_Type is
+               begin
+                  if Left = Right then
+                     return 0;
+                  else
+                     --  Use a minimum of 1% so that the result is only 0% if
+                     --  "store" compression method was used
+                     return DCF.Unzip.File_Size_Type'Max (1, DCF.Unzip.File_Size_Type
+                       (100.0 - (100.0 * Float (Left)) / Float (Right)));
+                  end if;
+               end Percentage;
+
                Total_Uncompressed_Size : DCF.Unzip.File_Size_Type := 0;
+               Total_Compressed_Size   : DCF.Unzip.File_Size_Type := 0;
 
                procedure List_File_From_Stream (File : DCF.Zip.Archived_File) is
-                  use type DCF.Unzip.File_Size_Type;
-
                   Date_Time : constant Ada.Calendar.Time
                     := DCF.Streams.Calendar.Convert (File.Date_Time);
                   Date : constant String := Ada.Calendar.Formatting.Image
                     (Date_Time, Time_Zone => Ada.Calendar.Time_Zones.UTC_Time_Offset (Date_Time));
                begin
                   Total_Uncompressed_Size := Total_Uncompressed_Size + File.Uncompressed_Size;
+                  Total_Compressed_Size   := Total_Compressed_Size + File.Compressed_Size;
 
                   --  Print date and time without seconds
-                  Mod_IO.Put (File.Uncompressed_Size, 9);
-                  Put_Line ("  " & Date (Date'First .. Date'Last - 3) & "   " & File.Name);
+                  Mod_IO.Put (File.Uncompressed_Size, 10);
+                  Mod_IO.Put (Percentage (File.Compressed_Size, File.Uncompressed_Size), 4);
+                  Put_Line ("%  " & Date (Date'First .. Date'Last - 3) & "   " & File.Name);
                end List_File_From_Stream;
 
                procedure List_All_Files is new DCF.Zip.Traverse (List_File_From_Stream);
             begin
-               Put_Line ("  Length      Date    Time    Name");
-               Put_Line ("---------  ---------- -----   ----");
+               Put_Line ("  Length   Cmpr     Date    Time    Name");
+               Put_Line ("---------- ----  ---------- -----   ----");
 
                List_All_Files (Info);
 
-               Put_Line ("---------                     -------");
-               Mod_IO.Put (Total_Uncompressed_Size, 9);
-               Put ("                    " & Info.Entries'Image);
+               Put_Line ("---------- ----                     -------");
+               Mod_IO.Put (Total_Uncompressed_Size, 10);
+               Mod_IO.Put (Percentage (Total_Compressed_Size, Total_Uncompressed_Size), 4);
+               Put ("%                    " & Info.Entries'Image);
                Put_Line (if Info.Entries > 1 then " files" else " file");
             end;
          else
