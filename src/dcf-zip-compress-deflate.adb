@@ -53,7 +53,6 @@ with DCF.Length_Limited_Huffman_Code_Lengths;
 
 procedure DCF.Zip.Compress.Deflate
   (Input, Output    : in out DCF.Streams.Root_Zipstream_Type'Class;
-   Input_Size_Known :        Boolean;
    Input_Size       :        File_Size_Type;
    Feedback         :        Feedback_Proc;
    Method           :        Deflation_Method;
@@ -98,7 +97,7 @@ is
       Amount : constant Integer := Outbufidx - 1;
    begin
       Output_Size := Output_Size + File_Size_Type (Integer'Max (0, Amount));
-      if Input_Size_Known and then Output_Size >= Input_Size then
+      if Output_Size >= Input_Size then
          --  The compression so far is obviously inefficient for that file.
          --  Useless to go further.
          --  Stop immediately before growing the file more than the
@@ -1523,12 +1522,8 @@ is
             if X_Percent > 0
               and then ((Bytes_In - 1) mod X_Percent = 0 or Bytes_In = Integer (Input_Size))
             then
-               if Input_Size_Known then
-                  Pctdone := Integer ((100.0 * Float (Bytes_In)) / Float (Input_Size));
-                  Feedback (Pctdone, False, User_Aborting);
-               else
-                  Feedback (0, False, User_Aborting);
-               end if;
+               Pctdone := Integer ((100.0 * Float (Bytes_In)) / Float (Input_Size));
+               Feedback (Pctdone, False, User_Aborting);
                if User_Aborting then
                   raise User_Abort;
                end if;
@@ -1617,11 +1612,7 @@ is
       Read_Block;
       R        := Text_Buffer_Index (String_Buffer_Size - Look_Ahead);
       Bytes_In := 0;
-      if Input_Size_Known then
-         X_Percent := Integer (Input_Size / 40);
-      else
-         X_Percent := 0;
-      end if;
+      X_Percent := Integer (Input_Size / 40);
       case Method is
          when Deflate_Fixed =>  --  "Fixed" (predefined) compression structure
             --  We have only one compressed data block, then it is already the last one.
@@ -1661,12 +1652,8 @@ is
 
 begin
    --  Allocate input and output buffers...
-   if Input_Size_Known then
-      Inbuf :=
-        new Byte_Buffer (1 .. Integer'Min (Integer'Max (8, Integer (Input_Size)), Buffer_Size));
-   else
-      Inbuf := new Byte_Buffer (1 .. Buffer_Size);
-   end if;
+   Inbuf :=
+     new Byte_Buffer (1 .. Integer'Min (Integer'Max (8, Integer (Input_Size)), Buffer_Size));
    Outbuf      := new Byte_Buffer (1 .. Buffer_Size);
    Output_Size := 0;
    Lz_Buffer   := new Full_Range_Lz_Buffer_Type;

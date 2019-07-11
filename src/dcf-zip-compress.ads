@@ -68,8 +68,7 @@ package DCF.Zip.Compress is
 
    procedure Compress_Data
      (Input, Output    : in out DCF.Streams.Root_Zipstream_Type'Class;
-      Input_Size_Known :        Boolean;
-      Input_Size       :        File_Size_Type;  --  Ignored if input_size_known = False
+      Input_Size       :        File_Size_Type;
       Method           :        Compression_Method;
       Feedback         :        Feedback_Proc;
       CRC              :    out Unsigned_32;

@@ -171,7 +171,6 @@ package body DCF.Zip.Create is
          Zip.Compress.Compress_Data
            (Input            => Stream,
             Output           => Info.Stream.all,
-            Input_Size_Known => True,
             Input_Size       => Shi.Dd.Uncompressed_Size,
             Method           => Info.Compress,
             Feedback         => Feedback,

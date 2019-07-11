@@ -33,7 +33,6 @@ package body DCF.Zip.Compress is
 
    procedure Compress_Data
      (Input, Output    : in out DCF.Streams.Root_Zipstream_Type'Class;
-      Input_Size_Known :        Boolean;
       Input_Size       :        File_Size_Type;
       Method           :        Compression_Method;
       Feedback         :        Feedback_Proc;
@@ -57,7 +56,7 @@ package body DCF.Zip.Compress is
          Zip_Type := Compression_Format_Code.Store;
          Counted  := 0;
          while not End_Of_Stream (Input) loop
-            if Input_Size_Known and Counted >= Input_Size then
+            if Counted >= Input_Size then
                exit;
             end if;
             --  Copy data
@@ -72,19 +71,12 @@ package body DCF.Zip.Compress is
               and then
               (First_Feedback or
                (Counted mod (2**16) = 0) or
-               (Input_Size_Known and Counted = Input_Size))
+               (Counted = Input_Size))
             then
-               if Input_Size_Known then
-                  Feedback
-                    (Percents_Done => Natural ((100.0 * Float (Counted)) / Float (Input_Size)),
-                     Entry_Skipped => False,
-                     User_Abort    => User_Aborting);
-               else
-                  Feedback
-                    (Percents_Done => 0,
-                     Entry_Skipped => False,
-                     User_Abort    => User_Aborting);
-               end if;
+               Feedback
+                 (Percents_Done => Natural ((100.0 * Float (Counted)) / Float (Input_Size)),
+                  Entry_Skipped => False,
+                  User_Abort    => User_Aborting);
                First_Feedback := False;
                if User_Aborting then
                   raise User_Abort;
@@ -109,7 +101,6 @@ package body DCF.Zip.Compress is
                Zip.Compress.Deflate
                  (Input,
                   Output,
-                  Input_Size_Known,
                   Input_Size,
                   Feedback,
                   Actual_Method,

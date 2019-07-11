@@ -24,8 +24,7 @@
 
 private procedure DCF.Zip.Compress.Deflate
   (Input, Output    : in out DCF.Streams.Root_Zipstream_Type'Class;
-   Input_Size_Known :        Boolean;
-   Input_Size       :        File_Size_Type;  --  Ignored if unknown
+   Input_Size       :        File_Size_Type;
    Feedback         :        Feedback_Proc;
    Method           :        Deflation_Method;
    CRC              : in out Unsigned_32;  --  Only updated here
