@@ -456,15 +456,6 @@ package body DCF.Zip is
       Uncomp_Size := Node.Uncomp_Size;
    end Get_Sizes;
 
-   --  Workaround for the severe xxx'Read xxx'Write performance
-   --  problems in the GNAT and ObjectAda compilers (as in 2009)
-   --  This is possible if and only if Byte = Stream_Element and
-   --  arrays types are both packed and aligned the same way.
-   subtype Size_Test_A is Byte_Buffer (1 .. 19);
-   subtype Size_Test_B is Ada.Streams.Stream_Element_Array (1 .. 19);
-   Workaround_Possible : constant Boolean :=
-     Size_Test_A'Size = Size_Test_B'Size and Size_Test_A'Alignment = Size_Test_B'Alignment;
-
    procedure Blockread
      (Stream        : in out DCF.Streams.Root_Zipstream_Type'Class;
       Buffer        :    out Byte_Buffer;
@@ -478,20 +469,8 @@ package body DCF.Zip is
       pragma Import (Ada, Se_Buffer);
       Last_Read : Stream_Element_Offset;
    begin
-      if Workaround_Possible then
-         Read (Stream, Se_Buffer, Last_Read);
-         Actually_Read := Natural (Last_Read);
-      else
-         if End_Of_Stream (Stream) then
-            Actually_Read := 0;
-         else
-            Actually_Read :=
-              Integer'Min (Buffer'Length, Integer (Size (Stream) - Index (Stream) + 1));
-            Byte_Buffer'Read
-              (Stream'Access,
-               Buffer (Buffer'First .. Buffer'First + Actually_Read - 1));
-         end if;
-      end if;
+      Read (Stream, Se_Buffer, Last_Read);
+      Actually_Read := Natural (Last_Read);
    end Blockread;
 
    procedure Blockread
@@ -515,12 +494,7 @@ package body DCF.Zip is
       for Se_Buffer'Address use Buffer'Address;
       pragma Import (Ada, Se_Buffer);
    begin
-      if Workaround_Possible then
-         Stream.Write (Se_Buffer);
-      else
-         Byte_Buffer'Write (Stream'Access, Buffer);
-         --  ^This is 30x to 70x slower on GNAT 2009 !
-      end if;
+      Stream.Write (Se_Buffer);
    end Blockwrite;
 
    function Image (M : Pkzip_Method) return String is
