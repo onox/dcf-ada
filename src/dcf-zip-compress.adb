@@ -44,12 +44,10 @@ package body DCF.Zip.Compress is
       User_Aborting  : Boolean;
       Idx_In         : constant Zs_Index_Type := Index (Input);
       Idx_Out        : constant Zs_Index_Type := Index (Output);
-      Compression_Ok : Boolean;
-      First_Feedback : Boolean                := True;
+      Compression_Ok : Boolean := False;
+      First_Feedback : Boolean := True;
 
-      --  Store data as is, or, if do_write = False, just compute
-      --  CRC (this is for encryption)
-      procedure Store_Data (Do_Write : Boolean) is
+      procedure Store_Data is
          Buffer    : Byte_Buffer (1 .. Buffer_Size);
          Last_Read : Natural;
       begin
@@ -59,13 +57,13 @@ package body DCF.Zip.Compress is
             if Counted >= Input_Size then
                exit;
             end if;
+
             --  Copy data
             Blockread (Input, Buffer, Last_Read);
             Counted := Counted + File_Size_Type (Last_Read);
             Update (CRC, Buffer (1 .. Last_Read));
-            if Do_Write then
-               Blockwrite (Output, Buffer (1 .. Last_Read));
-            end if;
+            Blockwrite (Output, Buffer (1 .. Last_Read));
+
             --  Feedback
             if Feedback /= null
               and then
@@ -90,13 +88,10 @@ package body DCF.Zip.Compress is
       procedure Compress_Data_Single_Method (Actual_Method : Compression_Method) is
       begin
          Init (CRC);
-         --  Dispatch the work to child procedures doing the stream compression
-         --  in different formats, depending on the actual compression method.
-         --  For example, for methods LZMA_for_JPEG, LZMA_for_WAV, or LZMA_3, we
-         --  logically call Zip.Compress.LZMA_E for the job.
+
          case Actual_Method is
             when Store =>
-               Store_Data (Do_Write => True);
+               Store_Data;
             when Deflation_Method =>
                Zip.Compress.Deflate
                  (Input,
@@ -109,21 +104,21 @@ package body DCF.Zip.Compress is
                   Compression_Ok);
                Zip_Type := Compression_Format_Code.Deflate;
          end case;
+
          CRC := Final (CRC);
-         --  Handle case where compression has been unefficient:
-         --  data to be compressed is too "random"; then compressed data
-         --  happen to be larger than uncompressed data
-         if not Compression_Ok then
-            --  Go back to the beginning and just store the data
-            Set_Index (Input, Idx_In);
-            Set_Index (Output, Idx_Out);
-            Init (CRC);
-            Store_Data (Do_Write => True);
-            CRC := Final (CRC);
-         end if;
       end Compress_Data_Single_Method;
    begin
       Compress_Data_Single_Method (Method);
+
+      --  Handle case where compression has been unefficient:
+      --  data to be compressed is too "random"; then compressed data
+      --  happen to be larger than uncompressed data
+      if not Compression_Ok then
+         --  Go back to the beginning and just store the data
+         Set_Index (Input, Idx_In);
+         Set_Index (Output, Idx_Out);
+         Compress_Data_Single_Method (Store);
+      end if;
    end Compress_Data;
 
 end DCF.Zip.Compress;
