@@ -37,10 +37,6 @@ abstract project Config is
       "-gnaty",         --  Default style checks
       "-gnaty3AdOSux-ms",
       "-gnat2012",      --  Use Ada 2012
-      "-Wall"           --  All GCC warnings
-   );
-
-   Dev_Switches := (
       "-gnato13",       --  Numeric overflow checking
       "-gnata"          --  Enable assertions
    );
@@ -61,15 +57,15 @@ abstract project Config is
    package Compiler is
       case Mode is
          when "debug" =>
-            for Switches ("ada") use Compiler_Switches & Dev_Switches & ("-g");
+            for Switches ("ada") use Compiler_Switches & ("-g");
          when "release" =>
             for Switches ("ada") use Compiler_Switches &
               ("-gnatn2", "-fomit-frame-pointer", "-flto", "-ffunction-sections");
          when "coverage" =>
-            for Switches ("ada") use Compiler_Switches & Dev_Switches &
+            for Switches ("ada") use Compiler_Switches &
               ("-fprofile-arcs", "-ftest-coverage");
          when "profiling" =>
-            for Switches ("ada") use Compiler_Switches & Dev_Switches & ("-g", "-pg");
+            for Switches ("ada") use Compiler_Switches & ("-g", "-pg");
       end case;
 
       for Local_Configuration_Pragmas use "gnat.adc";
