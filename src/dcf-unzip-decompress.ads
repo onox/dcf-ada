@@ -44,9 +44,7 @@ private package DCF.Unzip.Decompress is
       --  Zip_File must be open and its index is meant
       --  to point to the beginning of compressed data
       Format                     :        Pkzip_Method;
-      Mode                       :        Write_Mode;
-      Output_Memory_Access       :    out P_Stream_Element_Array;  --  \ = write_to_memory
-      Output_Stream_Access       :        P_Stream;                --  \ = write_to_stream
+      Output_Stream_Access       :        P_Stream;
       Data_Descriptor_After_Data :        Boolean;
       Hint                       : in out Zip.Headers.Local_File_Header;
       Verify_Integrity           :        Boolean);

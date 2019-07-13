@@ -27,8 +27,6 @@ package body DCF.Unzip.Decompress is
    procedure Decompress_Data
      (Zip_File                   : in out DCF.Streams.Root_Zipstream_Type'Class;
       Format                     :        Pkzip_Method;
-      Mode                       :        Write_Mode;
-      Output_Memory_Access       :    out P_Stream_Element_Array; -- \ = write_to_memory
       Output_Stream_Access       :        P_Stream;                   -- \ = write_to_stream
       Data_Descriptor_After_Data :        Boolean;
       Hint                       : in out Zip.Headers.Local_File_Header;
@@ -53,7 +51,6 @@ package body DCF.Unzip.Decompress is
          Compsize    : Unzip.File_Size_Type;  --  Compressed size of file
          Reachedsize : Unzip.File_Size_Type;  --  Number of bytes read from zipfile
          Crc32val           : Unsigned_32;    --  CRC calculated from data
-         Uncompressed_Index : Ada.Streams.Stream_Element_Offset;
       end Unz_Glob;
 
       Zip_Eof   : Boolean; -- read over end of zip section for this file
@@ -91,8 +88,7 @@ package body DCF.Unzip.Decompress is
       end Unz_Io;
 
       package Unz_Meth is
-         procedure Copy_Stored (Size : Ada.Streams.Stream_Element_Offset)
-           with Pre => Mode = Write_To_Stream;
+         procedure Copy_Stored (Size : Ada.Streams.Stream_Element_Offset);
          procedure Inflate;
       end Unz_Meth;
 
@@ -226,16 +222,7 @@ package body DCF.Unzip.Decompress is
             use Ada.Streams;
          begin
             begin
-               case Mode is
-                  when Write_To_Memory =>
-                     for I in 0 .. X - 1 loop
-                        Output_Memory_Access (Unz_Glob.Uncompressed_Index) :=
-                          Ada.Streams.Stream_Element (Unz_Glob.Slide (I));
-                        Unz_Glob.Uncompressed_Index := Unz_Glob.Uncompressed_Index + 1;
-                     end loop;
-                  when Write_To_Stream =>
-                     Blockwrite (Output_Stream_Access.all, Unz_Glob.Slide (0 .. X - 1));
-               end case;
+               Blockwrite (Output_Stream_Access.all, Unz_Glob.Slide (0 .. X - 1));
             exception
                when others =>
                   raise Unzip.Write_Error;
@@ -871,20 +858,7 @@ package body DCF.Unzip.Decompress is
 
       use Zip;
       use Unz_Meth;
-   begin -- Decompress_Data
-      Output_Memory_Access := null;
-      --  ^ this is an 'out' parameter, we have to set it anyway
-      case Mode is
-         when Write_To_Memory =>
-            Output_Memory_Access :=
-              new Ada.Streams
-                .Stream_Element_Array
-              (1 .. Ada.Streams.Stream_Element_Offset (Hint.Dd.Uncompressed_Size));
-            Unz_Glob.Uncompressed_Index := Output_Memory_Access'First;
-         when Write_To_Stream =>
-            null;
-      end case;
-
+   begin
       Unz_Glob.Compsize := Hint.Dd.Compressed_Size;
       if Unz_Glob.Compsize > File_Size_Type'Last - 2 then -- This means: unknown size
          Unz_Glob.Compsize := File_Size_Type'Last - 2;      -- Avoid wraparound in read_buffer
