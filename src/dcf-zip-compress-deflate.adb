@@ -1653,8 +1653,8 @@ is
 begin
    --  Allocate input and output buffers...
    Inbuf :=
-     new Byte_Buffer (1 .. Integer'Min (Integer'Max (8, Integer (Input_Size)), Buffer_Size));
-   Outbuf      := new Byte_Buffer (1 .. Buffer_Size);
+     new Byte_Buffer (1 .. Integer'Min (Integer'Max (8, Integer (Input_Size)), Default_Buffer_Size));
+   Outbuf      := new Byte_Buffer (1 .. Default_Buffer_Size);
    Output_Size := 0;
    Lz_Buffer   := new Full_Range_Lz_Buffer_Type;
    begin

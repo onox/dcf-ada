@@ -217,9 +217,10 @@ package DCF.Zip is
    procedure Copy_Chunk
      (From        : in out DCF.Streams.Root_Zipstream_Type'Class;
       Into        : in out Ada.Streams.Root_Stream_Type'Class;
-      Bytes       :        Natural;
-      Buffer_Size :        Positive      := 1024 * 1024;
+      Bytes       :        Ada.Streams.Stream_Element_Count;
       Feedback    :        Feedback_Proc := null);
+
+   User_Abort : exception;
 
    -----------------------------------------------------------------
    --  Information about this package - e.g., for an "about" box  --
@@ -228,6 +229,8 @@ package DCF.Zip is
    Version   : constant String := "1.0.0";
 
 private
+
+   Default_Buffer_Size : constant := 1024 * 1024;  --  1 MiB
 
    --  Zip_info, 23.VI.1999.
    --

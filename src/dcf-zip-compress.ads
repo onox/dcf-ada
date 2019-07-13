@@ -78,8 +78,6 @@ package DCF.Zip.Compress is
 
 private
 
-   Buffer_Size : constant := 1024 * 1024;  --  1 MiB
-
    Method_To_Format : constant Method_To_Format_Type :=
      (Store => Store, Deflation_Method => Deflate);
 

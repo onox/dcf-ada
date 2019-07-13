@@ -539,26 +539,33 @@ package body DCF.Zip is
    procedure Copy_Chunk
      (From        : in out DCF.Streams.Root_Zipstream_Type'Class;
       Into        : in out Ada.Streams.Root_Stream_Type'Class;
-      Bytes       :        Natural;
-      Buffer_Size :        Positive      := 1024 * 1024;
+      Bytes       :        Ada.Streams.Stream_Element_Count;
       Feedback    :        Feedback_Proc := null)
    is
-      Buf                    : Zip.Byte_Buffer (1 .. Buffer_Size);
-      Actually_Read, Remains : Natural;
-      User_Abort             : Boolean := False;
+      use type Ada.Streams.Stream_Element_Offset;
+
+      function Percentage (Left, Right : Ada.Streams.Stream_Element_Count) return Natural is
+        (Natural ((100.0 * Float (Left)) / Float (Right)));
+
+      Buffer     : Ada.Streams.Stream_Element_Array (1 .. Default_Buffer_Size);
+      Last_Read  : Ada.Streams.Stream_Element_Offset;
+      Counted    : Ada.Streams.Stream_Element_Count := 0;
+
+      User_Aborting : Boolean := False;
    begin
-      Remains := Bytes;
-      while Remains > 0 loop
+      while Counted < Bytes loop
          if Feedback /= null then
-            Feedback (100 - Integer (100.0 * Float (Remains) / Float (Bytes)), False, User_Abort);
-            --  !! do something if user_abort = True !!
+            Feedback (Percentage (Counted, Bytes), False, User_Aborting);
+            if User_Aborting then
+               raise User_Abort;
+            end if;
          end if;
-         Zip.Blockread (From, Buf (1 .. Integer'Min (Remains, Buf'Last)), Actually_Read);
-         if Actually_Read = 0 then  --  Premature end, unexpected
+         From.Read (Buffer, Last_Read);
+         if Last_Read < Bytes - Counted then  --  Premature end, unexpected
             raise Zip.Archive_Corrupted;
          end if;
-         Remains := Remains - Actually_Read;
-         Zip.Blockwrite (Into, Buf (1 .. Actually_Read));
+         Counted := Counted + Last_Read;
+         Into.Write (Buffer (1 .. Last_Read));
       end loop;
    end Copy_Chunk;
 

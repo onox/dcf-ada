@@ -48,7 +48,7 @@ package body DCF.Zip.Compress is
       First_Feedback : Boolean := True;
 
       procedure Store_Data is
-         Buffer    : Byte_Buffer (1 .. Buffer_Size);
+         Buffer    : Byte_Buffer (1 .. Default_Buffer_Size);
          Last_Read : Natural;
       begin
          Zip_Type := Compression_Format_Code.Store;

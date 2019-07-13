@@ -70,7 +70,6 @@ package DCF.Unzip is
    CRC_Error               : exception;
    Uncompressed_Size_Error : exception;
    Write_Error             : exception;
-   User_Abort              : exception;
 
 private
 

@@ -238,7 +238,7 @@ package body DCF.Zip.Create is
       Zip.Copy_Chunk
         (Stream,
          Info.Stream.all,
-         Integer (Lh.Dd.Compressed_Size),
+         Ada.Streams.Stream_Element_Count (Lh.Dd.Compressed_Size),
          Feedback => Feedback);
       --  Postfixed data descriptor contains the correct values for
       --  CRC and sizes. Example of Zip files using that descriptor: those
