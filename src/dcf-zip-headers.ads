@@ -77,18 +77,18 @@ package DCF.Zip.Headers is
    --  This header needs to be read in continuation of
    --  the compressed data -> access to a buffer
    procedure Copy_And_Check
-     (Buffer        : in  Byte_Buffer;
-      The_Data_Desc : out Data_Descriptor);
+     (Buffer     : in  Ada.Streams.Stream_Element_Array;
+      Descriptor : out Data_Descriptor);
 
    procedure Read_And_Check
-     (Stream        : in out Root_Zipstream_Type'Class;
-      The_Data_Desc :    out Data_Descriptor);
+     (Stream     : in out Root_Zipstream_Type'Class;
+      Descriptor :    out Data_Descriptor);
 
    Bad_Data_Descriptor : exception;
 
    procedure Write
-     (Stream        : in out Root_Zipstream_Type'Class;
-      The_Data_Desc : in     Data_Descriptor);
+     (Stream     : in out Root_Zipstream_Type'Class;
+      Descriptor : in     Data_Descriptor);
 
    -----------------------------------------------------------------------
    -- PKZIP local file header, in front of every file in archive - PK34 --
@@ -203,7 +203,7 @@ package DCF.Zip.Headers is
    --  Copy_and_check and Read_and_check assume a buffer or a stream
    --  pointing to the End-of-Central-Dir signature
    procedure Copy_And_Check
-     (Buffer  : in  Byte_Buffer;
+     (Buffer  : in  Ada.Streams.Stream_Element_Array;
       The_End : out End_Of_Central_Dir);
 
    procedure Read_And_Check

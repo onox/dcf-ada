@@ -480,7 +480,7 @@ package body DCF.Zip is
       Actually_Read : Natural;
    begin
       Blockread (Stream, Buffer, Actually_Read);
-      if Actually_Read < Buffer'Length then
+      if Actually_Read < Buffer'Last then
          raise Ada.IO_Exceptions.End_Error;
       end if;
    end Blockread;
@@ -496,6 +496,20 @@ package body DCF.Zip is
    begin
       Stream.Write (Se_Buffer);
    end Blockwrite;
+
+   procedure Blockread
+     (Stream : in out DCF.Streams.Root_Zipstream_Type'Class;
+      Buffer :    out Ada.Streams.Stream_Element_Array)
+   is
+      Last_Read : Ada.Streams.Stream_Element_Offset;
+
+      use type Ada.Streams.Stream_Element_Offset;
+   begin
+      Stream.Read (Buffer, Last_Read);
+      if Last_Read < Buffer'Last then
+         raise Ada.IO_Exceptions.End_Error;
+      end if;
+   end Blockread;
 
    function Image (M : Pkzip_Method) return String is
    begin

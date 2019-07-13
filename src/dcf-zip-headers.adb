@@ -21,6 +21,8 @@
 
 package body DCF.Zip.Headers is
 
+   use Ada.Streams;
+
    -----------------------------------------------------------
    -- Byte array <-> various integers, with Intel endianess --
    -----------------------------------------------------------
@@ -30,9 +32,9 @@ package body DCF.Zip.Headers is
 
    generic
       type Number is mod <>; -- range <> in Ada83 version (fake Interfaces)
-   function Intel_X86_Number (B : Byte_Buffer) return Number;
+   function Intel_X86_Number (B : Stream_Element_Array) return Number;
 
-   function Intel_X86_Number (B : Byte_Buffer) return Number is
+   function Intel_X86_Number (B : Stream_Element_Array) return Number is
       N : Number := 0;
    begin
       for I in reverse B'Range loop
@@ -48,15 +50,15 @@ package body DCF.Zip.Headers is
 
    generic
       type Number is mod <>; -- range <> in Ada83 version (fake Interfaces)
-      Size : Positive;
-   function Intel_X86_Buffer (N : Number) return Byte_Buffer;
+      Size : Stream_Element_Count;
+   function Intel_X86_Buffer (N : Number) return Stream_Element_Array;
 
-   function Intel_X86_Buffer (N : Number) return Byte_Buffer is
-      B : Byte_Buffer (1 .. Size);
+   function Intel_X86_Buffer (N : Number) return Stream_Element_Array is
+      B : Stream_Element_Array (1 .. Size);
       M : Number := N;
    begin
       for I in B'Range loop
-         B (I) := Unsigned_8 (M and 255);
+         B (I) := Stream_Element (M and 255);
          M     := M / 256;
       end loop;
       return B;
@@ -69,13 +71,13 @@ package body DCF.Zip.Headers is
    --  PK signatures  --
    ---------------------
 
-   function Pk_Signature (Buf : Byte_Buffer; Code : Unsigned_8) return Boolean is
+   function Pk_Signature (Buf : Stream_Element_Array; Code : Stream_Element) return Boolean is
    begin
       return Buf (Buf'First .. Buf'First + 3) = (16#50#, 16#4B#, Code, Code + 1);
       --  PK12, PK34, ...
    end Pk_Signature;
 
-   procedure Pk_Signature (Buf : in out Byte_Buffer; Code : Unsigned_8) is
+   procedure Pk_Signature (Buf : in out Stream_Element_Array; Code : Stream_Element) is
    begin
       Buf (1 .. 4) := (16#50#, 16#4B#, Code, Code + 1); -- PK12, PK34, ...
    end Pk_Signature;
@@ -87,7 +89,7 @@ package body DCF.Zip.Headers is
      (Stream : in out Root_Zipstream_Type'Class;
       Header :    out Central_File_Header)
    is
-      Chb : Byte_Buffer (1 .. 46);
+      Chb : Stream_Element_Array (1 .. 46);
    begin
       Blockread (Stream, Chb);
 
@@ -122,7 +124,7 @@ package body DCF.Zip.Headers is
    end Read_And_Check;
 
    procedure Write (Stream : in out Root_Zipstream_Type'Class; Header : in Central_File_Header) is
-      Chb : Byte_Buffer (1 .. 46);
+      Chb : Stream_Element_Array (1 .. 46);
    begin
       Pk_Signature (Chb, 1);
 
@@ -142,7 +144,7 @@ package body DCF.Zip.Headers is
       Chb (39 .. 42) := Intel_Bf (Header.External_Attributes);
       Chb (43 .. 46) := Intel_Bf (Header.Local_Header_Offset);
 
-      Blockwrite (Stream, Chb);
+      Stream.Write (Chb);
    end Write;
 
    -------------------------------------------------------------------------
@@ -152,7 +154,7 @@ package body DCF.Zip.Headers is
      (Stream : in out Root_Zipstream_Type'Class;
       Header :    out Local_File_Header)
    is
-      Lhb : Byte_Buffer (1 .. 30);
+      Lhb : Stream_Element_Array (1 .. 30);
    begin
       Blockread (Stream, Lhb);
 
@@ -181,7 +183,7 @@ package body DCF.Zip.Headers is
    end Read_And_Check;
 
    procedure Write (Stream : in out Root_Zipstream_Type'Class; Header : in Local_File_Header) is
-      Lhb : Byte_Buffer (1 .. 30);
+      Lhb : Stream_Element_Array (1 .. 30);
    begin
       Pk_Signature (Lhb, 3);
 
@@ -195,14 +197,14 @@ package body DCF.Zip.Headers is
       Lhb (27 .. 28) := Intel_Bf (Header.Filename_Length);
       Lhb (29 .. 30) := Intel_Bf (Header.Extra_Field_Length);
 
-      Blockwrite (Stream, Lhb);
+      Stream.Write (Lhb);
    end Write;
 
    ---------------------------------------------
    --  PKZIP end-of-central-directory - PK56  --
    ---------------------------------------------
-   procedure Copy_And_Check (Buffer : in Byte_Buffer; The_End : out End_Of_Central_Dir) is
-      O : constant Integer := Buffer'First - 1;
+   procedure Copy_And_Check (Buffer : in Stream_Element_Array; The_End : out End_Of_Central_Dir) is
+      O : constant Stream_Element_Offset := Buffer'First - 1;
    begin
       if not Pk_Signature (Buffer, 5) then
          raise Bad_End;
@@ -215,17 +217,16 @@ package body DCF.Zip.Headers is
       The_End.Central_Dir_Size    := Intel_Nb (Buffer (O + 13 .. O + 16));
       The_End.Central_Dir_Offset  := Intel_Nb (Buffer (O + 17 .. O + 20));
       The_End.Main_Comment_Length := Intel_Nb (Buffer (O + 21 .. O + 22));
-
    end Copy_And_Check;
 
    procedure Read_And_Check
      (Stream  : in out Root_Zipstream_Type'Class;
       The_End :    out End_Of_Central_Dir)
    is
-      Eb : Byte_Buffer (1 .. 22);
+      Buffer : Stream_Element_Array (1 .. 22);
    begin
-      Blockread (Stream, Eb);
-      Copy_And_Check (Eb, The_End);
+      Blockread (Stream, Buffer);
+      Copy_And_Check (Buffer, The_End);
    end Read_And_Check;
 
    procedure Load (Stream : in out Root_Zipstream_Type'Class; The_End : out End_Of_Central_Dir) is
@@ -246,15 +247,16 @@ package body DCF.Zip.Headers is
       Set_Index (Stream, Min_End_Start);
       declare
          --  We copy a large chunk of the zip stream's tail into a buffer.
-         Large_Buffer : Byte_Buffer (0 .. Natural (Size (Stream) - Min_End_Start));
-         Ilb          : Integer;
+         Large_Buffer : Stream_Element_Array
+           (0 .. Stream_Element_Count (Size (Stream) - Min_End_Start));
+         Ilb          : Stream_Element_Offset;
          X            : Zs_Size_Type;
       begin
          Blockread (Stream, Large_Buffer);
          for I in reverse Min_End_Start .. Size (Stream) - 21 loop
             --  Yes, we must _search_ for the header...
             --  because PKWARE put a variable-size comment _after_ it 8-(
-            Ilb := Integer (I - Min_End_Start);
+            Ilb := Stream_Element_Offset (I - Min_End_Start);
             if Pk_Signature (Large_Buffer (Ilb .. Ilb + 3), 5) then
                Copy_And_Check (Large_Buffer (Ilb .. Ilb + 21), The_End);
                --  At this point, the buffer was successfully read, the_end is
@@ -294,7 +296,7 @@ package body DCF.Zip.Headers is
    end Load;
 
    procedure Write (Stream : in out Root_Zipstream_Type'Class; The_End : in End_Of_Central_Dir) is
-      Eb : Byte_Buffer (1 .. 22);
+      Eb : Stream_Element_Array (1 .. 22);
    begin
       Pk_Signature (Eb, 5);
 
@@ -306,46 +308,48 @@ package body DCF.Zip.Headers is
       Eb (17 .. 20) := Intel_Bf (The_End.Central_Dir_Offset);
       Eb (21 .. 22) := Intel_Bf (The_End.Main_Comment_Length);
 
-      Blockwrite (Stream, Eb);
+      Stream.Write (Eb);
    end Write;
 
    --------------------------------------------------------------------
    --  PKZIP data descriptor, after streamed compressed data - PK78  --
    --------------------------------------------------------------------
-   procedure Copy_And_Check (Buffer : in Byte_Buffer; The_Data_Desc : out Data_Descriptor) is
+   procedure Copy_And_Check
+     (Buffer     : in  Stream_Element_Array;
+      Descriptor : out Data_Descriptor) is
    begin
       if not Pk_Signature (Buffer, 7) then
          raise Bad_Data_Descriptor;
       end if;
 
-      The_Data_Desc.Crc_32            := Intel_Nb (Buffer (5 .. 8));
-      The_Data_Desc.Compressed_Size   := Intel_Nb (Buffer (9 .. 12));
-      The_Data_Desc.Uncompressed_Size := Intel_Nb (Buffer (13 .. 16));
+      Descriptor.Crc_32            := Intel_Nb (Buffer (5 .. 8));
+      Descriptor.Compressed_Size   := Intel_Nb (Buffer (9 .. 12));
+      Descriptor.Uncompressed_Size := Intel_Nb (Buffer (13 .. 16));
    end Copy_And_Check;
 
    procedure Read_And_Check
-     (Stream        : in out Root_Zipstream_Type'Class;
-      The_Data_Desc :    out Data_Descriptor)
+     (Stream     : in out Root_Zipstream_Type'Class;
+      Descriptor :    out Data_Descriptor)
    is
-      Ddb : Byte_Buffer (1 .. 16);
+      Buffer : Stream_Element_Array (1 .. 16);
    begin
-      Blockread (Stream, Ddb);
-      Copy_And_Check (Ddb, The_Data_Desc);
+      Blockread (Stream, Buffer);
+      Copy_And_Check (Buffer, Descriptor);
    end Read_And_Check;
 
    procedure Write
-     (Stream        : in out Root_Zipstream_Type'Class;
-      The_Data_Desc : in     Data_Descriptor)
+     (Stream     : in out Root_Zipstream_Type'Class;
+      Descriptor : in     Data_Descriptor)
    is
-      Ddb : Byte_Buffer (1 .. 16);
+      Buffer : Stream_Element_Array (1 .. 16);
    begin
-      Pk_Signature (Ddb, 7);
+      Pk_Signature (Buffer, 7);
 
-      Ddb (5 .. 8)   := Intel_Bf (The_Data_Desc.Crc_32);
-      Ddb (9 .. 12)  := Intel_Bf (The_Data_Desc.Compressed_Size);
-      Ddb (13 .. 16) := Intel_Bf (The_Data_Desc.Uncompressed_Size);
+      Buffer (5 .. 8)   := Intel_Bf (Descriptor.Crc_32);
+      Buffer (9 .. 12)  := Intel_Bf (Descriptor.Compressed_Size);
+      Buffer (13 .. 16) := Intel_Bf (Descriptor.Uncompressed_Size);
 
-      Blockwrite (Stream, Ddb);
+      Stream.Write (Buffer);
    end Write;
 
 end DCF.Zip.Headers;

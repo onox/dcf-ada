@@ -202,6 +202,10 @@ package DCF.Zip is
      (Stream : in out DCF.Streams.Root_Zipstream_Type'Class;
       Buffer :    out Byte_Buffer);
 
+   procedure Blockread
+     (Stream : in out DCF.Streams.Root_Zipstream_Type'Class;
+      Buffer :    out Ada.Streams.Stream_Element_Array);
+
    --  This mimics the 'Write stream attribute; can be a lot faster, depending
    --  on the compiler's run-time library.
    --  NB: here we can use the root stream type: no question of size, index, etc.

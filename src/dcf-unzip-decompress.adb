@@ -846,9 +846,9 @@ package body DCF.Unzip.Decompress is
       end Unz_Meth;
 
       procedure Process_Descriptor (Dd : out Zip.Headers.Data_Descriptor) is
-         Start     : Integer;
+         Start     : Ada.Streams.Stream_Element_Offset;
          B         : Unsigned_8;
-         Dd_Buffer : Zip.Byte_Buffer (1 .. 30);
+         Dd_Buffer : Ada.Streams.Stream_Element_Array (1 .. 16);
       begin
          Unz_Io.Bit_Buffer.Dump_To_Byte_Boundary;
          B := Unz_Io.Read_Byte_Decrypted;
@@ -857,11 +857,11 @@ package body DCF.Unzip.Decompress is
             Dd_Buffer (2) := 75;
             Start         := 3;
          else
-            Dd_Buffer (1) := B; -- hopefully = 80 (will be checked)
+            Dd_Buffer (1) := Ada.Streams.Stream_Element (B); -- hopefully = 80 (will be checked)
             Start         := 2;
          end if;
          for I in Start .. 16 loop
-            Dd_Buffer (I) := Unz_Io.Read_Byte_Decrypted;
+            Dd_Buffer (I) := Ada.Streams.Stream_Element (Unz_Io.Read_Byte_Decrypted);
          end loop;
          Zip.Headers.Copy_And_Check (Dd_Buffer, Dd);
       exception
