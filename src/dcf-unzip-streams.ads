@@ -34,6 +34,18 @@ with DCF.Streams;
 package DCF.Unzip.Streams is
    pragma Preelaborate;
 
+   type Stream_Writer
+     (Target : access DCF.Streams.Root_Zipstream_Type'Class)
+   is new Ada.Streams.Root_Stream_Type with private;
+   --  A simple helper object to extract files to a Root_Zipstream_Type
+   --
+   --  To extract to a file on disk, create a Stream_Writer object as follows:
+   --
+   --  File_Stream   : aliased DCF.Streams.File_Zipstream := DCF.Streams.Create (Path);
+   --  Stream_Writer : DCF.Unzip.Streams.Stream_Writer (File_Stream'Access);
+   --
+   --  And then call procedure Extract below.
+
    use type DCF.Streams.Zipstream_Class_Access;
 
    procedure Extract
@@ -47,5 +59,22 @@ package DCF.Unzip.Streams is
    --  The memory footprint is limited to the decompression structures and
    --  buffering, so the outward stream can be an interesting alternative
    --  to the inward, albeit less comfortable.
+
+private
+
+   type Stream_Writer
+     (Target : access DCF.Streams.Root_Zipstream_Type'Class)
+   is new Ada.Streams.Root_Stream_Type with record
+      Index : DCF.Streams.Zs_Index_Type := DCF.Streams.Zs_Index_Type'First;
+   end record;
+
+   overriding procedure Read
+     (Stream : in out Stream_Writer;
+      Item   :    out Ada.Streams.Stream_Element_Array;
+      Last   :    out Ada.Streams.Stream_Element_Offset) is null;
+
+   overriding procedure Write
+     (Stream : in out Stream_Writer;
+      Item   : in     Ada.Streams.Stream_Element_Array);
 
 end DCF.Unzip.Streams;

@@ -85,30 +85,14 @@ A `File` object of type `Archived_File` can be queried:
 
 ### Extracting an archived file
 
-While visiting an archived file, the file can be extracted using a stream
-object:
-
-```ada
-type File_Stream_Writer
-  (File : access DCF.Streams.File_Zipstream)
-is new Ada.Streams.Root_Stream_Type with record
-  Index : DCF.Streams.Zs_Index_Type := DCF.Streams.Zs_Index_Type'First;
-end record;
-```
-
-In the implementation of `File_Stream_Writer.Write`, set the index of
-`This.File.all` to `This.Index` and then write `Item` to `This.File.all`.
-After writing, make sure to update `This.Index` because the `Write` procedure
-may be called multiple times for large files. See [unzipdcf][url-unzipdcf]
-tool for the exact implementation.
-
-Create the file and then write to it using the `File_Stream_Writer` object:
+While visiting an archived file, the file can be extracted using a
+`Stream_Writer` object. First create the file and then write to it:
 
 ```ada
 declare
    File_Stream : aliased DCF.Streams.File_Zipstream
      := DCF.Streams.Create (File.Name);
-   Stream_Writer : File_Stream_Writer (File_Stream'Access);
+   Stream_Writer : DCF.Unzip.Streams.Stream_Writer (File_Stream'Access);
 begin
    DCF.Unzip.Streams.Extract
      (Destination      => Stream_Writer,
@@ -117,6 +101,9 @@ begin
       Verify_Integrity => False);
 end;
 ```
+
+If you want to verify the integrity of the file without extracting it, set
+`Verify_Integrity` to `True` and use `null` in the discriminant of `Stream_Writer`.
 
 Note that you should verify that `File.Name` is a valid path and sanitize
 it before attempting to create and write to the file.
@@ -182,4 +169,3 @@ This library is distributed under the terms of the [MIT License][url-mit].
   [url-iso-21320]: https://www.iso.org/standard/60101.html
   [url-mit]: https://opensource.org/licenses/mit
   [url-zip-ada]: https://unzip-ada.sourceforge.net
-  [url-unzipdcf]: /tools/unzipdcf.adb

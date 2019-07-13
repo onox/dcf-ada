@@ -26,6 +26,19 @@ with DCF.Zip.Headers;
 
 package body DCF.Unzip.Streams is
 
+   overriding procedure Write
+     (Stream : in out Stream_Writer;
+      Item   : in     Ada.Streams.Stream_Element_Array)
+   is
+      use type DCF.Streams.Zs_Index_Type;
+   begin
+      if Stream.Target /= null then
+         Stream.Target.all.Set_Index (Stream.Index);
+         Stream.Target.all.Write (Item);
+         Stream.Index := Stream.Index + Item'Length;
+      end if;
+   end Write;
+
    procedure Unzip_File
      (Zip_Stream       : in out DCF.Streams.Root_Zipstream_Type'Class;
       Header_Index     : in     DCF.Streams.Zs_Index_Type;

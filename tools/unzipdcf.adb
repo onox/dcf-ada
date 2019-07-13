@@ -277,31 +277,6 @@ begin
                Extraction_Folder : constant String := SU.To_String (Extraction_Directory);
                pragma Assert (Extraction_Folder (Extraction_Folder'Last) /= '/');
 
-               type File_Stream_Writer
-                 (File : access DCF.Streams.File_Zipstream)
-               is new Ada.Streams.Root_Stream_Type with record
-                  Index : DCF.Streams.Zs_Index_Type := DCF.Streams.Zs_Index_Type'First;
-               end record;
-
-               overriding procedure Read
-                 (Stream : in out File_Stream_Writer;
-                  Item   :    out Ada.Streams.Stream_Element_Array;
-                  Last   :    out Ada.Streams.Stream_Element_Offset) is null;
-
-               overriding procedure Write
-                 (Stream : in out File_Stream_Writer;
-                  Item   : in     Ada.Streams.Stream_Element_Array)
-               is
-                  use type DCF.Streams.Zs_Index_Type;
-                  use DCF.Streams;
-               begin
-                  if not Test_Data then
-                     Root_Zipstream_Type'Class (Stream.File.all).Set_Index (Stream.Index);
-                     Root_Zipstream_Type'Class (Stream.File.all).Write (Item);
-                     Stream.Index := Stream.Index + Item'Length;
-                  end if;
-               end Write;
-
                function No_Directory (Name : String) return String is
                  (if Name (Name'Last) = '/' then Name (Name'First .. Name'Last - 1) else Name);
 
@@ -343,7 +318,7 @@ begin
 
                      if Test_Data then
                         declare
-                           Stream_Writer : File_Stream_Writer (null);
+                           Stream_Writer : DCF.Unzip.Streams.Stream_Writer (null);
                         begin
                            DCF.Unzip.Streams.Extract
                              (Destination      => Stream_Writer,
@@ -368,7 +343,7 @@ begin
                         declare
                            File_Stream : aliased DCF.Streams.File_Zipstream
                              := DCF.Streams.Create (Path);
-                           Stream_Writer : File_Stream_Writer (File_Stream'Access);
+                           Stream_Writer : DCF.Unzip.Streams.Stream_Writer (File_Stream'Access);
                         begin
                            DCF.Unzip.Streams.Extract
                              (Destination      => Stream_Writer,
