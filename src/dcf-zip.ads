@@ -213,12 +213,12 @@ package DCF.Zip is
      (Stream : in out Ada.Streams.Root_Stream_Type'Class;
       Buffer : in     Byte_Buffer);
 
-   --  Copy a chunk from a stream into another one, using a temporary buffer
    procedure Copy_Chunk
      (From        : in out DCF.Streams.Root_Zipstream_Type'Class;
       Into        : in out Ada.Streams.Root_Stream_Type'Class;
       Bytes       :        Ada.Streams.Stream_Element_Count;
       Feedback    :        Feedback_Proc := null);
+   --  Copy a chunk from a stream into another one, using a temporary buffer
 
    User_Abort : exception;
 

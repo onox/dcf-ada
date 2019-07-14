@@ -24,12 +24,7 @@ with DCF.Zip.CRC;
 
 package body DCF.Zip.Compress is
 
-   use DCF.Streams;
    use DCF.Zip.CRC;
-
-   ---------------------
-   --  Compress_data  --
-   ---------------------
 
    procedure Compress_Data
      (Input, Output    : in out DCF.Streams.Root_Zipstream_Type'Class;
@@ -40,49 +35,48 @@ package body DCF.Zip.Compress is
       Output_Size      :    out File_Size_Type;
       Zip_Type         :    out Unsigned_16)
    is
-      Counted        : File_Size_Type;
-      User_Aborting  : Boolean;
-      Idx_In         : constant Zs_Index_Type := Index (Input);
-      Idx_Out        : constant Zs_Index_Type := Index (Output);
-      Compression_Ok : Boolean := False;
-      First_Feedback : Boolean := True;
+      Index_In  : constant DCF.Streams.Zs_Index_Type := Input.Index;
+      Index_Out : constant DCF.Streams.Zs_Index_Type := Output.Index;
+
+      Compression_OK : Boolean := False;
 
       procedure Store_Data is
-         Buffer    : Byte_Buffer (1 .. Default_Buffer_Size);
-         Last_Read : Natural;
+         use type Ada.Streams.Stream_Element_Offset;
+
+         function Percentage (Left, Right : Ada.Streams.Stream_Element_Count) return Natural is
+           (Natural ((100.0 * Float (Left)) / Float (Right)));
+
+         Buffer    : Ada.Streams.Stream_Element_Array (1 .. Default_Buffer_Size);
+         Last_Read : Ada.Streams.Stream_Element_Offset;
+
+         Counted   : Ada.Streams.Stream_Element_Count := 0;
+         Size      : constant Ada.Streams.Stream_Element_Count :=
+           Ada.Streams.Stream_Element_Count (Input_Size);
+
+         User_Aborting  : Boolean := False;
       begin
-         Zip_Type := Compression_Format_Code.Store;
-         Counted  := 0;
-         while not End_Of_Stream (Input) loop
-            if Counted >= Input_Size then
-               exit;
-            end if;
-
-            --  Copy data
-            Blockread (Input, Buffer, Last_Read);
-            Counted := Counted + File_Size_Type (Last_Read);
-            Update (CRC, Buffer (1 .. Last_Read));
-            Blockwrite (Output, Buffer (1 .. Last_Read));
-
-            --  Feedback
-            if Feedback /= null
-              and then
-              (First_Feedback or
-               (Counted mod (2**16) = 0) or
-               (Counted = Input_Size))
-            then
-               Feedback
-                 (Percents_Done => Natural ((100.0 * Float (Counted)) / Float (Input_Size)),
-                  Entry_Skipped => False,
-                  User_Abort    => User_Aborting);
-               First_Feedback := False;
+         while not Input.End_Of_Stream loop
+            if Feedback /= null then
+               Feedback (Percentage (Counted, Size), False, User_Aborting);
                if User_Aborting then
                   raise User_Abort;
                end if;
             end if;
+
+            if Counted >= Size then
+               exit;
+            end if;
+
+            Input.Read (Buffer, Last_Read);
+            Counted := Counted + Last_Read;
+            Output.Write (Buffer (1 .. Last_Read));
+
+            Update_Stream_Array (CRC, Buffer (1 .. Last_Read));
          end loop;
-         Output_Size    := Counted;
-         Compression_Ok := True;
+
+         Output_Size    := File_Size_Type (Counted);
+         Zip_Type       := Compression_Format_Code.Store;
+         Compression_OK := True;
       end Store_Data;
 
       procedure Compress_Data_Single_Method (Actual_Method : Compression_Method) is
@@ -101,7 +95,7 @@ package body DCF.Zip.Compress is
                   Actual_Method,
                   CRC,
                   Output_Size,
-                  Compression_Ok);
+                  Compression_OK);
                Zip_Type := Compression_Format_Code.Deflate;
          end case;
 
@@ -113,10 +107,10 @@ package body DCF.Zip.Compress is
       --  Handle case where compression has been unefficient:
       --  data to be compressed is too "random"; then compressed data
       --  happen to be larger than uncompressed data
-      if not Compression_Ok then
+      if not Compression_OK then
          --  Go back to the beginning and just store the data
-         Set_Index (Input, Idx_In);
-         Set_Index (Output, Idx_Out);
+         Input.Set_Index (Index_In);
+         Output.Set_Index (Index_Out);
          Compress_Data_Single_Method (Store);
       end if;
    end Compress_Data;

@@ -535,7 +535,6 @@ package body DCF.Zip is
       end case;
    end Method_From_Code;
 
-   --  Copy a chunk from a stream into another one, using a temporary buffer
    procedure Copy_Chunk
      (From        : in out DCF.Streams.Root_Zipstream_Type'Class;
       Into        : in out Ada.Streams.Root_Stream_Type'Class;
