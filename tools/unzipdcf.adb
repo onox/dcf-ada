@@ -307,7 +307,7 @@ begin
                            pragma Assert (not Junk_Directories);
                            if not Dirs.Exists (Path) or else Dirs.Kind (Path) /= Dirs.Directory then
                               Put_Line ("   creating: " & Name);
-                              Dirs.Create_Path (Name);
+                              Dirs.Create_Path (Path);
                            end if;
                         elsif File.Compressed then
                            Put_Line ("  inflating: " & Name);
