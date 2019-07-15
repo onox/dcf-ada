@@ -112,9 +112,6 @@ package DCF.Zip is
 
    type Pkzip_Method is (Store, Deflate);
 
-   --  Return a String image, nicer than the 'Image attribute
-   function Image (M : Pkzip_Method) return String;
-
    --  Technical: translates the method code as set in zip archives
    function Method_From_Code (Code : Unsigned_16) return Pkzip_Method;
 

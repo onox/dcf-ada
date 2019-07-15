@@ -447,16 +447,6 @@ package body DCF.Zip is
       end if;
    end Blockread;
 
-   function Image (M : Pkzip_Method) return String is
-   begin
-      case M is
-         when Store =>
-            return "Store";
-         when Deflate =>
-            return "Deflate";
-      end case;
-   end Image;
-
    function Method_From_Code (Code : Unsigned_16) return Pkzip_Method is
    --  An enumeration clause might be more elegant, but needs
    --  curiously an Unchecked_Conversion... (RM 13.4)
