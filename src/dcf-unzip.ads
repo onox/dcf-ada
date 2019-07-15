@@ -44,28 +44,12 @@ private with Ada.Streams;
 package DCF.Unzip is
    pragma Preelaborate;
 
-   subtype Pkzip_Method is Zip.Pkzip_Method;
-
-   ----------------------------------------------
-   -- Extraction procedures for user interface --
-   ----------------------------------------------
-
-   --  NB: the *_proc types are accesses to procedures - their usage
-   --  may require the non-standard attribute "unrestricted_access",
-   --  or some changes.
-   --  Read unzipada.adb for details and examples.
-
    type Name_Conflict_Intervention is (Yes, No, Yes_To_All, None, Rename_It);
 
-   type Resolve_Conflict_Proc is access procedure
-     (Name            : in     String;
-      Name_Encoding   : in     Zip.Zip_Name_Encoding;
-      Action          :    out Name_Conflict_Intervention;
-      New_Name        :    out String;
-      New_Name_Length :    out Natural);
+   subtype Pkzip_Method is Zip.Pkzip_Method;
 
-   --  Data sizes in archive
    subtype File_Size_Type is Zip.File_Size_Type;
+   --  Data sizes in archive
 
    CRC_Error               : exception;
    Uncompressed_Size_Error : exception;
@@ -73,11 +57,6 @@ package DCF.Unzip is
 
 private
 
-   type Write_Mode is
-     (Write_To_Memory, Write_To_Stream);
-
-   type P_Stream is access all Ada.Streams.Root_Stream_Type'Class;
-
-   type P_Stream_Element_Array is access all Ada.Streams.Stream_Element_Array;
+   type P_Stream is not null access all Ada.Streams.Root_Stream_Type'Class;
 
 end DCF.Unzip;
