@@ -143,7 +143,6 @@ package DCF.Zip is
 
    type Feedback_Proc is access procedure
      (Percents_Done : in     Natural;   --  %'s completed
-      Entry_Skipped : in     Boolean;   --  Indicates one can show "skipped", no %'s
       User_Abort    :    out Boolean);  --  e.g. transmit a "click on Cancel" here
 
    -------------------------------------------------------------------------

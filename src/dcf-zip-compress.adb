@@ -57,7 +57,7 @@ package body DCF.Zip.Compress is
       begin
          while not Input.End_Of_Stream loop
             if Feedback /= null then
-               Feedback (Percentage (Counted, Size), False, User_Aborting);
+               Feedback (Percentage (Counted, Size), User_Aborting);
                if User_Aborting then
                   raise User_Abort;
                end if;

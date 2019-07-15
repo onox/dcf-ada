@@ -490,7 +490,7 @@ package body DCF.Zip is
    begin
       while Counted < Bytes loop
          if Feedback /= null then
-            Feedback (Percentage (Counted, Bytes), False, User_Aborting);
+            Feedback (Percentage (Counted, Bytes), User_Aborting);
             if User_Aborting then
                raise User_Abort;
             end if;

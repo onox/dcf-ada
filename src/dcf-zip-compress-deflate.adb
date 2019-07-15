@@ -1517,13 +1517,13 @@ is
          Bytes_In := Bytes_In + 1;
          if Feedback /= null then
             if Bytes_In = 1 then
-               Feedback (0, False, User_Aborting);
+               Feedback (0, User_Aborting);
             end if;
             if X_Percent > 0
               and then ((Bytes_In - 1) mod X_Percent = 0 or Bytes_In = Integer (Input_Size))
             then
                Pctdone := Integer ((100.0 * Float (Bytes_In)) / Float (Input_Size));
-               Feedback (Pctdone, False, User_Aborting);
+               Feedback (Pctdone, User_Aborting);
                if User_Aborting then
                   raise User_Abort;
                end if;
