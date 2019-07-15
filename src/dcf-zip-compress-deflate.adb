@@ -43,6 +43,8 @@
 --    - Make this procedure standalone & generic like LZMA.Encoding;
 --        use it in the Zada project (Zlib replacement)
 
+with System;
+
 with Ada.Unchecked_Deallocation;
 
 with DCF.Zip.CRC;
@@ -64,6 +66,21 @@ is
    --  All should be on False for normal use of this procedure.
 
    Deactivate_Scanning : constant Boolean := False;  --  Impact analysis of the scanning method
+
+   --  System.Word_Size: 13.3(8): A word is the largest amount of storage
+   --  that can be conveniently and efficiently manipulated by the hardware,
+   --  given the implementation's run-time model
+
+   Min_Bits_32 : constant := Integer'Max (32, System.Word_Size);
+
+   --  We define an Integer type which is at least 32 bits, but n bits
+   --  on a native n (> 32) bits architecture (no performance hit on 64+
+   --  bits architectures).
+   --  Integer_M16 not needed: Integer already guarantees 16 bits
+
+   type Integer_M32 is range -2**(Min_Bits_32 - 1) .. 2**(Min_Bits_32 - 1) - 1;
+   subtype Natural_M32 is Integer_M32 range 0 .. Integer_M32'Last;
+   subtype Positive_M32 is Integer_M32 range 1 .. Integer_M32'Last;
 
    -------------------------------------
    -- Buffered I/O - byte granularity --
@@ -1651,12 +1668,13 @@ is
    end Encode;
 
 begin
-   --  Allocate input and output buffers...
-   Inbuf :=
-     new Byte_Buffer (1 .. Integer'Min (Integer'Max (8, Integer (Input_Size)), Default_Buffer_Size));
+   --  Allocate input and output buffers
+   Inbuf := new Byte_Buffer
+     (1 .. Integer'Min (Integer'Max (8, Integer (Input_Size)), Default_Buffer_Size));
    Outbuf      := new Byte_Buffer (1 .. Default_Buffer_Size);
    Output_Size := 0;
    Lz_Buffer   := new Full_Range_Lz_Buffer_Type;
+
    begin
       Encode;
       Compression_Ok := True;

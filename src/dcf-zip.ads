@@ -29,8 +29,6 @@
 --  Version / date / download info: see the version, reference, web strings
 --  defined at the end of the public part of this package.
 
-with System;
-
 with Ada.Finalization;
 with Ada.Streams;
 
@@ -135,8 +133,7 @@ package DCF.Zip is
      with Pre => Info.Is_Loaded;
 
    --  User-defined procedure for feedback occuring during
-   --  compression or decompression (entry_skipped meaningful
-   --  only for the latter)
+   --  compression or decompression
 
    type Feedback_Proc is access procedure
      (Percents_Done : in     Natural;   --  %'s completed
@@ -256,21 +253,6 @@ private
 
    overriding procedure Finalize (Info : in out Zip_Info);
    --  Free heap-allocated memory
-
-   --  System.Word_Size: 13.3(8): A word is the largest amount of storage
-   --  that can be conveniently and efficiently manipulated by the hardware,
-   --  given the implementation's run-time model
-
-   Min_Bits_32 : constant := Integer'Max (32, System.Word_Size);
-
-   --  We define an Integer type which is at least 32 bits, but n bits
-   --  on a native n (> 32) bits architecture (no performance hit on 64+
-   --  bits architectures).
-   --  Integer_M16 not needed: Integer already guarantees 16 bits
-
-   type Integer_M32 is range -2**(Min_Bits_32 - 1) .. 2**(Min_Bits_32 - 1) - 1;
-   subtype Natural_M32 is Integer_M32 range 0 .. Integer_M32'Last;
-   subtype Positive_M32 is Integer_M32 range 1 .. Integer_M32'Last;
 
    --  Codes for compression formats in Zip archives
    --  See PKWARE's Appnote, "4.4.5 compression method"
