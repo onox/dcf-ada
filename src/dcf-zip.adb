@@ -406,55 +406,8 @@ package body DCF.Zip is
       Action ((Node => Dn));
    end Traverse_One_File;
 
-   procedure Tree_Stat
-     (Z         : in     Zip_Info;
-      Total     :    out Natural;
-      Max_Depth :    out Natural;
-      Avg_Depth :    out Float)
-   is
-      Sum_Depth : Natural := 0;
-
-      procedure Traverse_Tree (P : P_Dir_Node; Depth : Natural) is
-      begin
-         if P /= null then
-            Total := Total + 1;
-            if Depth > Max_Depth then
-               Max_Depth := Depth;
-            end if;
-            Sum_Depth := Sum_Depth + Depth;
-            Traverse_Tree (P.Left, Depth + 1);
-            Traverse_Tree (P.Right, Depth + 1);
-         end if;
-      end Traverse_Tree;
-   begin
-      Total     := 0;
-      Max_Depth := 0;
-      Traverse_Tree (Z.Dir_Binary_Tree, 0);
-      if Total = 0 then
-         Avg_Depth := 0.0;
-      else
-         Avg_Depth := Float (Sum_Depth) / Float (Total);
-      end if;
-   end Tree_Stat;
-
    function Exists (Info : in Zip_Info; Name : in String) return Boolean is
      (Get_Node (Info, Name) /= null);
-
-   procedure Get_Sizes
-     (Info        : in     Zip_Info;
-      Name        : in     String;
-      Comp_Size   :    out File_Size_Type;
-      Uncomp_Size :    out File_Size_Type)
-   is
-      Node : constant P_Dir_Node := Get_Node (Info, Name);
-   begin
-      if Node = null then
-         raise File_Name_Not_Found with
-           "Entry " & Name & " not found in " & Info.Name;
-      end if;
-      Comp_Size := Node.Comp_Size;
-      Uncomp_Size := Node.Uncomp_Size;
-   end Get_Sizes;
 
    procedure Blockread
      (Stream        : in out DCF.Streams.Root_Zipstream_Type'Class;

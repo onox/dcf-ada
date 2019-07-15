@@ -144,23 +144,10 @@ package DCF.Zip is
       with procedure Action (File : Archived_File);
    procedure Traverse_One_File (Z : Zip_Info; Name : String);
 
-   --  Academic: see how well the name tree is balanced
-   procedure Tree_Stat
-     (Z         : in     Zip_Info;
-      Total     :    out Natural;
-      Max_Depth :    out Natural;
-      Avg_Depth :    out Float);
-
    File_Name_Not_Found : exception;
 
    function Exists (Info : Zip_Info; Name : String) return Boolean
      with Pre => Info.Is_Loaded;
-
-   procedure Get_Sizes
-     (Info        : in     Zip_Info;
-      Name        : in     String;
-      Comp_Size   :    out File_Size_Type;
-      Uncomp_Size :    out File_Size_Type);
 
    --  User-defined procedure for feedback occuring during
    --  compression or decompression (entry_skipped meaningful
