@@ -205,8 +205,7 @@ package body DCF.Zip is
    procedure Load
      (Info            :    out Zip_Info;
       From            : in out DCF.Streams.Root_Zipstream_Type'Class;
-      Case_Sensitive  : in     Boolean               := False;
-      Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
+      Case_Sensitive  : in     Boolean := False)
    is
       procedure Insert
         (Dico_Name              :        String; -- UPPER if case-insensitive search
@@ -245,26 +244,10 @@ package body DCF.Zip is
             elsif Dico_Name < Node.Dico_Name then
                Insert_Into_Tree (Node.Left);
             else
-               --  Here we have a case where the entry name already exists in the dictionary.
-               case Duplicate_Names is
-                  when Error_On_Duplicate =>
-                     raise Duplicate_Name with
-                       "Same full entry name (in dictionary: " &
-                       Dico_Name &
-                       ") appears twice in archive directory; " &
-                       "procedure Load was called with strict name policy.";
-                  when Admit_Duplicates =>
-                     if File_Index > Node.File_Index then
-                        Insert_Into_Tree (Node.Right);
-                     elsif File_Index < Node.File_Index then
-                        Insert_Into_Tree (Node.Left);
-                     else
-                        raise Duplicate_Name with
-                          "Archive directory corrupt: same full entry name (in dictionary: " &
-                          Dico_Name &
-                          "), with same data position, appear twice.";
-                     end if;
-               end case;
+               --  Here we have a case where the entry name already exists
+               --  in the dictionary
+               raise Duplicate_Name with
+                 "Entry name '" & Dico_Name & "' appears twice in archive";
             end if;
          end Insert_Into_Tree;
       begin

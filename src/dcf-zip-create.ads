@@ -40,8 +40,7 @@ package DCF.Zip.Create is
    procedure Create
      (Info       : in out   Zip_Create_Info;
       Stream     : not null Zipstream_Class_Access;
-      Compress   :          Zip.Compress.Compression_Method := Zip.Compress.Deflate_1;
-      Duplicates :          Duplicate_Name_Policy           := Error_On_Duplicate)
+      Compress   :          Zip.Compress.Compression_Method := Zip.Compress.Deflate_1)
    with Pre  => Stream.Get_Name /= "",
         Post => Is_Created (Info);
 
@@ -110,8 +109,7 @@ private
       Contains : Pdir_Entries := null;
       --  'Contains' has unused room, to avoid reallocating each time:
       Last_Entry : Natural := 0;
-      Duplicates : Duplicate_Name_Policy;
-      --  We set up a name dictionary just for avoiding duplicate entries:
+      --  We set up a name dictionary just for avoiding duplicate entries
       Dir                : Name_Mapping.Map;
       Zip_Archive_Format : Zip_Archive_Format_Type := Zip_32;
       Comment : SU.Unbounded_String;

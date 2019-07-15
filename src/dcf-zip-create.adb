@@ -31,12 +31,10 @@ package body DCF.Zip.Create is
    procedure Create
      (Info       : in out   Zip_Create_Info;
       Stream     : not null Zipstream_Class_Access;
-      Compress   :          Zip.Compress.Compression_Method := Zip.Compress.Deflate_1;
-      Duplicates :          Duplicate_Name_Policy           := Error_On_Duplicate) is
+      Compress   :          Zip.Compress.Compression_Method := Zip.Compress.Deflate_1) is
    begin
       Info.Stream   := Stream;
       Info.Compress := Compress;
-      Info.Duplicates := Duplicates;
    end Create;
 
    function Is_Created (Info : Zip_Create_Info) return Boolean is
@@ -112,7 +110,7 @@ package body DCF.Zip.Create is
       M.Insert (SU.To_Unbounded_String (File_Name), Cm, Ok);
       if not Ok then
          --  Name already registered
-         raise Duplicate_Name with "Entry name = " & File_Name;
+         raise Duplicate_Name with "Entry name '" & File_Name & "' already in archive";
       end if;
    end Insert_To_Name_Dictionary;
 
@@ -137,9 +135,7 @@ package body DCF.Zip.Create is
       end loop;
 
       --  Check for duplicates; raises Duplicate_name in this case
-      if Info.Duplicates = Error_On_Duplicate then
-         Insert_To_Name_Dictionary (Entry_Name, Info.Dir);
-      end if;
+      Insert_To_Name_Dictionary (Entry_Name, Info.Dir);
 
       Add_Catalogue_Entry (Info);
       Last := Info.Last_Entry;
@@ -223,10 +219,10 @@ package body DCF.Zip.Create is
       begin
          String'Read (Stream'Access, Name);
          String'Read (Stream'Access, Extra);
-         if Info.Duplicates = Error_On_Duplicate then
-            --  Check for duplicates; raises Duplicate_name in this case:
-            Insert_To_Name_Dictionary (Name, Info.Dir);
-         end if;
+
+         --  Check for duplicates; raises Duplicate_name in this case:
+         Insert_To_Name_Dictionary (Name, Info.Dir);
+
          Add_Catalogue_Entry (Info);
          Info.Contains (Info.Last_Entry).Head.Local_Header_Offset :=
            Unsigned_32 (Index (Info.Stream.all)) - 1;

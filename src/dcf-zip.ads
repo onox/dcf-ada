@@ -78,25 +78,13 @@ package DCF.Zip is
    -----------------------------------------------------------------------------
 
    type Zip_Info is new Ada.Finalization.Controlled with private;
-   --  Zip_info contains the Zip file name (if it is a file)      --
-   --  or its input stream access, and the archive's directory.   --
-
-   -----------------------------------------------
-   --  Load the whole .zip directory contained  --
-   --  in archive (from) for quick searching.   --
-   -----------------------------------------------
-
-   type Duplicate_Name_Policy is
-     (Admit_Duplicates,     --  Two entries in the Zip archive may have the same full name
-      Error_On_Duplicate);  --  Raise exception on attempt to add twice the same entry name
 
    procedure Load
      (Info            :    out Zip_Info;
       From            : in out DCF.Streams.Root_Zipstream_Type'Class;
-      Case_Sensitive  : in     Boolean               := False;
-      Duplicate_Names : in     Duplicate_Name_Policy := Error_On_Duplicate)
+      Case_Sensitive  : in     Boolean := False)
    with Post => Info.Is_Loaded;
-   --  Load from a stream
+   --  Load an archive from a stream
 
    Archive_Corrupted   : exception;
    Duplicate_Name      : exception;
