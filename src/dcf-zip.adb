@@ -164,13 +164,8 @@ package body DCF.Zip is
    --              b) '\' and '/' identified -> all '/'   (new)
 
    function Normalize (S : String; Case_Sensitive : Boolean) return String is
-      Sn : String (S'Range);
+      Sn : String := (if Case_Sensitive then S else Ada.Characters.Handling.To_Upper (S));
    begin
-      if Case_Sensitive then
-         Sn := S;
-      else
-         Sn := Ada.Characters.Handling.To_Upper (S);
-      end if;
       for I in Sn'Range loop
          if Sn (I) = '\' then
             Sn (I) := '/';
