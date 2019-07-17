@@ -37,6 +37,13 @@ package body DCF.Unzip.Decompress is
       --  I/O Buffers: Size of sliding dictionary and output buffer
       Wsize : constant := 16#10000#; -- (orig: 16#8000# B = 32 KB)
 
+      CRC_Value : Unsigned_32;
+      --  CRC calculated from data
+
+      Compressed_Size : constant Unzip.File_Size_Type :=
+        Unzip.File_Size_Type'Min (Hint.Dd.Compressed_Size, File_Size_Type'Last - 2);
+      --  Compressed size of file
+
       ----------------------------------------------------------------------------
       -- Specifications of UnZ_* packages (remain of Info Zip's code structure) --
       ----------------------------------------------------------------------------
@@ -48,9 +55,7 @@ package body DCF.Unzip.Decompress is
          --  I/O Buffers: Input buffer
          Inbuf          : Zip.Byte_Buffer (0 .. Inbuf_Size - 1);
          Inpos, Readpos : Integer;  -- pos. in input buffer, pos. read from file
-         Compsize    : Unzip.File_Size_Type;  --  Compressed size of file
          Reachedsize : Unzip.File_Size_Type;  --  Number of bytes read from zipfile
-         Crc32val           : Unsigned_32;    --  CRC calculated from data
       end Unz_Glob;
 
       Zip_Eof   : Boolean; -- read over end of zip section for this file
@@ -104,7 +109,7 @@ package body DCF.Unzip.Decompress is
             Unz_Glob.Slide_Index      := 0;
             Unz_Glob.Reachedsize      := 0;
             Zip_Eof                   := False;
-            Zip.CRC.Init (Unz_Glob.Crc32val);
+            Zip.CRC.Init (CRC_Value);
             Bit_Buffer.Init;
          end Init_Buffers;
 
@@ -124,7 +129,7 @@ package body DCF.Unzip.Decompress is
 
          procedure Read_Buffer is
          begin
-            if Unz_Glob.Reachedsize > Unz_Glob.Compsize + 2 then
+            if Unz_Glob.Reachedsize > Compressed_Size + 2 then
                --  +2: last code is smaller than requested!
                Process_Compressed_End_Reached;
             else
@@ -227,7 +232,7 @@ package body DCF.Unzip.Decompress is
                when others =>
                   raise Unzip.Write_Error;
             end;
-            Zip.CRC.Update (Unz_Glob.Crc32val, Unz_Glob.Slide (0 .. X - 1));
+            Zip.CRC.Update (CRC_Value, Unz_Glob.Slide (0 .. X - 1));
          end Flush;
 
          procedure Flush_If_Full (W : in out Integer) is
@@ -336,7 +341,7 @@ package body DCF.Unzip.Decompress is
                         raise Unzip.Write_Error;
                   end;
                   if Verify_Integrity then
-                     Zip.CRC.Update_Stream_Array (Unz_Glob.Crc32val, Buffer);
+                     Zip.CRC.Update_Stream_Array (CRC_Value, Buffer);
                   end if;
                end;
             end loop;
@@ -638,7 +643,7 @@ package body DCF.Unzip.Decompress is
             Current_Length             : Natural;
             Defined, Number_Of_Lengths : Natural;
 
-            Tl,                             -- literal/length code tables
+            Tl : P_Table_List;            -- literal/length code tables
             Td : P_Table_List;            -- distance code tables
 
             Ct     : P_Huft_Table;       -- current table
@@ -691,6 +696,8 @@ package body DCF.Unzip.Decompress is
                     "Incomplete code set for compression structure";
                end if;
             exception
+               when Zip.Archive_Corrupted =>
+                  raise;
                when others =>
                   raise Zip.Archive_Corrupted with
                     "Error when building tables for compression structure";
@@ -768,6 +775,8 @@ package body DCF.Unzip.Decompress is
                     "Incomplete code set for literals/lengths";
                end if;
             exception
+               when Zip.Archive_Corrupted =>
+                  raise;
                when others =>
                   raise Zip.Archive_Corrupted with
                     "Error when building tables for literals/lengths";
@@ -814,7 +823,7 @@ package body DCF.Unzip.Decompress is
                   Inflate_Dynamic_Block;
                   Dyn := Dyn + 1;
                when others =>
-                  raise Zip.Archive_Corrupted; -- Bad block type (3)
+                  raise Zip.Archive_Corrupted;  --  Bad block type (3)
             end case;
          end Inflate_Block;
 
@@ -832,71 +841,68 @@ package body DCF.Unzip.Decompress is
          end Inflate;
       end Unz_Meth;
 
-      procedure Process_Descriptor (Dd : out Zip.Headers.Data_Descriptor) is
-         Start     : Ada.Streams.Stream_Element_Offset;
-         B         : Unsigned_8;
-         Dd_Buffer : Ada.Streams.Stream_Element_Array (1 .. 16);
+      procedure Process_Descriptor_Store (Descriptor : out Zip.Headers.Data_Descriptor) is
+         Buffer : Ada.Streams.Stream_Element_Array (1 .. 16);
+      begin
+         Zip.Blockread (Zip_File, Buffer);
+         Zip.Headers.Copy_And_Check (Buffer, Descriptor);
+      end Process_Descriptor_Store;
+
+      procedure Process_Descriptor_Deflate (Descriptor : out Zip.Headers.Data_Descriptor) is
+         Buffer : Ada.Streams.Stream_Element_Array (1 .. 16);
       begin
          Unz_Io.Bit_Buffer.Dump_To_Byte_Boundary;
-         B := Unz_Io.Read_Byte_Decrypted;
-         if B = 75 then -- 'K' ('P' is before, this is a Java/JAR bug!)
-            Dd_Buffer (1) := 80;
-            Dd_Buffer (2) := 75;
-            Start         := 3;
-         else
-            Dd_Buffer (1) := Ada.Streams.Stream_Element (B); -- hopefully = 80 (will be checked)
-            Start         := 2;
-         end if;
-         for I in Start .. 16 loop
-            Dd_Buffer (I) := Ada.Streams.Stream_Element (Unz_Io.Read_Byte_Decrypted);
+         for I in Buffer'Range loop
+            Buffer (I) := Ada.Streams.Stream_Element (Unz_Io.Read_Byte_Decrypted);
          end loop;
-         Zip.Headers.Copy_And_Check (Dd_Buffer, Dd);
-      exception
-         when Zip.Headers.Bad_Data_Descriptor =>
-            raise Zip.Archive_Corrupted;
-      end Process_Descriptor;
+         Zip.Headers.Copy_And_Check (Buffer, Descriptor);
+      end Process_Descriptor_Deflate;
 
       use Zip;
-      use Unz_Meth;
    begin
-      Unz_Glob.Compsize := Hint.Dd.Compressed_Size;
-      if Unz_Glob.Compsize > File_Size_Type'Last - 2 then -- This means: unknown size
-         Unz_Glob.Compsize := File_Size_Type'Last - 2;      -- Avoid wraparound in read_buffer
-      end if;                                             -- From TT's version, 2008
       Unz_Io.Init_Buffers;
 
       --  Unzip correct type
       case Format is
          when Store =>
-            Copy_Stored (Ada.Streams.Stream_Element_Offset (Unz_Glob.Compsize));
+            Unz_Meth.Copy_Stored (Ada.Streams.Stream_Element_Offset (Compressed_Size));
          when Deflate =>
             Unz_Meth.Inflate;
       end case;
 
       if Verify_Integrity then
-         Unz_Glob.Crc32val := Zip.CRC.Final (Unz_Glob.Crc32val);
+         CRC_Value := Zip.CRC.Final (CRC_Value);
       end if;
 
       if Data_Descriptor_After_Data then -- Sizes and CRC at the end
          declare
             Memo_Uncomp_Size : constant Unsigned_32 := Hint.Dd.Uncompressed_Size;
          begin
-            Process_Descriptor (Hint.Dd); -- CRC is for checking; sizes are for informing user
+            case Format is
+               when Store =>
+                  Process_Descriptor_Store (Hint.Dd);
+               when Deflate =>
+                  Process_Descriptor_Deflate (Hint.Dd);
+            end case;
+
+            --  CRC is for checking; sizes are for informing user
             if Memo_Uncomp_Size < Unsigned_32'Last
-              and then --
-              Memo_Uncomp_Size /= Hint.Dd.Uncompressed_Size
+              and then Memo_Uncomp_Size /= Hint.Dd.Uncompressed_Size
             then
                raise Uncompressed_Size_Error;
             end if;
+         exception
+            when Zip.Headers.Bad_Data_Descriptor =>
+               raise Zip.Archive_Corrupted;
          end;
       end if;
 
-      if Verify_Integrity and then Hint.Dd.Crc_32 /= Unz_Glob.Crc32val then
+      if Verify_Integrity and then Hint.Dd.Crc_32 /= CRC_Value then
          raise CRC_Error with
            "CRC stored in archive: " &
            Zip.CRC.Image (Hint.Dd.Crc_32) &
            "; CRC computed now: " &
-           Zip.CRC.Image (Unz_Glob.Crc32val);
+           Zip.CRC.Image (CRC_Value);
       end if;
    end Decompress_Data;
 
