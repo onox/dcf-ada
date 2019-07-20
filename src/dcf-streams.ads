@@ -116,6 +116,11 @@ package DCF.Streams is
 
    -----------------------------------------------------------------------------
 
+   type Array_Zipstream
+     (Elements : not null access Stream_Element_Array) is new Root_Zipstream_Type with private;
+
+   -----------------------------------------------------------------------------
+
    subtype Dos_Time is Unsigned_32;
 
    function Convert (Date : in Dos_Time) return Time;
@@ -212,5 +217,40 @@ private
    --  Returns true if the index is at the end of the stream
    overriding
    function End_Of_Stream (S : in File_Zipstream) return Boolean;
+
+   -----------------------------------------------------------------------------
+
+   type Array_Zipstream
+     (Elements : not null access Stream_Element_Array) is new Root_Zipstream_Type with
+   record
+      Index : Stream_Element_Offset := Elements'First;
+      EOF   : Boolean := False;
+   end record;
+
+   overriding
+   procedure Read
+     (Stream : in out Array_Zipstream;
+      Item   :    out Stream_Element_Array;
+      Last   :    out Stream_Element_Offset);
+
+   overriding
+   procedure Write
+     (Stream : in out Array_Zipstream;
+      Item   :        Stream_Element_Array);
+
+   overriding
+   procedure Set_Index (Stream : in out Array_Zipstream; To : Zs_Index_Type);
+
+   overriding
+   function Index (Stream : in Array_Zipstream) return Zs_Index_Type is
+     (Zs_Index_Type (Stream.Index));
+
+   overriding
+   function Size (Stream : in Array_Zipstream) return Zs_Size_Type is
+     (Zs_Size_Type (Stream.Elements'Length));
+
+   overriding
+   function End_Of_Stream (Stream : in Array_Zipstream) return Boolean is
+     (Stream.Size < Index (Stream));
 
 end DCF.Streams;

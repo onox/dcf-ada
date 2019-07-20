@@ -20,6 +20,7 @@
 --  THE SOFTWARE.
 
 with Ada.Characters.Latin_1;
+with Ada.IO_Exceptions;
 
 package body DCF.Streams is
 
@@ -259,5 +260,89 @@ package body DCF.Streams is
    begin
       return Ada.Streams.Stream_IO.End_Of_File (S.File.File);
    end End_Of_Stream;
+
+   -----------------------------------------------------------------------------
+
+   overriding
+   procedure Read
+     (Stream : in out Array_Zipstream;
+      Item   :    out Stream_Element_Array;
+      Last   :    out Stream_Element_Offset) is
+   begin
+      if Stream.EOF then
+         --  No elements transferred: Last := Item'First - 1 (See RM 13.13.1 (8))
+         --  T'Read will raise End_Error (See RM 13.13.2 (37))
+         if Item'First > Stream_Element_Offset'First then
+            Last := Item'First - 1;
+            return;
+         else
+            --  RM 13.13.1 (11) requires Read to raise Constraint_Error
+            --  if Item'First = Stream_Element_Offset'First
+            raise Constraint_Error;
+         end if;
+      end if;
+
+      if Stream.Elements'Last - Stream.Index >= Item'Length then
+         --  Normal case: even after reading, the index will be in the range
+         Last         := Item'Last;
+         Item         := Stream.Elements (Stream.Index .. Stream.Index + Item'Length - 1);
+         Stream.Index := Stream.Index + Item'Length;
+
+         pragma Assert (Stream.Index <= Stream.Elements'Last);
+         --  At least one element is left to be read, EOF not possible
+      else
+         --  Special case: we exhaust the buffer
+         Last                      := Item'First + (Stream.Elements'Last - Stream.Index);
+         Item (Item'First .. Last) := Stream.Elements (Stream.Index .. Stream.Elements'Last);
+
+         Stream.EOF := True;
+         --  If Last < Item'Last, the T'Read attribute raises End_Error
+         --  because of the incomplete reading
+      end if;
+   end Read;
+
+   overriding
+   procedure Write
+     (Stream : in out Array_Zipstream;
+      Item   :        Stream_Element_Array) is
+   begin
+      if Stream.EOF then
+         raise Ada.IO_Exceptions.End_Error;
+      end if;
+
+      if Stream.Elements'Last - Stream.Index >= Item'Length then
+         Stream.Elements (Stream.Index .. Stream.Index + Item'Length - 1) := Item;
+         Stream.Index := Stream.Index + Item'Length;
+
+         pragma Assert (Stream.Index <= Stream.Elements'Last);
+         --  At least one element is left to be written, EOF not possible
+      elsif Stream.Elements'Last - Stream.Index + 1 = Item'Length then
+         Stream.Elements (Stream.Index .. Stream.Elements'Last) := Item;
+
+         Stream.EOF := True;
+      else
+         --  RM 13.13.1 (9) requires the item to be appended to the stream,
+         --  but this might fail because the Stream_Element_Array is bounded.
+         --
+         --  Don't write if writing would be incomplete
+         raise Ada.IO_Exceptions.End_Error;
+      end if;
+   end Write;
+
+   overriding
+   procedure Set_Index (Stream : in out Array_Zipstream; To : Zs_Index_Type) is
+      Index : constant Stream_Element_Offset := Stream_Element_Offset (To);
+   begin
+      if (if Stream.Elements'Length > 0 then
+            Index not in Stream.Elements'Range
+          else
+            Index /= Stream.Elements'First)
+      then
+         raise Constraint_Error;
+      end if;
+
+      Stream.Index := Index;
+      Stream.EOF   := False;
+   end Set_Index;
 
 end DCF.Streams;

@@ -20,6 +20,7 @@
 
 with Ada.Command_Line;
 with Ada.Directories;
+with Ada.Streams;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
@@ -171,7 +172,8 @@ begin
                      end if;
 
                      declare
-                        Dir_Stream : aliased DCF.Streams.Memory_Zipstream;
+                        Empty_Array : aliased Ada.Streams.Stream_Element_Array := (1 .. 0 => <>);
+                        Dir_Stream  : aliased DCF.Streams.Array_Zipstream (Empty_Array'Access);
                      begin
                         DCF.Streams.Set_Name (Dir_Stream, Name & '/');
                         DCF.Streams.Set_Time (Dir_Stream,
