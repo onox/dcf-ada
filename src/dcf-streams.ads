@@ -35,7 +35,8 @@
 --
 --  Pure Ada 95+ code, 100% portable: OS-, CPU- and compiler- independent.
 
-with Ada.Finalization;
+private with Ada.Finalization;
+
 with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded;
 
@@ -98,10 +99,6 @@ package DCF.Streams is
 
    function Create (File_Name : String) return File_Zipstream;
    --  Create a file on the disk
-
-   --  Is the File_Zipstream open ?
-   function Is_Open (Str : in File_Zipstream) return Boolean
-     with Post => Is_Open'Result;
 
    --------------------------------------------------------------
    --  Array_Zipstream: stream based on a Stream_Element_Array --

@@ -100,11 +100,6 @@ package body DCF.Streams is
         others => <>);
    end Create;
 
-   function Is_Open (Str : in File_Zipstream) return Boolean is
-   begin
-      return Ada.Streams.Stream_IO.Is_Open (Str.File.File);
-   end Is_Open;
-
    overriding
    procedure Read
      (Stream : in out File_Zipstream;
