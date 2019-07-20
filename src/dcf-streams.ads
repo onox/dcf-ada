@@ -27,7 +27,7 @@
 --
 --  In addition, this package provides two ready-to-use derivations:
 --
---    - Memory_Zipstream, for using in-memory streaming
+--    - Array_Zipstream, for using in-memory streaming
 --    - File_Zipstream, for accessing files
 --
 --  The Zip_Streams package can be used as such, independently
@@ -85,21 +85,10 @@ package DCF.Streams is
    --  Returns true if the index is at the end of the stream, else false
    function End_Of_Stream (S : in Root_Zipstream_Type) return Boolean is abstract;
 
-   -----------------------------------------------------------------------
-   --  Memory_Zipstream: stream based on an in-memory Unbounded_String  --
-   -----------------------------------------------------------------------
-   type Memory_Zipstream is new Root_Zipstream_Type with private;
-
-   --  Get the complete value (contents) of the stream
-   procedure Get (Str : Memory_Zipstream; Unb : out Unbounded_String);
-
-   --  Set a value in the stream, the index will be set
-   --  to null and old data in the stream will be lost.
-   procedure Set (Str : in out Memory_Zipstream; Unb : Unbounded_String);
-
    ----------------------------------------------
    --  File_Zipstream: stream based on a file  --
    ----------------------------------------------
+
    type File_Zipstream is new Root_Zipstream_Type with private;
 
    type File_Mode is new Ada.Streams.Stream_IO.File_Mode;
@@ -114,7 +103,9 @@ package DCF.Streams is
    function Is_Open (Str : in File_Zipstream) return Boolean
      with Post => Is_Open'Result;
 
-   -----------------------------------------------------------------------------
+   --------------------------------------------------------------
+   --  Array_Zipstream: stream based on a Stream_Element_Array --
+   --------------------------------------------------------------
 
    type Array_Zipstream
      (Elements : not null access Stream_Element_Array) is new Root_Zipstream_Type with private;
@@ -139,40 +130,6 @@ private
       Modification_Time : Time := Default_Time;
    end record;
 
-   --  Memory_Zipstream spec
-   type Memory_Zipstream is new Root_Zipstream_Type with record
-      Unb : Unbounded_String;
-      Loc : Integer := 1;
-   end record;
-
-   --  Read data from the stream
-   overriding
-   procedure Read
-     (Stream : in out Memory_Zipstream;
-      Item   :    out Stream_Element_Array;
-      Last   :    out Stream_Element_Offset);
-
-   --  Write data to the stream, starting from the current index.
-   --  Data will be overwritten from index if already available.
-   overriding
-   procedure Write (Stream : in out Memory_Zipstream; Item : Stream_Element_Array);
-
-   --  Set the index on the stream
-   overriding
-   procedure Set_Index (S : in out Memory_Zipstream; To : Zs_Index_Type);
-
-   --  Returns the index of the stream
-   overriding
-   function Index (S : in Memory_Zipstream) return Zs_Index_Type;
-
-   --  Returns the Size of the stream
-   overriding
-   function Size (S : in Memory_Zipstream) return Zs_Size_Type;
-
-   --  Returns true if the index is at the end of the stream
-   overriding
-   function End_Of_Stream (S : in Memory_Zipstream) return Boolean;
-
    -----------------------------------------------------------------------------
 
    type Open_File is limited new Ada.Finalization.Limited_Controlled with record
@@ -185,7 +142,6 @@ private
 
    -----------------------------------------------------------------------------
 
-   --  File_Zipstream spec
    type File_Zipstream is new Root_Zipstream_Type with record
       File : Open_File;
    end record;

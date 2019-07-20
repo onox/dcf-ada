@@ -19,7 +19,6 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
-with Ada.Characters.Latin_1;
 with Ada.IO_Exceptions;
 
 package body DCF.Streams is
@@ -80,121 +79,6 @@ package body DCF.Streams is
    begin
       return Dos_Time (Date);  --  Currently a trivial conversion
    end Convert;
-
-   -----------------------------------------------------------------------
-   --  Unbounded_Stream: stream based on an in-memory Unbounded_String  --
-   -----------------------------------------------------------------------
-
-   procedure Get (Str : Memory_Zipstream; Unb : out Unbounded_String) is
-   begin
-      Unb := Str.Unb;
-   end Get;
-
-   procedure Set (Str : in out Memory_Zipstream; Unb : Unbounded_String) is
-   begin
-      Str.Unb := Null_Unbounded_String;  --  Clear the content of the stream
-      Str.Unb := Unb;
-      Str.Loc := 1;
-   end Set;
-
-   overriding
-   procedure Read
-     (Stream : in out Memory_Zipstream;
-      Item   :    out Stream_Element_Array;
-      Last   :    out Stream_Element_Offset) is
-   begin
-      --  Item is read from the stream. If (and only if) the stream is
-      --  exhausted, Last will be < Item'Last. In that case, T'Read will
-      --  raise an End_Error exception.
-      --
-      --  Cf: RM 13.13.1(8), RM 13.13.1(11), RM 13.13.2(37) and
-      --  explanations by Tucker Taft
-      --
-      Last := Item'First - 1;
-      --  If Item is empty, the following loop is skipped; if Stream.Loc
-      --  is already indexing out of Stream.Unb, that value is also appropriate
-      for I in Item'Range loop
-         Item (I)   := Character'Pos (Element (Stream.Unb, Stream.Loc));
-         Stream.Loc := Stream.Loc + 1;
-         Last       := I;
-      end loop;
-   exception
-      when Ada.Strings.Index_Error =>
-         --  What could be read has been read; T'Read will raise End_Error
-         null;
-   end Read;
-
-   Max_Chunk_Size : constant := 16 * 1024;
-
-   overriding
-   procedure Write (Stream : in out Memory_Zipstream; Item : Stream_Element_Array) is
-      I          : Stream_Element_Offset := Item'First;
-      Chunk_Size : Integer;
-      Tmp        : String (1 .. Max_Chunk_Size);
-   begin
-      while I <= Item'Last loop
-         Chunk_Size := Integer'Min (Integer (Item'Last - I + 1), Max_Chunk_Size);
-         if Stream.Loc > Length (Stream.Unb) then
-            --  ...we are off the string's bounds, we need to extend it
-            for J in 1 .. Chunk_Size loop
-               Tmp (J) := Character'Val (Item (I));
-               I       := I + 1;
-            end loop;
-            Append (Stream.Unb, Tmp (1 .. Chunk_Size));
-         else
-            --  ...we can work (at least for a part) within the string's bounds
-            Chunk_Size := Integer'Min (Chunk_Size, Length (Stream.Unb) - Stream.Loc + 1);
-            for J in 0 .. Chunk_Size - 1 loop
-               Replace_Element (Stream.Unb, Stream.Loc + J, Character'Val (Item (I)));
-               --  GNAT 2008's Replace_Slice does something very general
-               --  even in the trivial case where one can make:
-               --  Source.Reference(Low..High):= By;
-               --  -> still faster with elem by elem replacement
-               --  Anyway, this place is not critical for zipping: only the
-               --  local header before compressed data is rewritten after
-               --  compression. So usually, we are off bounds.
-               I := I + 1;
-            end loop;
-         end if;
-         Stream.Loc := Stream.Loc + Chunk_Size;
-      end loop;
-   end Write;
-
-   overriding
-   procedure Set_Index (S : in out Memory_Zipstream; To : Zs_Index_Type) is
-      I, Chunk_Size : Zs_Size_Type;
-
-      use Ada.Characters.Latin_1;
-   begin
-      if To > Zs_Size_Type (Length (S.Unb)) then
-         --  ...we are off the string's bounds, we need to extend it
-         I := Zs_Size_Type (Length (S.Unb)) + 1;
-         while I <= To loop
-            Chunk_Size := Zs_Size_Type'Min (To - I + 1, Zs_Size_Type (Max_Chunk_Size));
-            Append (S.Unb, (1 .. Integer (Chunk_Size) => NUL));
-            I := I + Chunk_Size;
-         end loop;
-      end if;
-      S.Loc := Integer (To);
-   end Set_Index;
-
-   overriding
-   function Size (S : in Memory_Zipstream) return Zs_Size_Type is
-   begin
-      return Zs_Size_Type (Length (S.Unb));
-   end Size;
-
-   overriding
-   function Index (S : in Memory_Zipstream) return Zs_Index_Type is
-   begin
-      return Zs_Index_Type (S.Loc);
-   end Index;
-
-   overriding
-   function End_Of_Stream (S : in Memory_Zipstream) return Boolean is
-   begin
-      return Size (S) < Index (S);
-   end End_Of_Stream;
 
    ----------------------------------------------
    --  File_Zipstream: stream based on a file  --
@@ -261,7 +145,9 @@ package body DCF.Streams is
       return Ada.Streams.Stream_IO.End_Of_File (S.File.File);
    end End_Of_Stream;
 
-   -----------------------------------------------------------------------------
+   --------------------------------------------------------------
+   --  Array_Zipstream: stream based on a Stream_Element_Array --
+   --------------------------------------------------------------
 
    overriding
    procedure Read
