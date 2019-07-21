@@ -118,6 +118,10 @@ package body DCF.Zip.Headers is
          raise Bad_Central_Header with "Archive needs invalid version to extract";
       end if;
 
+      if Header.Disk_Number_Start /= 0 then
+         raise Bad_Central_Header with "Archive may not span multiple volumes";
+      end if;
+
       if not Valid_Bitflag (Header.Short_Info) then
          raise Bad_Central_Header with "Archive uses prohibited features";
       end if;
