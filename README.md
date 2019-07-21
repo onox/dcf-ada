@@ -24,11 +24,11 @@ modifications:
 
  * Removed obsolescent features and implementation-defined extensions
 
+ * All packages except one that uses `Ada.Calendar` are preelaborated
+
  * Removed features prohibited by ISO standard
 
- * Removed lots of duplicated code and simplified API
-
- * All packages except one that uses `Ada.Calendar` are preelaborated
+ * Removed lots of duplicated code and simplified the API, reducing SLOC from 12k to 4.5
 
 ## Usage
 
@@ -90,8 +90,7 @@ While visiting an archived file, the file can be extracted using a
 
 ```ada
 declare
-   File_Stream : aliased DCF.Streams.File_Zipstream
-     := DCF.Streams.Create (File.Name);
+   File_Stream   : aliased DCF.Streams.File_Zipstream := DCF.Streams.Create (File.Name);
    Stream_Writer : DCF.Unzip.Streams.Stream_Writer (File_Stream'Access);
 begin
    DCF.Unzip.Streams.Extract
