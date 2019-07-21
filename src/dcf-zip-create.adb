@@ -92,7 +92,7 @@ package body DCF.Zip.Create is
          Cfh : Central_File_Header renames Info.Contains (Info.Last_Entry).Head;
       begin
          --  Administration
-         Cfh.Made_By_Version                   := 23;  --  Version 2.30
+         Cfh.Made_By_Version                   := 20;  --  Version 2.0
          Cfh.Comment_Length                    := 0;
          Cfh.Disk_Number_Start                 := 0;
          Cfh.Internal_Attributes               := 0;   --  0: binary; 1: text
