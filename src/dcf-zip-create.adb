@@ -121,18 +121,28 @@ package body DCF.Zip.Create is
       Compressed_Size :    out Zip.File_Size_Type;
       Final_Method    :    out Natural)
    is
+      function To_File_Name (Path : String) return String is
+         Name : String := Path;
+      begin
+         --  Appnote: 4.4.17.1, slashes must be forward slashes '/' instead of '\'
+         for C of Name loop
+            if C = '\' then
+               C := '/';
+            end if;
+         end loop;
+
+         return Name;
+      end To_File_Name;
+
       Mem1, Mem2 : Zs_Index_Type := Zs_Index_Type'First;
-      Entry_Name : String        := Get_Name (Stream);
       Last       : Positive;
+
+      Entry_Name : constant String  := To_File_Name (Get_Name (Stream));
+      Is_Folder  : constant Boolean := Entry_Name (Entry_Name'Last) = '/';
    begin
-      --  Appnote.txt, V. J. :
-      --    " All slashes should be forward slashes '/' as opposed to
-      --    backwards slashes '\' "
-      for I in Entry_Name'Range loop
-         if Entry_Name (I) = '\' then
-            Entry_Name (I) := '/';
-         end if;
-      end loop;
+      if Is_Folder and then Stream.Size > 0 then
+         raise Constraint_Error;
+      end if;
 
       --  Check for duplicates; raises Duplicate_name in this case
       Insert_To_Name_Dictionary (Entry_Name, Info.Dir);
@@ -168,7 +178,7 @@ package body DCF.Zip.Create is
            (Input            => Stream,
             Output           => Info.Stream.all,
             Input_Size       => Shi.Dd.Uncompressed_Size,
-            Method           => Info.Compress,
+            Method           => (if Is_Folder then Zip.Compress.Store else Info.Compress),
             Feedback         => Feedback,
             CRC              => Shi.Dd.Crc_32,
             Output_Size      => Shi.Dd.Compressed_Size,
