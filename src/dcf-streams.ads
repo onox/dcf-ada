@@ -72,10 +72,12 @@ package DCF.Streams is
    --  Returns the Size of the stream
    function Size (S : in Root_Zipstream_Type) return Zs_Size_Type is abstract;
 
-   procedure Set_Name (S : in out Root_Zipstream_Type; Name : String);
+   procedure Set_Name (S : in out Root_Zipstream_Type; Name : String; UTF_8 : Boolean := False);
 
    --  This procedure returns the name of the stream
    function Get_Name (S : in Root_Zipstream_Type) return String;
+
+   function UTF_8_Encoding (S : in Root_Zipstream_Type) return Boolean;
 
    --  This procedure sets the Modification_Time of the stream
    procedure Set_Time (S : in out Root_Zipstream_Type; Modification_Time : Time);
@@ -125,6 +127,7 @@ private
    type Root_Zipstream_Type is abstract new Ada.Streams.Root_Stream_Type with record
       Name              : Unbounded_String;
       Modification_Time : Time := Default_Time;
+      UTF_8             : Boolean := False;
    end record;
 
    -----------------------------------------------------------------------------

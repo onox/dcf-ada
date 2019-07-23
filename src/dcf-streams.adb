@@ -50,15 +50,18 @@ package body DCF.Streams is
 
    -----------------------------------------------------------------------------
 
-   procedure Set_Name (S : in out Root_Zipstream_Type; Name : String) is
+   procedure Set_Name (S : in out Root_Zipstream_Type; Name : String; UTF_8 : Boolean := False) is
    begin
-      S.Name := To_Unbounded_String (Name);
+      S.Name  := To_Unbounded_String (Name);
+      S.UTF_8 := UTF_8;
    end Set_Name;
 
    function Get_Name (S : in Root_Zipstream_Type) return String is
    begin
       return To_String (S.Name);
    end Get_Name;
+
+   function UTF_8_Encoding (S : in Root_Zipstream_Type) return Boolean is (S.UTF_8);
 
    procedure Set_Time (S : in out Root_Zipstream_Type; Modification_Time : Time) is
    begin

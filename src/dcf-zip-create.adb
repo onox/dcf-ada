@@ -155,9 +155,9 @@ package body DCF.Zip.Create is
          Shi : Local_File_Header renames Cfh.Short_Info;
       begin
          pragma Assert (Zip.Headers.Encryption_Flag_Bit not in Shi.Bit_Flag);
-         --  TODO Handle unicode name and read only
---            Shi.Bit_Flag := Shi.Bit_Flag or Zip.Headers.Language_Encoding_Flag_Bit;
---            Cfh.External_Attributes := Cfh.External_Attributes or 1;
+         if Stream.UTF_8_Encoding then
+            Shi.Bit_Flag := Shi.Bit_Flag or Zip.Headers.Language_Encoding_Flag_Bit;
+         end if;
 
          Shi.File_Timedate         := Get_Time (Stream);
          Shi.Dd.Uncompressed_Size  := Unsigned_32 (Size (Stream));
