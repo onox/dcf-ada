@@ -28,7 +28,7 @@ modifications:
 
  * Removed features prohibited by ISO standard
 
- * Removed lots of duplicated code and simplified the API, reducing SLOC from 12k to 4.5
+ * Removed lots of duplicated code and simplified the API, reducing SLOC from 12k to 4.5k
 
 ## Usage
 
@@ -100,6 +100,8 @@ begin
       Verify_Integrity => False);
 end;
 ```
+
+If you want to extract to a `Stream_Element_Array`, use `DCF.Streams.Array_Zipstream`.
 
 If you want to verify the integrity of the file without extracting it, set
 `Verify_Integrity` to `True` and use `null` in the discriminant of `Stream_Writer`.
