@@ -194,7 +194,7 @@ package DCF.Zip is
    --  Information about this package - e.g., for an "about" box  --
    -----------------------------------------------------------------
 
-   Version   : constant String := "1.0.0";
+   Version   : constant String := "2.0.0";
 
 private
 
