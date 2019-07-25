@@ -55,7 +55,7 @@ begin
    Ada.Text_IO.Put_Line ("Visiting " & File.Name);
 end Visit_File;
 
-package Visit_All_Files is new DCF.Zip.Traverse (Visit_File);
+procedure Visit_All_Files is new DCF.Zip.Traverse (Visit_File);
 ```
 
 Call `Visit_All_Files (Info)` to visit all files. To extract a single
