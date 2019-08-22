@@ -1,3 +1,5 @@
+--  SPDX-License-Identifier: MIT
+--
 --  Copyright (c) 2007 - 2018 Gautier de Montmollin (Maintainer of the Ada version)
 --  SWITZERLAND
 --

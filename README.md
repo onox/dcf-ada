@@ -164,6 +164,10 @@ a bugfix or an improvement.
 ## License
 
 This library is distributed under the terms of the [MIT License][url-mit].
+The first line of each Ada file should contain an SPDX license identifier
+tag that refers to this license:
+
+    SPDX-License-Identifier: MIT
 
   [url-bfg]: https://rtyley.github.io/bfg-repo-cleaner
   [url-contributing]: /CONTRIBUTING.md

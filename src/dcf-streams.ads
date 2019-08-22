@@ -1,3 +1,5 @@
+--  SPDX-License-Identifier: MIT
+--
 --  Contributed by ITEC - NXP Semiconductors
 --  June 2008
 --

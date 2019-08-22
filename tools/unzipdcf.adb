@@ -1,3 +1,5 @@
+--  SPDX-License-Identifier: MIT
+--
 --  Copyright (c) 2009 - 2018 Gautier de Montmollin
 --  Copyright (c) 2019 onox <denkpadje@gmail.com>
 --

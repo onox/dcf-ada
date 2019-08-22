@@ -1,3 +1,5 @@
+--  SPDX-License-Identifier: MIT
+--
 --  Copyright (c) 2000 - 2018 Gautier de Montmollin (maintainer)
 --  SWITZERLAND
 --
