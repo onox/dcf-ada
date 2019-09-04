@@ -30,9 +30,7 @@ package body DCF.Unzip.Streams is
 
    overriding procedure Write
      (Stream : in out Stream_Writer;
-      Item   : in     Ada.Streams.Stream_Element_Array)
-   is
-      use type DCF.Streams.Zs_Index_Type;
+      Item   : in     Ada.Streams.Stream_Element_Array) is
    begin
       if Stream.Target /= null then
          Stream.Target.all.Set_Index (Stream.Index);
