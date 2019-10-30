@@ -1,5 +1,4 @@
 CFLAGS  ?= -O2 -march=native
-LDFLAGS ?= -Wl,-z,relro -Wl,-z,now
 
 GNATMAKE    = gprbuild -dm -p
 GNATCLEAN   = gprclean -q
@@ -16,16 +15,16 @@ alidir     = $(libdir)
 .PHONY: build debug profile tools format clean install
 
 build:
-	$(GNATMAKE) -P dcf_ada.gpr -cargs $(CFLAGS) -largs $(LDFLAGS)
+	$(GNATMAKE) -P dcf_ada.gpr -cargs $(CFLAGS)
 
 debug:
-	$(GNATMAKE) -P dcf_ada.gpr -XMode=debug -cargs $(CFLAGS) -largs $(LDFLAGS)
+	$(GNATMAKE) -P dcf_ada.gpr -XMode=debug -cargs $(CFLAGS)
 
 profile:
-	$(GNATMAKE) -P dcf_ada.gpr -XMode=profiling -cargs $(CFLAGS) -largs $(LDFLAGS)
+	$(GNATMAKE) -P dcf_ada.gpr -XMode=profiling -cargs $(CFLAGS)
 
 tools:
-	$(GNATMAKE) -P tools.gpr -cargs $(CFLAGS) -largs $(LDFLAGS)
+	$(GNATMAKE) -P tools.gpr -cargs $(CFLAGS)
 
 format:
 	$(GNATPP) -P dcf_ada.gpr -XMode=debug -cargs $(CFLAGS)
