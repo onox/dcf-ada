@@ -15,32 +15,32 @@ alidir     = $(libdir)
 .PHONY: build debug profile tools format clean install
 
 build:
-	$(GNATMAKE) -P dcf_ada.gpr -cargs $(CFLAGS)
+	$(GNATMAKE) -P tools/dcf_ada.gpr -cargs $(CFLAGS)
 
 debug:
-	$(GNATMAKE) -P dcf_ada.gpr -XMode=debug -cargs $(CFLAGS)
+	$(GNATMAKE) -P tools/dcf_ada.gpr -XMode=debug -cargs $(CFLAGS)
 
 profile:
-	$(GNATMAKE) -P dcf_ada.gpr -XMode=profiling -cargs $(CFLAGS)
+	$(GNATMAKE) -P tools/dcf_ada.gpr -XMode=profiling -cargs $(CFLAGS)
 
 tools:
-	$(GNATMAKE) -P tools.gpr -cargs $(CFLAGS)
+	$(GNATMAKE) -P tools/tools.gpr -cargs $(CFLAGS)
 
 format:
-	$(GNATPP) -P dcf_ada.gpr -XMode=debug -cargs $(CFLAGS)
-	$(GNATPP) -P tools.gpr -XMode=debug -cargs $(CFLAGS)
+	$(GNATPP) -P tools/dcf_ada.gpr -XMode=debug -cargs $(CFLAGS)
+	$(GNATPP) -P tools/tools.gpr -XMode=debug -cargs $(CFLAGS)
 	rm **/*.npp
 
 clean:
-	$(GNATCLEAN) -P dcf_ada.gpr
-	$(GNATCLEAN) -P tools.gpr
-	rm -rf bin lib obj
+	$(GNATCLEAN) -P tools/dcf_ada.gpr
+	$(GNATCLEAN) -P tools/tools.gpr
+	rm -rf bin build
 
 install:
-	$(GNATINSTALL) --relocate-build-tree -p -q -f --install-name='dcf-ada' \
+	$(GNATINSTALL) -p -q -f --install-name='dcf-ada' \
 		--sources-subdir=$(includedir) \
 		--project-subdir=$(gprdir) \
 		--lib-subdir=$(libdir) \
 		--ali-subdir=$(alidir) \
-		--prefix=$(PREFIX) -P dcf_ada.gpr
+		--prefix=$(PREFIX) -P tools/dcf_ada.gpr
 	install bin/* $(PREFIX)/bin/
