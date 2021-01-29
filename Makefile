@@ -12,6 +12,13 @@ gprdir     = $(PREFIX)/share/gpr
 libdir     = $(PREFIX)/lib
 alidir     = $(libdir)
 
+installcmd = $(GNATINSTALL) -p \
+	--sources-subdir=$(includedir) \
+	--project-subdir=$(gprdir) \
+	--lib-subdir=$(libdir) \
+	--ali-subdir=$(alidir) \
+	--prefix=$(PREFIX)
+
 .PHONY: build debug profile tools format clean install
 
 build:
@@ -37,10 +44,10 @@ clean:
 	rm -rf bin build
 
 install:
-	$(GNATINSTALL) -p -q -f --install-name='dcf-ada' \
-		--sources-subdir=$(includedir) \
-		--project-subdir=$(gprdir) \
-		--lib-subdir=$(libdir) \
-		--ali-subdir=$(alidir) \
-		--prefix=$(PREFIX) -P tools/dcf_ada.gpr
+	$(installcmd) -f --install-name='dcf-ada' -P tools/dcf_ada.gpr
 	install bin/* $(PREFIX)/bin/
+
+uninstall:
+	$(installcmd) --uninstall --install-name='dcf-ada' -P tools/dcf_ada.gpr
+	rm $(PREFIX)/bin/zipdcf
+	rm $(PREFIX)/bin/unzipdcf
