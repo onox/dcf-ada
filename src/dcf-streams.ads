@@ -24,18 +24,13 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
---  The Zip_Streams package defines an abstract stream
+--  The DCF.Streams package defines an abstract stream
 --  type, Root_Zipstream_Type, with name, time and an index for random access.
 --
 --  In addition, this package provides two ready-to-use derivations:
 --
 --    - Array_Zipstream, for using in-memory streaming
 --    - File_Zipstream, for accessing files
---
---  The Zip_Streams package can be used as such, independently
---  of the Zip-Ada library.
---
---  Pure Ada 95+ code, 100% portable: OS-, CPU- and compiler- independent.
 
 private with Ada.Finalization;
 

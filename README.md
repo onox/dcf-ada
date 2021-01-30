@@ -56,10 +56,11 @@ begin
 end Visit_File;
 
 procedure Visit_All_Files is new DCF.Zip.Traverse (Visit_File);
+procedure Visit_One_File  is new DCF.Zip.Traverse_One_File (Visit_File);
 ```
 
 Call `Visit_All_Files (Info)` to visit all files. To extract a single
-file, use `Traverse_One_File` instead.
+file, call `Visit_One_File (Info, "my-file.txt")` instead.
 
 ### Querying an archived file
 
@@ -101,7 +102,14 @@ begin
 end;
 ```
 
-If you want to extract to a `Stream_Element_Array`, use `DCF.Streams.Array_Zipstream`.
+If you want to extract to a `Stream_Element_Array`, use `DCF.Streams.Array_Zipstream`:
+
+```ada
+declare
+   Byte_Stream   : aliased DCF.Streams.Array_Zipstream (My_Element_Array'Access);
+   Stream_Writer : DCF.Unzip.Streams.Stream_Writer (Byte_Stream'Access);
+begin
+```
 
 If you want to verify the integrity of the file without extracting it, set
 `Verify_Integrity` to `True` and use `null` in the discriminant of `Stream_Writer`.
@@ -115,7 +123,7 @@ In order to build the library, you need to have:
 
  * An Ada 2012 compiler
 
- * GPRBuild and `make`
+ * [Alire][url-alire] and `make`
 
 ## Installing dependencies on Ubuntu 18.04 LTS
 
@@ -169,6 +177,7 @@ tag that refers to this license:
 
     SPDX-License-Identifier: MIT
 
+  [url-alire]: https://alire.ada.dev/
   [url-bfg]: https://rtyley.github.io/bfg-repo-cleaner
   [url-contributing]: /CONTRIBUTING.md
   [url-iso-21320]: https://www.iso.org/standard/60101.html
