@@ -38,20 +38,18 @@ with DCF.Zip;
 use Ada.Command_Line;
 use Ada.Text_IO;
 
-with My_Resolve_Conflict;
-
 procedure UnzipDCF is
    package Dirs renames Ada.Directories;
    package SU   renames Ada.Strings.Unbounded;
 
-   List_Files       : Boolean := False;
-   Test_Data        : Boolean := False;
-   Comment          : Boolean := False;
+   List_Files : Boolean := False;
+   Test_Data  : Boolean := False;
+   Comment    : Boolean := False;
 
-   Quiet            : Boolean := False;
+   Quiet      : Boolean := False;
 
-   Junk_Directories : Boolean := False;
-   Lower_Case_Match : Boolean := False;
+   No_Directories : Boolean := False;
+   Lower_Case     : Boolean := False;
 
    Last_Option : Natural := 0;
 
@@ -73,8 +71,47 @@ procedure UnzipDCF is
       Put_Line ("modifiers:");
       Put_Line ("  -n  never overwrite existing files        -q  quiet mode");
       Put_Line ("  -o  always overwrite existing files");
-      Put_Line ("  -j  junk archived directory structure     -L  force lower case on stored names");
+      Put_Line ("  -j  junk archived directory structure     -L  make names lower case");
    end Help;
+
+   procedure Resolve_Conflict
+     (Name            : in     String;
+      Name_Encoding   : in     DCF.Zip.Zip_Name_Encoding;
+      Action          :    out DCF.Unzip.Name_Conflict_Intervention;
+      New_Name        :    out String;
+      New_Name_Length :    out Natural)
+   is
+      C : Character;
+
+      use all type DCF.Unzip.Name_Conflict_Intervention;
+   begin
+      loop
+         Put ("replace " & Name & "? [y]es, [n]o, [A]ll, [N]one, [r]ename: ");
+         declare
+            Input : constant String := Get_Line;
+         begin
+            C := Input (Input'First);
+            exit when C = 'y' or C = 'n' or C = 'A' or C = 'N' or C = 'r';
+            Put_Line ("error: invalid response [" & Input & "]");
+         end;
+      end loop;
+      case C is
+         when 'y' =>
+            Action := Yes;
+         when 'n' =>
+            Action := No;
+         when 'A' =>
+            Action := Yes_To_All;
+         when 'N' =>
+            Action := None;
+         when 'r' =>
+            Action := Rename_It;
+            Put ("new name: ");
+            Get_Line (New_Name, New_Name_Length);
+         when others =>
+            raise Program_Error;
+      end case;
+   end Resolve_Conflict;
 
    function Get_Out_File
      (Containing_Directory   : String;
@@ -88,10 +125,10 @@ procedure UnzipDCF is
       use all type Dirs.File_Kind;
 
       function Maybe_Trash_Dir (File_Name : String) return String is
-         Name  : constant String  := (if Lower_Case_Match then To_Lower (File_Name) else File_Name);
+         Name  : constant String  := (if Lower_Case then To_Lower (File_Name) else File_Name);
          Index : constant Natural := Ada.Strings.Fixed.Index (Name, "/", Ada.Strings.Backward);
       begin
-         return (if Junk_Directories then Name (Index + 1 .. Name'Last) else Name);
+         return (if No_Directories then Name (Index + 1 .. Name'Last) else Name);
       end Maybe_Trash_Dir;
 
       --  Optionally trash the archived directory structure and then concatenate with
@@ -114,7 +151,7 @@ procedure UnzipDCF is
          case Name_Conflict_Decision is
             when Yes | No | Rename_It =>
                --  Then ask for this name too
-               My_Resolve_Conflict
+               Resolve_Conflict
                  (File.Name,
                   File.Name_Encoding,
                   Name_Conflict_Decision,
@@ -165,7 +202,7 @@ begin
                   when 'l' =>
                      List_Files := True;
                   when 'j' =>
-                     Junk_Directories := True;
+                     No_Directories := True;
                   when 'd' =>
                      if I = Argument_Count then
                         Help;
@@ -175,7 +212,7 @@ begin
                        (Dirs.Full_Name (Argument (I + 1)));
                      Last_Option := I + 1;
                   when 'L' =>
-                     Lower_Case_Match := True;
+                     Lower_Case := True;
                   when 'n' =>
                      Name_Conflict_Decision := DCF.Unzip.None;
                   when 'o' =>
@@ -280,7 +317,7 @@ begin
                function No_Directory (Name : String) return String is
                  (if Name (Name'Last) = '/' then Name (Name'First .. Name'Last - 1) else Name);
 
-               procedure Extract_File_From_Stream (File : DCF.Zip.Archived_File) is
+               procedure Extract_From_Stream (File : DCF.Zip.Archived_File) is
                   Name : constant String
                     := Get_Out_File (Extraction_Folder, File, Name_Conflict_Decision);
                   File_Is_Directory : constant Boolean := File.Name (File.Name'Last) = '/';
@@ -304,8 +341,10 @@ begin
                         if Test_Data then
                            Put ("    testing: " & Name);
                         elsif File_Is_Directory then
-                           pragma Assert (not Junk_Directories);
-                           if not Dirs.Exists (Path) or else Dirs.Kind (Path) /= Dirs.Directory then
+                           pragma Assert (not No_Directories);
+                           if not Dirs.Exists (Path)
+                             or else Dirs.Kind (Path) /= Dirs.Directory
+                           then
                               Put_Line ("   creating: " & Name);
                               Dirs.Create_Path (Path);
                            end if;
@@ -353,10 +392,10 @@ begin
                         end;
                      end if;
                   end;
-               end Extract_File_From_Stream;
+               end Extract_From_Stream;
 
-               procedure Extract_All_Files is new DCF.Zip.Traverse (Extract_File_From_Stream);
-               procedure Extract_One_File  is new DCF.Zip.Traverse_One_File (Extract_File_From_Stream);
+               procedure Extract_All_Files is new DCF.Zip.Traverse (Extract_From_Stream);
+               procedure Extract_One_File  is new DCF.Zip.Traverse_One_File (Extract_From_Stream);
             begin
                if not Test_Data and then not Dirs.Exists (Extraction_Folder) then
                   Dirs.Create_Path (Extraction_Folder);

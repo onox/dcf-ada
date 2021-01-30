@@ -605,8 +605,8 @@ is
    --  Concretely, the trees are described by the bit length of each symbol, so the header's
    --  content is a vector of length max 320, whose contents are in the 0 .. 18 range and typically
    --  look like:  ... 8, 8, 9, 7, 8, 10, 6, 8, 8, 8, 8, 8, 11, 8, 9, 8, ...
-   --  Clearly this vector has redundancies and can be sent in a compressed form.
-   --  In this example, the RLE will compress the string of 8's with a single code 8, then a code 17
+   --  Clearly this vector has redundancies and can be sent in a compressed form. In this example,
+   --  the RLE will compress the string of 8's with a single code 8, then a code 17
    --  (repeat x times). Anyway, the very frequent 8's will be encoded with a small number of
    --  bits (less than the 5 plain bits, or maximum 7 Huffman-encoded bits
    --  needed for encoding integers in the 0 .. 18 range).

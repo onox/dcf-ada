@@ -75,7 +75,8 @@ package body DCF.Unzip.Streams is
            Local_Header.Extra_Field_Length +
            Zip.Headers.Local_Header_Length);
 
-      Data_Descriptor_After_Data := (Local_Header.Bit_Flag and Zip.Headers.Descriptor_Flag_Bit) /= 0;
+      Data_Descriptor_After_Data :=
+        (Local_Header.Bit_Flag and Zip.Headers.Descriptor_Flag_Bit) /= 0;
 
       if Data_Descriptor_After_Data then
          --  Sizes and CRC are stored after the data

@@ -733,7 +733,8 @@ package body DCF.Unzip.Decompress is
                         --  and cannot be repeated. This unspecified case is
                         --  treated as an error by zlib's inflate.c.
                         raise Zip.Archive_Corrupted with
-                          "Illegal data for compression structure (repeat an undefined code length)";
+                          "Illegal data for compression structure" &
+                          " (repeat an undefined code length)";
                      end if;
                      Repeat_Length_Code (3 + Unz_Io.Bit_Buffer.Read_And_Dump (2));
                   when 17 =>
@@ -747,7 +748,8 @@ package body DCF.Unzip.Decompress is
                   when others =>
                      --  Shouldn't occur if this tree is correct
                      raise Zip.Archive_Corrupted with
-                       "Illegal data for compression structure (values should be in the range 0 .. 18): " &
+                       "Illegal data for compression structure" &
+                       " (values should be in the range 0 .. 18): " &
                        Integer'Image (Ct (Ct_Idx).N);
                end case;
             end loop;

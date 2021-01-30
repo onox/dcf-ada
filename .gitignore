@@ -1,6 +1,2 @@
-/build/
-/bin/
-/auto.cgpr
-*.swp
-*.DS_Store
-.#*#
+build/
+alire/

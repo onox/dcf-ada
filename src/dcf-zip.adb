@@ -280,7 +280,8 @@ package body DCF.Zip is
             --  Skip extra field and entry comment
             From.Set_Index
               (From.Index +
-               DCF.Streams.Zs_Size_Type (Header.Short_Info.Extra_Field_Length + Header.Comment_Length));
+               DCF.Streams.Zs_Size_Type
+                 (Header.Short_Info.Extra_Field_Length + Header.Comment_Length));
             --  Now the whole i_th central directory entry is behind
             Insert
               (Dico_Name  => Normalize (This_Name, Case_Sensitive),
