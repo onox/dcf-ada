@@ -8,7 +8,7 @@ build:
   ci:
     - git clone --recurse-submodules https://github.com/alire-project/alire.git
     - cd alire && gprbuild -j0 -P alr_env && cd ..
-    - PATH="./alire/bin:$PATH" make
+    - PATH="../alire/bin:$PATH" make
 
 integrations:
   notifications:
