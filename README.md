@@ -133,41 +133,33 @@ Install the dependencies using apt:
 $ sudo apt install gnat-7 gprbuild make
 ```
 
-## Installation
+and then install Alire.
 
-A Makefile is provided to build the source code and tools. Use `make` to build
-the source code:
+## Using the library
 
-```
-$ make
-```
-
-You can override CFLAGS if desired. After having compiled the source code,
-the library can be installed by executing:
+Use the library in your crates as follows:
 
 ```
-$ make PREFIX=/usr install
+alr with dcf
 ```
 
-Change `PREFIX` to the preferred destination folder, for example `~/.local`.
-Import `dcf_ada` in your \*.gpr project file:
-
-```ada
-with "dcf_ada";
-```
-
-## Tools
+## Installing the tools
 
 Some tools to compress or decompress document container files can be build with:
 
-```sh
-$ make tools
 ```
+$ make
+$ make PREFIX=~/.local install
+```
+
+## Thanks
+
+Much thanks to @zertovitch for the Zip-Ada project.
 
 ## Contributing
 
-Read the [contributing guidelines][url-contributing] if you want to add
-a bugfix or an improvement.
+Please read the [contributing guidelines][url-contributing] before opening
+issues or pull requests.
 
 ## License
 
