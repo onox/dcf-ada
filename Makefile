@@ -3,14 +3,16 @@ PREFIX ?= /usr
 .PHONY: build clean install uninstall
 
 build:
-	alr build
+	cd dcf && alr build
+	cd zipdcf && alr build
 
 clean:
-	alr clean
-	rm -rf build
+	cd dcf && alr clean
+	cd zipdcf && alr clean
+	rm -rf dcf/build zipdcf/build
 
 install:
-	install build/bin/* $(PREFIX)/bin/
+	install zipdcf/build/bin/* $(PREFIX)/bin/
 
 uninstall:
 	rm $(PREFIX)/bin/zipdcf

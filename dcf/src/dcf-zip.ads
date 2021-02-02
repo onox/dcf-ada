@@ -21,16 +21,6 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
---  Zip
---  ---
---
---  Library for manipulating archive files in the Zip format
---
---  Pure Ada 2005+ code, 100% portable: OS-, CPU- and compiler- independent.
---
---  Version / date / download info: see the version, reference, web strings
---  defined at the end of the public part of this package.
-
 with Ada.Finalization;
 with Ada.Streams;
 
@@ -39,8 +29,8 @@ with DCF.Streams;
 package DCF.Zip is
    pragma Preelaborate;
 
-   --  Data sizes in archive
    subtype File_Size_Type is Unsigned_32;
+   --  Data sizes in archive
 
    subtype Time is DCF.Streams.Time;
 
@@ -196,7 +186,7 @@ package DCF.Zip is
    --  Information about this package - e.g., for an "about" box  --
    -----------------------------------------------------------------
 
-   Version   : constant String := "2.0.0";
+   Version   : constant String := "2.0.2";
 
 private
 
