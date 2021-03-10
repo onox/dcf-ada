@@ -26,8 +26,8 @@ package body DCF.Zip.CRC is
    CRC32_Table : array (Unsigned_32'(0) .. 255) of Unsigned_32;
 
    procedure Prepare_Table is
-      --  CRC-32 algorithm, ISO-3309
-      Seed : constant := 16#EDB88320#;
+      --  CRC-32 algorithm, section 4.4.7 of .zip file format specification
+      Seed : constant := 16#EDB8_8320#;
       L    : Unsigned_32;
    begin
       for I in CRC32_Table'Range loop

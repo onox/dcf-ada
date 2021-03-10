@@ -7,15 +7,15 @@
 
 # dcf-ada
 
-An Ada 2012 library for document container files, a Zip-based archive format
-standardized in [ISO/IEC 21320-1:2015][url-iso-21320]. Document container
-files are Zip files with several restrictions:
+An Ada 2012 library for document container files, a Zip-based archive files
+with some limitations:
 
- * Only "store" (uncompressed) and "deflate" compression methods are allowed
+ * Only the "store" (uncompressed) and "deflate" ([RFC 1951][url-deflate])
+   compression methods can be used
 
- * Archives may not be encrypted or contain digital signatures
+ * Archives cannot be encrypted or contain digital signatures
 
- * Archives may not span multiple volumes or be segmented
+ * Archives cannot be split into multiple files
 
 This library is based on the [Zip-Ada][url-zip-ada] library, with extensive
 modifications:
@@ -28,7 +28,7 @@ modifications:
 
  * All packages except one that uses `Ada.Calendar` are preelaborated
 
- * Removed features prohibited by ISO standard
+ * Removed unneeded features
 
  * Removed lots of duplicated code and simplified the API, reducing SLOC from 12k to 4.5k
 
@@ -174,6 +174,6 @@ tag that refers to this license:
   [url-alire]: https://alire.ada.dev/
   [url-bfg]: https://rtyley.github.io/bfg-repo-cleaner
   [url-contributing]: /CONTRIBUTING.md
-  [url-iso-21320]: https://www.iso.org/standard/60101.html
+  [url-deflate]: https://tools.ietf.org/html/rfc1951
   [url-mit]: https://opensource.org/licenses/mit
   [url-zip-ada]: https://unzip-ada.sourceforge.net
