@@ -96,6 +96,7 @@ project Zipdcf is
             for Default_Switches ("Ada") use ("-lgcov", "-fprofile-arcs");
          when "profiling" =>
             for Default_Switches ("Ada") use ("-pg");
+         when others => null;
       end case;
    end Linker;
 
