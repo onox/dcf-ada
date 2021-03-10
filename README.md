@@ -1,7 +1,6 @@
 [![Alire dcf](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/dcf.json)](https://alire.ada.dev/crates/dcf.html)
 [![Alire zipdcf](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/zipdcf.json)](https://alire.ada.dev/crates/zipdcf.html)
 [![License](https://img.shields.io/github/license/onox/dcf-ada.svg?color=blue)](https://github.com/onox/dcf-ada/blob/master/LICENSE)
-[![Build status](https://img.shields.io/shippable/5cd73c52bbceea00079c64f0/master.svg)](https://app.shippable.com/github/onox/dcf-ada)
 [![GitHub release](https://img.shields.io/github/release/onox/dcf-ada.svg)](https://github.com/onox/dcf-ada/releases/latest)
 [![IRC](https://img.shields.io/badge/IRC-%23ada%20on%20freenode-orange.svg)](https://webchat.freenode.net/?channels=ada)
 
