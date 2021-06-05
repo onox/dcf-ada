@@ -1,6 +1,6 @@
 project Dcf is
 
-   for Library_Name use "Dcf";
+   for Library_Name use "dcf";
    for Library_Version use "2.0.2";
 
    for Source_Dirs use ("src");
