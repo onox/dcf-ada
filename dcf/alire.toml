@@ -8,3 +8,5 @@ tags = ["zip", "document", "container"]
 authors = ["onox", "Gautier de Montmollin"]
 maintainers = ["onox <denkpadje@gmail.com>"]
 maintainers-logins = ["onox"]
+
+configuration.disabled = true

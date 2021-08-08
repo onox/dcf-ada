@@ -11,5 +11,7 @@ authors = ["onox", "Gautier de Montmollin"]
 maintainers = ["onox <denkpadje@gmail.com>"]
 maintainers-logins = ["onox"]
 
+configuration.disabled = true
+
 [[depends-on]]
 dcf = "^2.0"
