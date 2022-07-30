@@ -1,6 +1,6 @@
 name = "dcf"
 description = "Ada 2012 library for document container files, Zip-based archive files"
-version = "2.0.2"
+version = "2.0.3"
 website = "https://github.com/onox/dcf-ada"
 licenses = "MIT"
 tags = ["zip", "document", "container", "archive"]
