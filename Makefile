@@ -3,8 +3,8 @@ PREFIX ?= /usr
 .PHONY: build clean install uninstall
 
 build:
-	cd dcf && alr build
-	cd zipdcf && alr build
+	cd dcf && alr build --validation
+	cd zipdcf && alr build --validation
 
 clean:
 	cd dcf && alr clean
