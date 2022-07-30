@@ -26,7 +26,6 @@ with Ada.Calendar.Time_Zones;
 with Ada.Characters.Handling;
 with Ada.Command_Line;
 with Ada.Directories;
-with Ada.Streams;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
@@ -76,7 +75,6 @@ procedure UnzipDCF is
 
    procedure Resolve_Conflict
      (Name            : in     String;
-      Name_Encoding   : in     DCF.Zip.Zip_Name_Encoding;
       Action          :    out DCF.Unzip.Name_Conflict_Intervention;
       New_Name        :    out String;
       New_Name_Length :    out Natural)
@@ -135,7 +133,6 @@ procedure UnzipDCF is
       --  extraction directory
       Possible_Name : constant String := Maybe_Trash_Dir (File.Name);
       Possible_Path : constant String := Containing_Directory & '/' & Possible_Name;
-      --  TODO Use File.Name_Encoding
 
       New_Name        : String (1 .. 1024);
       New_Name_Length : Natural;
@@ -153,7 +150,6 @@ procedure UnzipDCF is
                --  Then ask for this name too
                Resolve_Conflict
                  (File.Name,
-                  File.Name_Encoding,
                   Name_Conflict_Decision,
                   New_Name,
                   New_Name_Length);

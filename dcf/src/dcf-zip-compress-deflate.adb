@@ -497,8 +497,7 @@ is
    function Similar
      (H1, H2    : Deflate_Huff_Descriptors;
       Dist_Kind : Distance_Type;
-      Threshold : Natural;
-      Comment   : String) return Boolean
+      Threshold : Natural) return Boolean
    is
       Dist  : Natural_M32;
       Thres : Natural_M32 := Natural_M32 (Threshold);
@@ -1448,10 +1447,7 @@ is
                    (Initial_Hd,
                     Sliding_Hd,
                     Step_Choice (Level).Metric,
-                    Step_Choice (Level).Cutting_Threshold,
-                    "Compare sliding to initial (step size=" &
-                    Lz_Buffer_Index_Type'Image (Step_Choice (Level).Slider_Step) &
-                    ')')
+                    Step_Choice (Level).Cutting_Threshold)
                then
                   Send_As_Block (Lz_Buffer (Send_From .. Slide_Mid - 1), Last_Block => False);
                   Send_From  := Slide_Mid;
