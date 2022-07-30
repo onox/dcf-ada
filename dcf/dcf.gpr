@@ -25,8 +25,4 @@ project Dcf is
       for Switches ("Ada") use ("-Es"); --  Symbolic traceback
    end Binder;
 
-   package Linker is
-      for Linker_Options use ("-Wl,-gc-sections");
-   end Linker;
-
 end Dcf;
