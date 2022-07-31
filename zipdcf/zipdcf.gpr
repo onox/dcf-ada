@@ -3,11 +3,10 @@ with "config/zipdcf_config";
 
 project Zipdcf is
 
-   for Library_Version use Project'Library_Name & ".so." & Zipdcf_Config.Crate_Version;
+   for Create_Missing_Dirs use "True";
 
    for Source_Dirs use ("src");
    for Object_Dir use "build/obj/" & Zipdcf_Config.Build_Profile;
-   for Create_Missing_Dirs use "True";
    for Exec_Dir use "build/bin";
    for Main use ("zipdcf.adb", "unzipdcf.adb");
 
